@@ -124,8 +124,8 @@ The application provides a fully functional web interface with:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/webshield.git
-   cd webshield
+   git clone https://github.com/deepspsd/webshield.official.git
+   cd webshield.official
    ```
 
 2. **Set up Python environment:**
@@ -203,8 +203,8 @@ python test_ml_models.py
 | `GET` | `/` | Serve main application | No |
 | `POST` | `/api/scan` | Submit URL for analysis | Optional |
 | `GET` | `/api/scan/{scan_id}` | Retrieve scan results | Optional |
-| `POST` | `/api/register` | Create new user account | No |
-| `POST` | `/api/login` | Authenticate user | No |
+| `POST` | `/api/register` | User registration | No |
+| `POST` | `/api/login` | User authentication | No |
 | `GET` | `/api/history` | User's scan history | Yes |
 | `GET` | `/api/stats` | Platform statistics | No |
 | `GET` | `/api/health` | System health check | No |
@@ -305,5 +305,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 *Built with ❤️ for web security and powered by advanced AI*
 
 **WebShield** - *Protecting the web, one URL at a time.*
-#   w e b s h i e l d . o f f i c i a l  
- 
