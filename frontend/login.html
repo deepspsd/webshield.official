@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebShield - Login</title>
+
+    <style>
+        :root {
+            --background: 220 25% 3%;
+            --foreground: 220 25% 98%;
+            --card: 220 25% 5%;
+            --card-foreground: 220 25% 98%;
+            --primary: 210 100% 60%;
+            --accent: 160 84% 45%;
+            --muted: 220 25% 12%;
+            --muted-foreground: 220 25% 70%;
+            --border: 220 25% 15%;
+            --ring: 210 100% 60%;
+            --radius: 0.75rem;
+            --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(250 100% 60%));
+            --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(217.2 32.6% 20%) 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: hsl(var(--background)); color: hsl(var(--foreground)); min-height: 100vh; display: flex; flex-direction: column; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+
+        /* Header consistent with index/register */
+        .header { border-bottom: 1px solid hsl(var(--border) / 0.5); background: hsl(var(--card) / 0.5); backdrop-filter: blur(8px); }
+        .header-content { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+        .logo { display: flex; align-items: center; gap: .75rem; text-decoration: none; }
+        .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))); border-radius: 8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; }
+        .logo-text { font-size: 1.5rem; font-weight: bold; background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))); -webkit-background-clip: text; background-clip:text; -webkit-text-fill-color: transparent; }
+        .nav { display: none; gap: 2rem; }
+        @media (min-width:768px){ .nav{ display:flex; } }
+        .nav a { color: hsl(var(--muted-foreground)); text-decoration:none; font-size:.875rem; transition: color .3s; }
+        .nav a:hover { color: hsl(var(--primary)); }
+        .header-buttons { display:flex; gap:.75rem; }
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.75rem 1.5rem; border-radius:.75rem; font-size:.875rem; font-weight:600; text-decoration:none; border:none; cursor:pointer; transition: all .2s cubic-bezier(.4,0,.2,1); }
+        .btn-ghost { background: transparent; color: hsl(var(--foreground)); border:1px solid transparent; }
+        .btn-ghost:hover { background: hsl(var(--muted) / .5); border-color: hsl(var(--border)); }
+        .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 14px 0 hsl(var(--primary)/.25); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px 0 hsl(var(--primary)/.4); }
+        .btn-full { width:100%; padding:.75rem; font-size:1rem; margin-bottom:1rem; }
+        .btn-google { background:#ffffff; color:#1f2937; border:1px solid hsl(var(--border)); }
+        .btn-google:hover { background:#f8fafc; }
+
+        /* Main */
+        .main { flex:1; display:flex; align-items:center; justify-content:center; padding:2rem 0; }
+        .login-card { background: var(--gradient-card); border:1px solid hsl(var(--border)); border-radius: var(--radius); padding:2rem; width:100%; max-width:400px; box-shadow: 0 10px 30px -10px hsl(var(--primary)/.3); }
+        .login-header { text-align:center; margin-bottom:2rem; }
+        .login-title { font-size:2rem; font-weight:700; background: var(--gradient-primary); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:.5rem; }
+        .login-subtitle { color:hsl(var(--muted-foreground)); font-size:.875rem; }
+        .form-group { margin-bottom:1.5rem; }
+        .form-label { display:block; font-size:.875rem; font-weight:500; margin-bottom:.5rem; color:hsl(var(--foreground)); }
+        .form-input { width:100%; padding:.75rem; background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius: var(--radius); color:hsl(var(--foreground)); font-size:.875rem; transition: all .3s; }
+        .form-input:focus { outline:none; border-color:hsl(var(--primary)); box-shadow:0 0 0 2px hsl(var(--ring)/.2); }
+        .divider { display:flex; align-items:center; margin:1.5rem 0; color:hsl(var(--muted-foreground)); font-size:.875rem; }
+        .divider::before,.divider::after { content:''; flex:1; height:1px; background:hsl(var(--border)); }
+        .divider span { padding:0 1rem; }
+
+        @media(max-width:768px){ .login-card{ margin:1rem; padding:1.5rem; } .login-title{ font-size:1.75rem;} .form-input,.btn-full{ height:3rem; font-size:1rem;} }
+        @media(max-width:480px){ .login-card{ margin:.5rem; padding:1.25rem;} .login-title{ font-size:1.5rem;} .form-input,.btn-full{ height:2.75rem; font-size:.9rem;} }
+        
+        /* Mobile menu button styles */
+        .mobile-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background: hsl(var(--muted));
+        }
+
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                height: 56px;
+                padding: 0 0.5rem;
+            }
+            
+            .nav {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+            
+            .header-buttons {
+                gap: 0.5rem;
+            }
+        }
+
+        /* Mobile Navigation */
+        @media (max-width: 767px) {
+            .nav {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                background: hsl(var(--card));
+                border-bottom: 1px solid hsl(var(--border));
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                z-index: 1000;
+                transform: translateY(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .nav.active {
+                transform: translateY(0);
+            }
+            
+            .nav a {
+                color: hsl(var(--foreground));
+                text-decoration: none;
+                font-size: 0.875rem;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid hsl(var(--border) / 0.3);
+                transition: color 0.3s;
+            }
+            
+            .nav a:hover {
+                color: hsl(var(--primary));
+            }
+            
+            .nav a:last-child {
+                border-bottom: none;
+            }
+        }
+        
+        .footer { background: hsl(var(--card) / .2); padding:.5rem 0; text-align:center; font-size:1rem; color:hsl(var(--muted-foreground)); width:100%; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo"><div class="logo-icon">🛡️</div><span class="logo-text">WebShield</span></a>
+                <nav class="nav" id="mobile-nav">
+                    <a href="index.html">Home</a>
+                    <a href="features.html">Features</a>
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="how-to-install.html">Extension</a>
+                    <a href="about.html">About</a>
+                </nav>
+                
+                <button class="mobile-menu-btn" id="mobile-menu-btn" style="display: none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                
+                <div class="header-buttons" id="header-actions">
+                    <a href="login.html" class="btn btn-ghost" id="signin-btn"><span class="icon">🔑</span>Sign In</a>
+                    <a href="register.html" class="btn btn-primary" id="getstarted-btn"><span class="icon">👤</span>Get Started</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="login-card">
+            <div class="login-header">
+                <h1 class="login-title">Welcome Back</h1>
+                <p class="login-subtitle">Sign in to your WebShield account</p>
+                <p id="flash" style="margin-top:.5rem;color:#10b981;display:none;"></p>
+            </div>
+
+            <form>
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+            </form>
+
+            <div class="divider"><span>or</span></div>
+
+            <button class="btn btn-google btn-full">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21.35 11.1H12v2.9h5.3c-.23 1.48-1.6 4.33-5.3 4.33-3.19 0-5.8-2.63-5.8-5.88s2.61-5.88 5.8-5.88c1.81 0 3.03.77 3.73 1.43l2.55-2.46C16.86 3.76 14.65 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c5.31 0 8.8-3.73 8.8-9 0-.6-.07-1.02-.15-1.5Z" fill="#4285F4"/>
+                </svg>
+                Continue with Google
+            </button>
+
+            <div class="login-footer" style="text-align:center; color:hsl(var(--muted-foreground)); font-size:.875rem;">
+                <p>Don't have an account? <a href="register.html">Sign up</a></p>
+                <p><a href="#">Forgot your password?</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Flash message from successful registration
+            const flash = sessionStorage.getItem('flashMessage');
+            if (flash) {
+                const el = document.getElementById('flash');
+                if (el) { el.textContent = flash; el.style.display = 'block'; }
+                sessionStorage.removeItem('flashMessage');
+            }
+
+            // Mobile menu functionality
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+            
+            if (mobileMenuBtn && mobileNav) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    mobileNav.classList.toggle('active');
+                });
+            }
+            const loginForm = document.querySelector('form');
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                console.log('🔐 Login attempt for:', email);
+                
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/api/auth/login`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    console.log('📡 Login response status:', response.status);
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        console.log('✅ Login successful, user data:', userData);
+                        
+                        // Store user data in localStorage
+                        localStorage.setItem('userLoggedIn', 'true');
+                        localStorage.setItem('userEmail', email);
+                        localStorage.setItem('userName', userData.name || email.split('@')[0]);
+                        
+                        console.log('💾 Stored in localStorage:', {
+                            userLoggedIn: localStorage.getItem('userLoggedIn'),
+                            userEmail: localStorage.getItem('userEmail'),
+                            userName: localStorage.getItem('userName')
+                        });
+                        
+                        console.log('🔄 Redirecting to dashboard...');
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        const error = await response.json();
+                        console.error('❌ Login failed:', error);
+                        alert(error.detail || 'Login failed. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('❌ Login error:', error);
+                    alert('Login failed. Please try again.');
+                }
+            });
+        });
+    </script>
+    <script src="config.js"></script>
+    <footer class="footer"><div class="container"><p> 2025 WebShield</p><p>All rights reserved. Protecting the web, one URL at a time.</p></div></footer>
+</body>
+</html>

@@ -1,0 +1,20 @@
+Copy this file to .env and fill in your MySQL credentials
+Example for local MySQL:
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=webshield
+DB_PASSWORD=your_password
+DB_NAME=webshield
+
+Alternatively, use a full URL (takes precedence if complete):
+DB_URL=mysql://webshield:your_password@127.0.0.1:3306/webshield
+
+Optional: disable pooling (recommended on Windows)
+DB_DISABLE_POOL=1
+
+Optional SSL parameters
+DB_SSL_MODE=DISABLED  # or REQUIRED
+DB_SSL_CA=
+DB_SSL_CERT=
+DB_SSL_KEY=
+
