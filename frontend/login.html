@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WebShield</title>
+    <script src="accessibility-enhancements.js"></script>
+    <script src="webshield-core.js"></script>
+    <script src="webshield-translation.js"></script>
+    <link rel="stylesheet" href="translation-styles.css">
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="premium-effects.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="cyber-effects.js" defer></script>
+    <style>
+        :root {
+            /* Enhanced Color System - Vibrant */
+            --primary: 220 95% 58%;
+            --primary-foreground: 220 15% 98%;
+            --primary-hover: 220 90% 65%;
+            --accent: 160 85% 48%;
+            --accent-foreground: 220 15% 98%;
+            --accent-hover: 160 80% 55%;
+            --success: 142 76% 40%;
+            --warning: 45 93% 50%;
+            --destructive: 0 75% 55%;
+            --info: 210 100% 65%;
+
+            /* Dark Theme - Rich Colors */
+            --background: 240 35% 8%;
+            --foreground: 220 15% 96%;
+            --card: 240 30% 10%;
+            --card-foreground: 220 15% 96%;
+            --popover: 240 30% 10%;
+            --popover-foreground: 220 15% 96%;
+            --secondary: 240 25% 15%;
+            --secondary-foreground: 220 15% 96%;
+            --muted: 240 20% 12%;
+            --muted-foreground: 220 10% 65%;
+            --border: 240 20% 18%;
+            --input: 240 20% 18%;
+            --ring: 220 95% 58%;
+            --radius: 0.75rem;
+
+            /* Enhanced Gradients */
+            --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+            --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-hover)));
+            --gradient-cyber: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+        }
+
+        [data-theme="light"] {
+            /* Light Theme Colors */
+            --background: 0 0% 98%;
+            --foreground: 222 84% 5%;
+            --card: 0 0% 100%;
+            --card-foreground: 222 84% 5%;
+            --muted: 210 40% 95%;
+            --muted-foreground: 215 16% 47%;
+            --border: 214 32% 91%;
+            --input: 214 32% 91%;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(125deg,
+                    hsl(220 40% 8%) 0%,
+                    hsl(230 45% 12%) 20%,
+                    hsl(240 40% 10%) 40%,
+                    hsl(250 45% 12%) 60%,
+                    hsl(260 40% 10%) 80%,
+                    hsl(220 40% 8%) 100%),
+                radial-gradient(ellipse at top left, hsl(220 90% 56% / 0.15) 0%, transparent 40%),
+                radial-gradient(ellipse at bottom right, hsl(280 80% 50% / 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, hsl(160 84% 45% / 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                conic-gradient(from 180deg at 50% 50%,
+                    hsl(220 90% 56% / 0.03) 0deg,
+                    hsl(280 80% 50% / 0.02) 60deg,
+                    hsl(160 84% 45% / 0.03) 120deg,
+                    hsl(220 90% 56% / 0.02) 180deg,
+                    hsl(280 80% 50% / 0.03) 240deg,
+                    hsl(160 84% 45% / 0.02) 300deg,
+                    hsl(220 90% 56% / 0.03) 360deg);
+            pointer-events: none;
+            z-index: -1;
+            animation: meshRotate 60s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes backgroundShift {
+
+            0%,
+            100% {
+                filter: hue-rotate(0deg) brightness(1);
+            }
+
+            25% {
+                filter: hue-rotate(10deg) brightness(1.05);
+            }
+
+            50% {
+                filter: hue-rotate(-10deg) brightness(0.95);
+            }
+
+            75% {
+                filter: hue-rotate(5deg) brightness(1.02);
+            }
+        }
+
+        @keyframes meshRotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+            background-color: hsl(var(--card) / 0.5);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .header-content {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                height: 56px;
+                padding: 0 0.5rem;
+            }
+
+            .logo-text {
+                font-size: 1.25rem;
+            }
+
+            .logo-icon {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            animation: logoGlow 4s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .logo-icon:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 0 25px hsl(var(--primary) / 0.6);
+        }
+
+        @keyframes logoGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+                transform: translateY(0px);
+            }
+
+            50% {
+                box-shadow: 0 0 25px hsl(var(--primary) / 0.5);
+                transform: translateY(-2px);
+            }
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav {
+            display: none;
+            gap: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .nav {
+                display: flex;
+            }
+        }
+
+        .nav a {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.3s;
+        }
+
+        .nav a:hover {
+            color: hsl(var(--primary));
+        }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Mobile header buttons */
+        @media (max-width: 768px) {
+            .header-buttons {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .btn .icon {
+                width: 1rem;
+                height: 1rem;
+            }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            padding: .75rem 1.5rem;
+            border-radius: .75rem;
+            font-size: .875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all .2s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--muted) / .5);
+            border-color: hsl(var(--border));
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-primary-start, #007bff), var(--gradient-primary-end, #0056b3));
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(0, 123, 255, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(0, 123, 255, 0.4), 0 0 20px rgba(0, 123, 255, 0.3);
+            background: linear-gradient(135deg, var(--gradient-primary-end, #0056b3), var(--gradient-primary-start, #007bff));
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-full {
+            width: 100%;
+            padding: .75rem;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-google {
+            background: #ffffff;
+            color: #1f2937;
+            border: 1px solid hsl(var(--border));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-google::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.05), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-google:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-google:hover::before {
+            left: 100%;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .login-card {
+            background: hsl(var(--card) / 0.6);
+            border: 1px solid hsl(var(--border) / 0.3);
+            border-radius: 1.5rem;
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow:
+                0 20px 40px hsl(var(--background) / 0.3),
+                0 0 0 1px hsl(var(--border) / 0.1) inset;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(30px) saturate(180%);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .login-card:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, hsl(210 100% 60%), hsl(160 84% 45%));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: .75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .login-subtitle {
+            color: hsl(var(--muted-foreground));
+            font-size: .875rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: .875rem;
+            font-weight: 500;
+            margin-bottom: .5rem;
+            color: hsl(var(--foreground));
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1.125rem 1.25rem;
+            background: hsl(var(--background) / 0.5);
+            border: 2px solid hsl(var(--border) / 0.3);
+            border-radius: 0.875rem;
+            color: hsl(var(--foreground));
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+            box-shadow:
+                0 0 0 3px rgba(59, 130, 246, 0.15),
+                0 4px 12px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            transition: opacity 0.2s ease;
+        }
+
+        .form-input:focus::placeholder {
+            opacity: 0.6;
+        }
+
+        /* Loading animation */
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Error message styling */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Success message styling */
+        .success-message {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: hsl(var(--muted-foreground));
+            font-size: .875rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: hsl(var(--border));
+        }
+
+        .divider span {
+            padding: 0 1rem;
+        }
+
+        @media(max-width:768px) {
+            .login-card {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .login-title {
+                font-size: 1.75rem;
+            }
+
+            .form-input,
+            .btn-full {
+                height: 3rem;
+                font-size: 1rem;
+            }
+        }
+
+        @media(max-width:480px) {
+            .login-card {
+                margin: .5rem;
+                padding: 1.25rem;
+            }
+
+            .login-title {
+                font-size: 1.5rem;
+            }
+
+            .form-input,
+            .btn-full {
+                height: 2.75rem;
+                font-size: .9rem;
+            }
+        }
+
+        /* Mobile menu button styles */
+        .mobile-menu-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: hsl(var(--muted));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                height: 56px;
+                padding: 0 0.5rem;
+            }
+
+            .nav {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+
+            .header-buttons {
+                gap: 0.5rem;
+            }
+        }
+
+        /* Mobile Navigation */
+        @media (max-width: 767px) {
+            .nav {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                background: hsl(var(--card));
+                border-bottom: 1px solid hsl(var(--border));
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                z-index: 1000;
+                transform: translateY(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .nav.active {
+                transform: translateY(0);
+            }
+
+            .nav a {
+                color: hsl(var(--foreground));
+                text-decoration: none;
+                font-size: 0.875rem;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid hsl(var(--border) / 0.3);
+                transition: color 0.3s;
+            }
+
+            .nav a:hover {
+                color: hsl(var(--primary));
+            }
+
+            .nav a:last-child {
+                border-bottom: none;
+            }
+        }
+
+        /* footer style removed to use shared css */
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">🛡️</div><span class="logo-text">WebShield</span>
+                </a>
+                <nav class="nav" id="mobile-nav">
+                    <a href="index.html" data-translate="nav-home">Home</a>
+                    <a href="features.html" data-translate="nav-features">Features</a>
+                    <a href="learn.html" data-translate="nav-learn">Learn</a>
+                    <a href="dashboard.html" data-translate="nav-dashboard">Dashboard</a>
+                    <a href="how-to-install.html" data-translate="nav-extension">Extension</a>
+                    <a href="about.html" data-translate="nav-about">About</a>
+                </nav>
+
+                <button class="mobile-menu-btn" id="mobile-menu-btn" style="display: none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+
+                <div class="header-buttons" id="header-actions">
+                    <a href="login.html" class="btn btn-ghost" id="signin-btn"><span class="icon">🔑</span><span
+                            data-translate="btn-sign-in">Sign In</span></a>
+                    <a href="register.html" class="btn btn-primary" id="getstarted-btn"><span
+                            class="icon">👤</span><span data-translate="btn-get-started">Get Started</span></a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="login-card">
+            <div class="login-header">
+                <h1 class="login-title" data-translate="login-title">Welcome Back</h1>
+                <p class="login-subtitle" data-translate="login-subtitle">Sign in to your WebShield account</p>
+                <p id="flash" style="margin-top:.5rem;color:#10b981;display:none;"></p>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <form>
+                <div class="form-group">
+                    <label for="email" class="form-label" data-translate="form-email">Email</label>
+                    <input type="email" id="email" class="form-input" data-translate-placeholder="placeholder-email"
+                        placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label" data-translate="form-password">Password</label>
+                    <input type="password" id="password" class="form-input"
+                        data-translate-placeholder="placeholder-password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="login-btn" data-translate="btn-sign-in">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loading" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" class="animate-spin">
+                            <path d="M21 12a9 9 0 11-6.219-8.56" />
+                        </svg>
+                        Signing In...
+                    </span>
+                </button>
+            </form>
+
+            <div class="divider"><span data-translate="divider-or">or</span></div>
+
+            <button class="btn btn-google btn-full">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M21.35 11.1H12v2.9h5.3c-.23 1.48-1.6 4.33-5.3 4.33-3.19 0-5.8-2.63-5.8-5.88s2.61-5.88 5.8-5.88c1.81 0 3.03.77 3.73 1.43l2.55-2.46C16.86 3.76 14.65 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c5.31 0 8.8-3.73 8.8-9 0-.6-.07-1.02-.15-1.5Z"
+                        fill="#4285F4" />
+                </svg>
+                <span data-translate="btn-continue-google">Continue with Google</span>
+            </button>
+
+            <div class="login-footer" style="text-align:center; color:hsl(var(--muted-foreground)); font-size:.875rem;">
+                <p><span data-translate="login-no-account">Don't have an account?</span> <a href="register.html"
+                        data-translate="btn-sign-up">Sign up</a></p>
+                <p><a href="#" data-translate="link-forgot-password">Forgot your password?</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Flash message from successful registration
+            const flash = sessionStorage.getItem('flashMessage');
+            if (flash) {
+                const el = document.getElementById('flash');
+                if (el) { el.textContent = flash; el.style.display = 'block'; }
+                sessionStorage.removeItem('flashMessage');
+            }
+
+            // Mobile menu functionality
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            if (mobileMenuBtn && mobileNav) {
+                mobileMenuBtn.addEventListener('click', function () {
+                    mobileNav.classList.toggle('active');
+                });
+            }
+            const loginForm = document.querySelector('form');
+            const loginBtn = document.getElementById('login-btn');
+            const btnText = loginBtn.querySelector('.btn-text');
+            const btnLoading = loginBtn.querySelector('.btn-loading');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            }
+
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+            }
+
+            function setLoading(loading) {
+                if (loading) {
+                    loginBtn.disabled = true;
+                    btnText.style.display = 'none';
+                    btnLoading.style.display = 'flex';
+                    loginBtn.style.opacity = '0.8';
+                } else {
+                    loginBtn.disabled = false;
+                    btnText.style.display = 'block';
+                    btnLoading.style.display = 'none';
+                    loginBtn.style.opacity = '1';
+                }
+            }
+
+            loginForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+
+                // Basic validation
+                if (!email || !password) {
+                    showError('Please fill in all fields.');
+                    return;
+                }
+
+                if (!email.includes('@') || !email.includes('.')) {
+                    showError('Please enter a valid email address.');
+                    return;
+                }
+
+                setLoading(true);
+                console.log('🔐 Login attempt for:', email);
+
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/api/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    console.log('📡 Login response status:', response.status);
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        console.log('✅ Login successful, user data:', userData);
+
+                        showSuccess('Login successful! Redirecting to dashboard...');
+
+                        // Store user data in localStorage
+                        localStorage.setItem('userLoggedIn', 'true');
+                        localStorage.setItem('userEmail', email);
+                        localStorage.setItem('userName', userData.name || email.split('@')[0]);
+
+                        console.log('💾 Stored in localStorage:', {
+                            userLoggedIn: localStorage.getItem('userLoggedIn'),
+                            userEmail: localStorage.getItem('userEmail'),
+                            userName: localStorage.getItem('userName')
+                        });
+
+                        // Redirect after a short delay to show success message
+                        setTimeout(() => {
+                            console.log('🔄 Redirecting to dashboard...');
+                            window.location.href = 'dashboard.html';
+                        }, 1500);
+                    } else {
+                        const error = await response.json();
+                        console.error('❌ Login failed:', error);
+                        showError(error.detail || 'Invalid email or password. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('❌ Login error:', error);
+                    showError('Connection error. Please check your internet connection and try again.');
+                } finally {
+                    setLoading(false);
+                }
+            });
+        });
+    </script>
+    <script src="config.js"></script>
+    <!-- Include enhanced animations -->
+    <script src="enhanced-animations.js"></script>
+
+    <!-- Initialize theme on page load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.WebShieldTheme) {
+                window.WebShieldTheme.init();
+            }
+        });
+    </script>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <div class="footer-copyright" data-translate="footer-copyright">
+                    &copy; 2025 WebShield. All rights reserved.
+                </div>
+                <div class="footer-links">
+                    <a href="#" data-translate="footer-privacy">Privacy</a>
+                    <a href="#" data-translate="footer-terms">Terms</a>
+                    <a href="#" data-translate="footer-security">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
+```

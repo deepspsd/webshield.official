@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebShield Standalone</title>
+    <meta name="theme-color" content="#0a0a0a">
+    <script src="accessibility-enhancements.js"></script>
+    <script src="webshield-core.js"></script>
+    <script src="webshield-translation.js"></script>
+    <style>
+        :root {
+            --primary: 220 95% 55%;
+            --primary-glow: 220 90% 65%;
+            --primary-variant: 230 85% 45%;
+            --accent: 45 100% 55%;
+            --success: 142 76% 36%;
+            --destructive: 0 72% 51%;
+            --warning: 38 92% 50%;
+            --background: 224 71% 4%;
+            --surface: 224 71% 6%;
+            --card: 224 71% 8%;
+            --muted: 215 27% 17%;
+            --border: 215 27% 20%;
+            --foreground: 213 31% 91%;
+            --muted-foreground: 215 20% 65%;
+        }
+
+        [data-theme="light"] {
+            --primary: 220 95% 45%;
+            --primary-glow: 220 90% 55%;
+            --primary-variant: 230 85% 35%;
+            --accent: 45 100% 45%;
+            --background: 0 0% 98%;
+            --surface: 0 0% 96%;
+            --card: 0 0% 100%;
+            --muted: 210 40% 95%;
+            --border: 214 32% 91%;
+            --foreground: 222 84% 5%;
+            --muted-foreground: 215 16% 47%;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 1rem; }
+
+        .header {
+            position: sticky; top: 0; z-index: 1000;
+            background: hsl(var(--card) / 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid hsl(var(--border));
+        }
+        .header-content {
+            height: 64px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .logo { display: flex; align-items: center; gap: .75rem; }
+        .logo-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, hsl(210 100% 60%), hsl(160 84% 45%)); }
+        .logo-text { font-weight: 700; font-size: 1.25rem; background: linear-gradient(135deg, hsl(210 100% 60%), hsl(160 84% 45%)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav { display: flex; gap: 1.25rem; }
+        .nav a { color: hsl(var(--muted-foreground)); text-decoration: none; font-size: .95rem; }
+        .nav a:hover { color: hsl(var(--primary)); }
+        .header-actions { display: flex; align-items: center; gap: .5rem; }
+
+        .main { padding: 2rem 0; }
+        .hero { padding: 2rem 0; text-align: center; }
+        .hero h1 { font-size: 2.25rem; margin: 0 0 .5rem; }
+        .hero p { color: hsl(var(--muted-foreground)); margin: 0 0 1rem; }
+        .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .75rem 1.25rem; border-radius: .75rem; border: 1px solid hsl(var(--border)); color: hsl(var(--foreground)); background: transparent; cursor: pointer; }
+        .btn-primary { border: 0; background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-variant))); color: #fff; box-shadow: 0 6px 20px hsl(var(--primary) / .25); }
+
+        /* Theme toggle */
+        .theme-toggle-btn { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; border-radius: 8px; background: hsl(var(--muted) / .5); color: hsl(var(--foreground)); cursor: pointer; }
+        .theme-toggle-btn:hover { background: hsl(var(--muted)); }
+
+        /* Translation styles (extracted from translation-styles.css, simplified) */
+        .translation-container { position: relative; display: inline-flex; align-items: center; }
+        .translation-btn { display: inline-flex; align-items: center; gap: .5rem; height: 40px; padding: 0 12px; border: none; border-radius: 8px; background: hsl(var(--muted) / .5); color: hsl(var(--foreground)); cursor: pointer; }
+        .translation-btn.translating { opacity: .7; cursor: wait; }
+        .translation-text { font-size: .9rem; font-weight: 500; }
+        .language-selector { position: absolute; top: calc(100% + 8px); right: 0; min-width: 200px; border: 1px solid hsl(var(--border)); background: hsl(var(--card) / .95); border-radius: 12px; box-shadow: 0 10px 25px -5px hsl(var(--background) / .8); z-index: 1000; }
+        .language-selector.hidden { display: none; }
+        .language-list { max-height: 300px; overflow-y: auto; padding: .5rem 0; }
+        .language-option { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .6rem 1rem; border: 0; background: transparent; color: inherit; cursor: pointer; }
+        .language-option.active { background: hsl(var(--primary) / .1); color: hsl(var(--primary)); font-weight: 600; }
+        .lang-code { width: 32px; height: 20px; display: grid; place-items: center; border-radius: 4px; background: hsl(var(--muted) / .3); font-size: .75rem; font-weight: 700; }
+        .translation-error { position: fixed; top: 80px; right: 20px; background: hsl(var(--destructive)); color: #fff; padding: 12px 16px; border-radius: 8px; z-index: 1000; }
+
+        .card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 12px; padding: 1.25rem; }
+        .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <div class="logo-text">WebShield</div>
+                </div>
+                <nav class="nav">
+                    <a href="#">Home</a>
+                    <a href="#features">Features</a>
+                    <a href="#scan">Scan</a>
+                </nav>
+                <div class="header-actions" id="header-actions">
+                    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme" title="Toggle theme">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <section class="hero">
+                <h1>Welcome to WebShield</h1>
+                <p>Advanced web security with real-time URL scanning and threat detection.</p>
+                <button class="btn btn-primary" data-translate>Get Started</button>
+            </section>
+
+            <section id="features" class="grid" style="margin-top: 1rem;">
+                <div class="card">
+                    <h3 class="card-title">Real-time URL Scanning</h3>
+                    <p>Analyze URLs for malware, phishing, and suspicious content.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">SSL Certificate Analysis</h3>
+                    <p>Validate SSL/TLS certificates and detect configuration issues.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">VirusTotal Integration</h3>
+                    <p>Leverage multi-engine scanning for comprehensive coverage.</p>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">AI Content Analysis</h3>
+                    <p>Detect phishing and malicious content using ML models.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Theme Manager (inline, simplified)
+        (function() {
+            function setTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('webshield-theme', theme);
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.content = theme === 'dark' ? 'hsl(224, 71%, 4%)' : 'hsl(0, 0%, 98%)';
+            }
+            function getStored() { return localStorage.getItem('webshield-theme'); }
+            function getSystem() { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+            var initial = getStored() || getSystem();
+            setTheme(initial);
+            var btn = document.getElementById('theme-toggle');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+                    setTheme(next);
+                });
+            }
+        })();
+
+        // Translator (inline, simplified)
+        (function() {
+            var supported = { en: 'English', es: 'Español', fr: 'Français', de: 'Deutsch', pt: 'Português', it: 'Italiano', ja: '日本語', ko: '한국어' };
+            var current = localStorage.getItem('webshield-language') || 'en';
+            var originalTexts = [];
+
+            function createUI() {
+                var headerActions = document.querySelector('.header-actions') || document.querySelector('.header-buttons');
+                var container = document.createElement('div');
+                container.className = 'translation-container';
+                container.innerHTML = '\
+                <button id="translation-toggle" class="translation-btn" title="Translate Page">\
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\
+                        <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>\
+                    </svg>\
+                    <span class="translation-text">Translate</span>\
+                </button>\
+                <div id="language-selector" class="language-selector hidden">\
+                    <div class="language-list">\
+                        ' + Object.keys(supported).map(function(code){ return '\
+                            <button class="language-option ' + (code===current ? 'active' : '') + '" data-lang="' + code + '">\
+                                <span class="lang-code">' + code.toUpperCase() + '</span>\
+                                <span class="lang-name">' + supported[code] + '</span>\
+                            </button>'}).join('') + '\
+                    </div>\
+                </div>';
+
+                if (headerActions) {
+                    var themeBtn = headerActions.querySelector('.theme-toggle-btn');
+                    if (themeBtn) headerActions.insertBefore(container, themeBtn); else headerActions.appendChild(container);
+                } else {
+                    var floating = document.createElement('div');
+                    floating.style.position = 'fixed'; floating.style.top = '12px'; floating.style.right = '12px'; floating.style.zIndex = '10000';
+                    floating.appendChild(container);
+                    document.body.appendChild(floating);
+                }
+
+                document.addEventListener('click', function(e){
+                    var btn = e.target.closest('#translation-toggle');
+                    var opt = e.target.closest('.language-option');
+                    var sel = document.getElementById('language-selector');
+                    if (btn) { e.preventDefault(); if (sel) sel.classList.toggle('hidden'); }
+                    else if (opt) { e.preventDefault(); selectLanguage(opt.getAttribute('data-lang')); if (sel) sel.classList.add('hidden'); }
+                    else if (sel && !sel.contains(e.target)) { sel.classList.add('hidden'); }
+                });
+            }
+
+            function elementsToTranslate() {
+                var selectors = ['h1','h2','h3','p','button:not(.translation-btn):not(.theme-toggle-btn)','a','label','legend','[data-translate]'];
+                var list = [];
+                selectors.forEach(function(s){ document.querySelectorAll(s).forEach(function(el){
+                    var text = (el.textContent||'').trim();
+                    if (!text) return; if (el.closest('.no-translate')) return; if (text.length < 2) return; list.push(el);
+                });});
+                return list;
+            }
+
+            function storeOriginals(elems) {
+                originalTexts = elems.map(function(el){ return el.textContent.trim(); });
+            }
+
+            function applyTranslations(elems, map) {
+                elems.forEach(function(el, i){ var t = map[originalTexts[i]]; if (t && t !== originalTexts[i]) el.textContent = t; });
+            }
+
+            function updateButton() {
+                var btn = document.getElementById('translation-toggle');
+                var text = btn ? btn.querySelector('.translation-text') : null;
+                if (text) text.textContent = (current === 'en') ? 'Translate' : (supported[current] || 'Translate');
+            }
+
+            function selectLanguage(code) {
+                if (!supported[code]) return;
+                current = code; localStorage.setItem('webshield-language', code);
+                if (code === 'en') { restore(); updateButton(); return; }
+                translatePage(code).then(function(){ updateButton(); }).catch(function(){ showError(); });
+            }
+
+            function restore() {
+                var elems = elementsToTranslate();
+                elems.forEach(function(el, i){ if (originalTexts[i]) el.textContent = originalTexts[i]; });
+            }
+
+            function showError() {
+                var e = document.createElement('div'); e.className = 'translation-error'; e.textContent = 'Translation failed. Please try again.';
+                document.body.appendChild(e); setTimeout(function(){ e.remove(); }, 2500);
+            }
+
+            function translatePage(lang) {
+                var elems = elementsToTranslate(); if (!elems.length) return Promise.resolve();
+                if (!originalTexts.length) storeOriginals(elems);
+                var texts = originalTexts.filter(function(t){ return t && t.length < 500; });
+                var btn = document.getElementById('translation-toggle'); if (btn) btn.classList.add('translating');
+                return fetch('/api/translations/translate/batch', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ texts: texts, target_lang: lang, context: 'web interface' })
+                }).then(function(res){ if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+                  .then(function(data){ applyTranslations(elems, data.translations || {}); })
+                  .catch(function(err){ console.error('Translation error', err); throw err; })
+                  .finally(function(){ if (btn) btn.classList.remove('translating'); });
+            }
+
+            // init
+            createUI();
+            if (current !== 'en') { selectLanguage(current); }
+        })();
+    </script>
+    <!-- Initialize theme on page load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.WebShieldTheme) {
+                window.WebShieldTheme.init();
+            }
+        });
+    </script>
+</body>
+</html>
+
+

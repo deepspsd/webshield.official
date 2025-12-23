@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Web Security - WebShield Learning Hub</title>
+    <meta name="description"
+        content="Master web security with free courses on phishing detection, password security, and safe browsing. Earn certificates and track your progress.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="premium-effects.css">
+    <script src="cyber-effects.js" defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: 220 90% 56%;
+            --primary-foreground: 220 15% 98%;
+            --accent: 160 84% 45%;
+            --background: 240 35% 8%;
+            --foreground: 220 15% 96%;
+            --card: 240 30% 10%;
+            --card-foreground: 220 15% 96%;
+            --muted: 240 20% 12%;
+            --muted-foreground: 220 10% 65%;
+            --border: 240 20% 18%;
+            --shadow-lg: 0 10px 40px -10px hsl(0 0% 0% / 0.4);
+            --shadow-xl: 0 20px 60px -15px hsl(0 0% 0% / 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: hsl(var(--background) / 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid hsl(var(--border));
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .nav-brand-icon {
+            font-size: 1.5rem;
+        }
+
+        .nav-brand-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-left: auto;
+        }
+
+        .nav-link {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: hsl(var(--foreground));
+        }
+
+        .nav-cta {
+            padding: 0.5rem 1.25rem;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            border-radius: 0.5rem;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px hsl(var(--primary) / 0.4);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 64px;
+            min-height: calc(100vh - 64px);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            padding: 6rem 2rem;
+            text-align: center;
+            background: linear-gradient(180deg,
+                    hsl(var(--primary) / 0.1) 0%,
+                    transparent 100%);
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(ellipse at center,
+                    hsl(var(--primary) / 0.15) 0%,
+                    transparent 60%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: hsl(var(--primary) / 0.1);
+            border: 1px solid hsl(var(--primary) / 0.3);
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: hsl(var(--primary));
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 1.25rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat-label {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* Filter Section */
+        .filter-section {
+            padding: 2rem;
+            background: hsl(var(--card));
+            border-bottom: 1px solid hsl(var(--border));
+            position: sticky;
+            top: 64px;
+            z-index: 100;
+        }
+
+        .filter-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1.25rem;
+            background: transparent;
+            border: 1px solid hsl(var(--border));
+            border-radius: 2rem;
+            color: hsl(var(--muted-foreground));
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            border-color: hsl(var(--primary) / 0.5);
+            color: hsl(var(--foreground));
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            border-color: transparent;
+            color: white;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: hsl(var(--muted));
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.75rem;
+            color: hsl(var(--foreground));
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+            box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* Course Grid */
+        .courses-section {
+            padding: 3rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .course-count {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Course Card */
+        .course-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 1.5rem;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .course-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+            border-color: hsl(var(--primary) / 0.3);
+        }
+
+        .course-thumbnail {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .course-thumbnail.beginner {
+            background: linear-gradient(135deg, hsl(142 76% 40% / 0.2), hsl(160 84% 45% / 0.1));
+        }
+
+        .course-thumbnail.intermediate {
+            background: linear-gradient(135deg, hsl(45 93% 50% / 0.2), hsl(25 95% 55% / 0.1));
+        }
+
+        .course-thumbnail.advanced {
+            background: linear-gradient(135deg, hsl(0 75% 55% / 0.2), hsl(280 80% 50% / 0.1));
+        }
+
+        .course-badges {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.difficulty {
+            background: hsl(var(--background) / 0.9);
+            backdrop-filter: blur(10px);
+        }
+
+        .badge.difficulty.beginner {
+            color: hsl(142 76% 40%);
+        }
+
+        .badge.difficulty.intermediate {
+            color: hsl(45 93% 50%);
+        }
+
+        .badge.difficulty.advanced {
+            color: hsl(0 75% 55%);
+        }
+
+        .badge.free {
+            background: hsl(var(--accent) / 0.2);
+            color: hsl(var(--accent));
+        }
+
+        .course-body {
+            padding: 1.5rem;
+        }
+
+        .course-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .course-description {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .course-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .course-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .course-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid hsl(var(--border));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .course-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: hsl(45 93% 50%);
+            font-weight: 600;
+        }
+
+        .course-enrollments {
+            font-size: 0.8rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .enroll-btn {
+            padding: 0.5rem 1.25rem;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .enroll-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px hsl(var(--primary) / 0.4);
+        }
+
+        /* Loading State */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid hsl(var(--muted));
+            border-top-color: hsl(var(--primary));
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-description {
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* User Progress Section */
+        .user-progress-section {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .progress-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .progress-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .progress-card {
+            background: hsl(var(--muted));
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .progress-card-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-card-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-card-label {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+            margin-top: 0.25rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero-section {
+                padding: 4rem 1rem;
+            }
+
+            .hero-stats {
+                gap: 2rem;
+            }
+
+            .filter-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+            }
+
+            .search-box {
+                max-width: none;
+            }
+
+            .courses-section {
+                padding: 2rem 1rem;
+            }
+
+            .course-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .course-card {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .course-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .course-card:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .course-card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .course-card:nth-child(4) {
+            animation-delay: 0.25s;
+        }
+
+        .course-card:nth-child(5) {
+            animation-delay: 0.3s;
+        }
+
+        .course-card:nth-child(6) {
+            animation-delay: 0.35s;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 1rem;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 10000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: hsl(var(--accent));
+        }
+
+        .toast.error {
+            border-color: hsl(0 75% 55%);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <a href="/" class="nav-brand">
+            <span class="nav-brand-icon">🛡️</span>
+            <span class="nav-brand-text">WebShield</span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/scan-url.html" class="nav-link">Scan URL</a>
+            <a href="/learn.html" class="nav-link active">Learn</a>
+            <a href="/dashboard.html" class="nav-link">Dashboard</a>
+            <a href="/scan-url.html" class="nav-cta">Scan Now</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <span class="hero-badge">🎓 Free Security Courses</span>
+                <h1 class="hero-title">
+                    Master <span>Web Security</span>
+                </h1>
+                <p class="hero-description">
+                    Learn to protect yourself and others from online threats with our free,
+                    comprehensive courses designed by security experts.
+                </p>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-number" id="totalCourses">5</div>
+                        <div class="hero-stat-label">Free Courses</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number">50+</div>
+                        <div class="hero-stat-label">Lessons</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number" id="totalStudents">10K+</div>
+                        <div class="hero-stat-label">Students</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Progress (shown when logged in) -->
+        <section class="courses-section" id="userProgressSection" style="display: none;">
+            <div class="user-progress-section">
+                <div class="progress-header">
+                    <h2 class="progress-title">📊 Your Learning Progress</h2>
+                    <a href="/dashboard.html" class="enroll-btn">View Dashboard</a>
+                </div>
+                <div class="progress-grid">
+                    <div class="progress-card">
+                        <div class="progress-card-icon">📚</div>
+                        <div class="progress-card-value" id="userEnrollments">0</div>
+                        <div class="progress-card-label">Courses Enrolled</div>
+                    </div>
+                    <div class="progress-card">
+                        <div class="progress-card-icon">✅</div>
+                        <div class="progress-card-value" id="userCompleted">0</div>
+                        <div class="progress-card-label">Completed</div>
+                    </div>
+                    <div class="progress-card">
+                        <div class="progress-card-icon">🏆</div>
+                        <div class="progress-card-value" id="userAchievements">0</div>
+                        <div class="progress-card-label">Achievements</div>
+                    </div>
+                    <div class="progress-card">
+                        <div class="progress-card-icon">🛡️</div>
+                        <div class="progress-card-value" id="userScore">0</div>
+                        <div class="progress-card-label">Security Score</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-section">
+            <div class="filter-container">
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all">All Courses</button>
+                    <button class="filter-btn" data-filter="beginner">🌱 Beginner</button>
+                    <button class="filter-btn" data-filter="intermediate">🌿 Intermediate</button>
+                    <button class="filter-btn" data-filter="advanced">🌳 Advanced</button>
+                </div>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" placeholder="Search courses..." id="searchInput">
+                </div>
+            </div>
+        </section>
+
+        <!-- Courses Section -->
+        <section class="courses-section">
+            <div class="section-header">
+                <h2 class="section-title">📖 Available Courses</h2>
+                <span class="course-count" id="courseCount">Loading...</span>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-container" id="loadingState">
+                <div class="spinner"></div>
+                <p>Loading courses...</p>
+            </div>
+
+            <!-- Course Grid -->
+            <div class="course-grid" id="courseGrid" style="display: none;"></div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-state-icon">📚</div>
+                <h3 class="empty-state-title">No courses found</h3>
+                <p class="empty-state-description">Try adjusting your filters or search query</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon"></span>
+        <span class="toast-message"></span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <div class="footer-copyright" data-translate="footer-copyright">
+                    &copy; 2025 WebShield. All rights reserved.
+                </div>
+                <div class="footer-links">
+                    <a href="#" data-translate="footer-privacy">Privacy</a>
+                    <a href="#" data-translate="footer-terms">Terms</a>
+                    <a href="#" data-translate="footer-security">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        let allCourses = [];
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        // Course icons based on category/title
+        const courseIcons = {
+            'phishing': '🎣',
+            'password': '🔐',
+            'ssl': '🔒',
+            'https': '🔒',
+            'security fundamentals': '🛡️',
+            'threat': '🔍',
+            'malware': '🦠',
+            'privacy': '🔏',
+            'default': '📚'
+        };
+
+        // Get course icon based on title
+        function getCourseIcon(title) {
+            const lowerTitle = title.toLowerCase();
+            for (const [key, icon] of Object.entries(courseIcons)) {
+                if (lowerTitle.includes(key)) return icon;
+            }
+            return courseIcons.default;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCourses();
+            setupFilters();
+            setupSearch();
+            checkUserProgress();
+        });
+
+        // Load courses from API
+        async function loadCourses() {
+            const loadingState = document.getElementById('loadingState');
+            const courseGrid = document.getElementById('courseGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/courses/`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch courses');
+                }
+
+                allCourses = await response.json();
+
+                // Update stats
+                document.getElementById('totalCourses').textContent = allCourses.length;
+
+                // Calculate total students
+                const totalStudents = allCourses.reduce((sum, c) => sum + (c.enrollment_count || 0), 0);
+                document.getElementById('totalStudents').textContent = formatNumber(totalStudents);
+
+                // Render courses
+                renderCourses(allCourses);
+
+            } catch (error) {
+                console.error('Error loading courses:', error);
+
+                // Show sample courses if API fails
+                allCourses = getSampleCourses();
+                renderCourses(allCourses);
+            } finally {
+                loadingState.style.display = 'none';
+            }
+        }
+
+        // Render courses
+        function renderCourses(courses) {
+            const courseGrid = document.getElementById('courseGrid');
+            const emptyState = document.getElementById('emptyState');
+            const courseCount = document.getElementById('courseCount');
+
+            if (courses.length === 0) {
+                courseGrid.style.display = 'none';
+                emptyState.style.display = 'block';
+                courseCount.textContent = 'No courses found';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            courseGrid.style.display = 'grid';
+            courseCount.textContent = `${courses.length} course${courses.length !== 1 ? 's' : ''} available`;
+
+            courseGrid.innerHTML = courses.map(course => `
+                <div class="course-card" onclick="viewCourse('${course.course_id}')">
+                    <div class="course-thumbnail ${course.difficulty_level}">
+                        <div class="course-badges">
+                            <span class="badge difficulty ${course.difficulty_level}">
+                                ${getDifficultyLabel(course.difficulty_level)}
+                            </span>
+                            <span class="badge free">FREE</span>
+                        </div>
+                        ${getCourseIcon(course.title)}
+                    </div>
+                    <div class="course-body">
+                        <h3 class="course-title">${escapeHtml(course.title)}</h3>
+                        <p class="course-description">${escapeHtml(course.description || 'Learn essential security concepts.')}</p>
+                        <div class="course-meta">
+                            <span class="course-meta-item">
+                                <span>⏱️</span>
+                                <span>${course.duration_minutes || 60} min</span>
+                            </span>
+                            <span class="course-meta-item">
+                                <span>👤</span>
+                                <span>${escapeHtml(course.instructor_name || 'WebShield Team')}</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="course-footer">
+                        <div class="course-rating">
+                            <span>⭐</span>
+                            <span>${(course.rating || 4.5).toFixed(1)}</span>
+                        </div>
+                        <span class="course-enrollments">
+                            ${formatNumber(course.enrollment_count || 0)} students
+                        </span>
+                        <button class="enroll-btn" onclick="event.stopPropagation(); enrollCourse('${course.course_id}', '${escapeHtml(course.title)}')">
+                            Enroll Free
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Setup filter buttons
+        function setupFilters() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    currentFilter = btn.dataset.filter;
+                    applyFilters();
+                });
+            });
+        }
+
+        // Setup search
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            let debounceTimeout;
+
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => {
+                    searchQuery = e.target.value.toLowerCase();
+                    applyFilters();
+                }, 300);
+            });
+        }
+
+        // Apply filters
+        function applyFilters() {
+            let filtered = allCourses;
+
+            // Apply difficulty filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(c => c.difficulty_level === currentFilter);
+            }
+
+            // Apply search filter
+            if (searchQuery) {
+                filtered = filtered.filter(c =>
+                    c.title.toLowerCase().includes(searchQuery) ||
+                    (c.description && c.description.toLowerCase().includes(searchQuery)) ||
+                    (c.instructor_name && c.instructor_name.toLowerCase().includes(searchQuery))
+                );
+            }
+
+            renderCourses(filtered);
+        }
+
+        // Check user progress
+        async function checkUserProgress() {
+            const userEmail = localStorage.getItem('userEmail');
+
+            if (!userEmail) {
+                document.getElementById('userProgressSection').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/courses/user/${userEmail}/stats`);
+
+                if (!response.ok) return;
+
+                const stats = await response.json();
+
+                document.getElementById('userProgressSection').style.display = 'block';
+                document.getElementById('userEnrollments').textContent = stats.total_enrollments || 0;
+                document.getElementById('userCompleted').textContent = stats.completed_courses || 0;
+                document.getElementById('userAchievements').textContent = stats.achievements_count || 0;
+                document.getElementById('userScore').textContent = stats.security_awareness_score || 0;
+
+            } catch (error) {
+                console.error('Error loading user progress:', error);
+            }
+        }
+
+        // View course details
+        function viewCourse(courseId) {
+            // For now, show course details or redirect
+            // You can implement a modal or navigate to a detail page
+            showToast('Course details coming soon! Click "Enroll Free" to get started.', 'success');
+        }
+
+        // Enroll in course
+        async function enrollCourse(courseId, courseTitle) {
+            const userEmail = localStorage.getItem('userEmail');
+
+            if (!userEmail) {
+                showToast('Please log in to enroll in courses', 'error');
+                setTimeout(() => {
+                    window.location.href = '/login.html?redirect=/learn.html';
+                }, 1500);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/courses/enroll`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_email: userEmail,
+                        course_id: courseId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.already_enrolled) {
+                    showToast(`You're already enrolled in "${courseTitle}"!`, 'success');
+                } else {
+                    showToast(`Successfully enrolled in "${courseTitle}"! 🎉`, 'success');
+                    // Refresh user progress
+                    checkUserProgress();
+                }
+
+            } catch (error) {
+                console.error('Error enrolling:', error);
+                showToast('Failed to enroll. Please try again.', 'error');
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.querySelector('.toast-message').textContent = message;
+            toast.querySelector('.toast-icon').textContent = type === 'success' ? '✅' : '❌';
+            toast.className = `toast ${type} show`;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Helper functions
+        function getDifficultyLabel(level) {
+            const labels = {
+                beginner: '🌱 Beginner',
+                intermediate: '🌿 Intermediate',
+                advanced: '🌳 Advanced'
+            };
+            return labels[level] || labels.beginner;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Sample courses (fallback if API fails)
+        function getSampleCourses() {
+            return [
+                {
+                    course_id: 'c1',
+                    title: 'Web Security Fundamentals',
+                    description: 'Learn the essential concepts of web security and how to protect yourself online. Perfect for beginners!',
+                    difficulty_level: 'beginner',
+                    duration_minutes: 120,
+                    instructor_name: 'WebShield Security Team',
+                    enrollment_count: 5420,
+                    rating: 4.8
+                },
+                {
+                    course_id: 'c2',
+                    title: 'Phishing Detection Masterclass',
+                    description: 'Master the art of identifying phishing attacks. Learn to spot fake websites, emails, and social engineering tactics.',
+                    difficulty_level: 'beginner',
+                    duration_minutes: 90,
+                    instructor_name: 'Dr. Sarah Chen',
+                    enrollment_count: 3890,
+                    rating: 4.9
+                },
+                {
+                    course_id: 'c3',
+                    title: 'SSL/HTTPS Deep Dive',
+                    description: 'Understand how SSL certificates work and why HTTPS is crucial for web security.',
+                    difficulty_level: 'intermediate',
+                    duration_minutes: 150,
+                    instructor_name: 'Prof. Michael Torres',
+                    enrollment_count: 2150,
+                    rating: 4.7
+                },
+                {
+                    course_id: 'c4',
+                    title: 'Password Security Best Practices',
+                    description: 'Learn how to create, manage, and protect strong passwords. Includes password manager recommendations.',
+                    difficulty_level: 'beginner',
+                    duration_minutes: 60,
+                    instructor_name: 'WebShield Security Team',
+                    enrollment_count: 4200,
+                    rating: 4.6
+                },
+                {
+                    course_id: 'c5',
+                    title: 'Advanced Threat Analysis',
+                    description: 'Deep dive into analyzing complex threats, malware, and attack vectors. For security professionals.',
+                    difficulty_level: 'advanced',
+                    duration_minutes: 240,
+                    instructor_name: 'Dr. James Wilson',
+                    enrollment_count: 890,
+                    rating: 4.8
+                }
+            ];
+        }
+    </script>
+</body>
+
+</html>

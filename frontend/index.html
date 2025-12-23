@@ -1,0 +1,3994 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebShield - Advanced Web Security Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00f2fe">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="description"
+        content="WebShield provides real-time protection against online threats using AI and machine learning. Scan URLs, detect phishing, and secure your browsing experience.">
+    <meta name="keywords" content="web security, URL scanner, phishing detection, malware protection, cybersecurity">
+    <meta property="og:title" content="WebShield - Advanced Web Security">
+    <meta property="og:description" content="Real-time protection against online threats using AI and machine learning">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <script src="accessibility-enhancements.js"></script>
+    <script src="webshield-core.js"></script>
+    <script src="error-handler.js"></script>
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="premium-effects.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="cyber-effects.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Enhanced Color System - Vibrant */
+            --primary: 220 95% 58%;
+            --primary-foreground: 220 15% 98%;
+            --primary-hover: 220 90% 65%;
+            --accent: 160 85% 48%;
+            --accent-foreground: 220 15% 98%;
+            --accent-hover: 160 80% 55%;
+            --success: 142 76% 40%;
+            --warning: 45 93% 50%;
+            --destructive: 0 75% 55%;
+            --info: 210 100% 65%;
+
+            /* Enhanced Gradients */
+            --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+            --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-hover)));
+            --gradient-cyber: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+            --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+
+            /* Enhanced Shadows */
+            --shadow-sm: 0 2px 4px hsl(var(--background) / 0.1);
+            --shadow-md: 0 4px 12px hsl(var(--background) / 0.15);
+            --shadow-lg: 0 8px 25px hsl(var(--background) / 0.2);
+            --shadow-xl: 0 20px 40px hsl(var(--background) / 0.25);
+            --shadow-glow: 0 0 30px hsl(var(--primary) / 0.3);
+
+            /* Animation Timing */
+            --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+            --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+            --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+            /* Dark Theme - Rich Colors */
+            --background: 240 35% 8%;
+            --foreground: 220 15% 96%;
+            --card: 240 30% 10%;
+            --card-foreground: 220 15% 96%;
+            --popover: 240 30% 10%;
+            --popover-foreground: 220 15% 96%;
+            --secondary: 240 25% 15%;
+            --secondary-foreground: 220 15% 96%;
+            --muted: 240 20% 12%;
+            --muted-foreground: 220 10% 65%;
+            --border: 240 20% 18%;
+            --input: 240 20% 18%;
+        }
+
+        [data-theme="light"] {
+            /* Light Theme Colors */
+            --background: 0 0% 98%;
+            --foreground: 222 84% 5%;
+            --card: 0 0% 100%;
+            --card-foreground: 222 84% 5%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222 84% 5%;
+            --secondary: 240 5% 85%;
+            --secondary-foreground: 222 84% 5%;
+            --muted: 210 40% 95%;
+            --muted-foreground: 215 16% 47%;
+            --border: 214 32% 91%;
+            --input: 214 32% 91%;
+
+            /* Light theme specific adjustments */
+            --shadow-sm: 0 2px 4px hsl(var(--foreground) / 0.05);
+            --shadow-md: 0 4px 12px hsl(var(--foreground) / 0.08);
+            --shadow-lg: 0 8px 25px hsl(var(--foreground) / 0.12);
+            --shadow-xl: 0 20px 40px hsl(var(--foreground) / 0.15);
+            --shadow-glow: 0 0 30px hsl(var(--primary) / 0.2);
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 80px;
+            /* Enhanced smooth scrolling with momentum */
+            scroll-snap-type: y proximity;
+        }
+
+        /* Enhanced smooth scrolling for all elements */
+        * {
+            scroll-behavior: smooth;
+        }
+
+        /* Momentum scrolling for better mobile experience */
+        body {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            position: relative;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                conic-gradient(from 180deg at 50% 50%,
+                    hsl(220 90% 56% / 0.03) 0deg,
+                    hsl(280 80% 50% / 0.02) 60deg,
+                    hsl(160 84% 45% / 0.03) 120deg,
+                    hsl(220 90% 56% / 0.02) 180deg,
+                    hsl(280 80% 50% / 0.03) 240deg,
+                    hsl(160 84% 45% / 0.02) 300deg,
+                    hsl(220 90% 56% / 0.03) 360deg);
+            pointer-events: none;
+            z-index: -1;
+            animation: meshRotate 60s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes meshRotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(125deg,
+                    hsl(220 40% 8%) 0%,
+                    hsl(230 45% 12%) 20%,
+                    hsl(240 40% 10%) 40%,
+                    hsl(250 45% 12%) 60%,
+                    hsl(260 40% 10%) 80%,
+                    hsl(220 40% 8%) 100%),
+                radial-gradient(ellipse at top left, hsl(220 90% 56% / 0.15) 0%, transparent 40%),
+                radial-gradient(ellipse at bottom right, hsl(280 80% 50% / 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, hsl(160 84% 45% / 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+
+            0%,
+            100% {
+                filter: hue-rotate(0deg) brightness(1);
+            }
+
+            25% {
+                filter: hue-rotate(10deg) brightness(1.05);
+            }
+
+            50% {
+                filter: hue-rotate(-10deg) brightness(0.95);
+            }
+
+            75% {
+                filter: hue-rotate(5deg) brightness(1.02);
+            }
+        }
+
+
+        /* Enhanced custom scrollbar for better visual experience */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: hsl(var(--muted));
+            border-radius: 6px;
+            box-shadow: inset 0 0 5px hsl(var(--background) / 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid hsl(var(--muted));
+            box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px hsl(var(--primary) / 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(135deg, hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.8));
+        }
+
+        /* Scrollbar corner */
+        ::-webkit-scrollbar-corner {
+            background: hsl(var(--muted));
+        }
+
+        /* Firefox scrollbar */
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Mobile-first responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.75rem;
+            }
+        }
+
+        /* Header */
+        .header {
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+            background-color: hsl(var(--card) / 0.5);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-content {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                height: 56px;
+                padding: 0 0.5rem;
+            }
+
+            .logo-text {
+                font-size: 1.25rem;
+            }
+
+            .logo-icon {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            animation: logoGlow 4s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .logo-icon:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 0 25px hsl(var(--primary) / 0.6);
+        }
+
+        @keyframes logoGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+                transform: translateY(0px);
+            }
+
+            50% {
+                box-shadow: 0 0 25px hsl(var(--accent) / 0.5);
+                transform: translateY(-2px);
+            }
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav {
+            display: none;
+            gap: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .nav {
+                display: flex;
+            }
+        }
+
+        /* Mobile navigation improvements */
+        @media (max-width: 767px) {
+            .nav {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                background: hsl(var(--card));
+                border-bottom: 1px solid hsl(var(--border));
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                z-index: 1000;
+                transform: translateY(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .nav.active {
+                transform: translateY(0);
+            }
+
+            .nav a {
+                padding: 0.75rem 1rem;
+                border-radius: var(--radius);
+                background: hsl(var(--muted) / 0.3);
+            }
+
+            .mobile-menu-btn {
+                display: flex !important;
+                background: none;
+                border: none;
+                color: hsl(var(--foreground));
+                cursor: pointer;
+                padding: 0.5rem;
+                border-radius: var(--radius);
+                transition: background 0.3s;
+            }
+
+            .mobile-menu-btn:hover {
+                background: hsl(var(--muted));
+            }
+        }
+
+        .nav a {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.3s;
+        }
+
+        .nav a:hover {
+            color: hsl(var(--primary));
+        }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Mobile header buttons */
+        @media (max-width: 768px) {
+            .header-buttons {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .btn .icon {
+                width: 1rem;
+                height: 1rem;
+            }
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            user-select: none;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--muted) / 0.5);
+            border-color: hsl(var(--border));
+        }
+
+        .btn-hero {
+            background: linear-gradient(135deg,
+                    hsl(220 90% 56%) 0%,
+                    hsl(220 85% 60%) 50%,
+                    hsl(220 90% 65%) 100%);
+            color: white;
+            border: 1px solid hsl(220 90% 56% / 0.3);
+            box-shadow:
+                0 6px 20px 0 hsl(220 90% 56% / 0.4),
+                0 0 30px hsl(220 90% 56% / 0.2);
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            min-width: 180px;
+        }
+
+        .btn-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--primary) / 0.4);
+        }
+
+        .btn-hero:hover::before {
+            left: 100%;
+        }
+
+        .theme-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--foreground));
+            cursor: pointer;
+            transition: all 0.3s var(--ease-out-quart);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-glass);
+            transition: left 0.5s ease;
+        }
+
+        .theme-toggle-btn:hover {
+            background: hsl(var(--muted));
+            border-color: hsl(var(--primary));
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+
+        .theme-toggle-btn:hover::before {
+            left: 100%;
+        }
+
+        .theme-toggle-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .theme-toggle-btn svg {
+            transition: transform 0.3s var(--ease-spring);
+            z-index: 1;
+        }
+
+        .theme-toggle-btn:hover svg {
+            transform: rotate(180deg) scale(1.1);
+        }
+
+        .theme-toggle-btn:focus-visible {
+            outline: 2px solid hsl(var(--primary));
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .btn-scan {
+            background: linear-gradient(135deg,
+                    hsl(160 84% 45%) 0%,
+                    hsl(160 80% 50%) 50%,
+                    hsl(160 84% 55%) 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            box-shadow:
+                0 6px 20px 0 hsl(160 84% 45% / 0.4),
+                0 0 30px hsl(160 84% 45% / 0.3);
+            border-radius: 1.25rem;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .btn-scan::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-scan:hover::before {
+            left: 100%;
+        }
+
+        .btn-scan:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px 0 hsl(var(--accent) / 0.4);
+        }
+
+        .btn-scan:active {
+            transform: translateY(0px) scale(0.98);
+        }
+
+        .btn-outline {
+            background: hsl(var(--card) / 0.5);
+            color: hsl(var(--foreground));
+            border: 2px solid hsl(var(--border) / 0.4);
+            backdrop-filter: blur(20px);
+            font-weight: 600;
+            min-width: 180px;
+            box-shadow: 0 4px 15px hsl(var(--background) / 0.2);
+        }
+
+        .btn-outline:hover {
+            background: hsl(var(--muted) / 0.5);
+            border-color: hsl(var(--primary));
+            color: hsl(var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px hsl(var(--primary) / 0.2);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        /* Additional button variants */
+        .btn-success {
+            background: linear-gradient(135deg, hsl(var(--success)), hsl(142 76% 36%));
+            color: white;
+            box-shadow: 0 4px 14px 0 hsl(var(--success) / 0.25);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--success) / 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, hsl(var(--warning)), hsl(38 92% 50%));
+            color: white;
+            box-shadow: 0 4px 14px 0 hsl(var(--warning) / 0.25);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--warning) / 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, hsl(var(--destructive)), hsl(0 72% 51%));
+            color: white;
+            box-shadow: 0 4px 14px 0 hsl(var(--destructive) / 0.25);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--destructive) / 0.4);
+        }
+
+        /* Button states */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn:disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Button groups */
+        .btn-group {
+            display: inline-flex;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .btn-group .btn {
+            border-radius: 0;
+            border-right: 1px solid hsl(var(--border) / 0.2);
+        }
+
+        .btn-group .btn:first-child {
+            border-top-left-radius: 0.75rem;
+            border-bottom-left-radius: 0.75rem;
+        }
+
+        .btn-group .btn:last-child {
+            border-top-right-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+            border-right: none;
+        }
+
+        /* Hero Section - Professional Design */
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 3rem 0 4rem;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            scroll-snap-align: start;
+            background:
+                linear-gradient(180deg,
+                    transparent 0%,
+                    hsl(220 90% 56% / 0.03) 50%,
+                    transparent 100%),
+                linear-gradient(135deg,
+                    transparent 0%,
+                    hsl(240 40% 10% / 0.5) 100%);
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 25% 25%, hsl(220 90% 56% / 0.08) 0%, transparent 35%),
+                radial-gradient(circle at 75% 75%, hsl(280 80% 50% / 0.06) 0%, transparent 35%),
+                radial-gradient(circle at 50% 0%, hsl(160 84% 45% / 0.05) 0%, transparent 40%),
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23007bff' stop-opacity='0.02'/%3E%3Cstop offset='100%25' stop-color='%2300d4ff' stop-opacity='0.01'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpattern id='b' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='url(%23a)' stroke-width='0.5'/%3E%3Ccircle cx='50' cy='50' r='20' fill='none' stroke='url(%23a)' stroke-width='0.3'/%3E%3C/pattern%3E%3Crect width='100%25' height='100%25' fill='url(%23b)'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.7;
+        }
+
+
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(60px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile hero section */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 2rem 0 3rem;
+                min-height: 85vh;
+            }
+
+            .hero h1 {
+                font-size: clamp(1.9rem, 7vw, 2.5rem);
+                line-height: 1.15;
+                margin-bottom: 0.75rem;
+            }
+
+            .hero p {
+                font-size: 0.95rem;
+                margin-bottom: 2rem;
+                line-height: 1.5;
+            }
+        }
+
+
+
+
+
+
+        .hero-content {
+            position: relative;
+            text-align: center;
+            max-width: 72rem;
+            margin: 0 auto;
+            padding: 0;
+            z-index: 1;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.25rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            text-shadow: 0 0 60px hsl(220 90% 56% / 0.4);
+        }
+
+        .hero h1.animate-in {
+            transform: translateY(0) scale(1);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg,
+                    hsl(220 100% 70%) 0%,
+                    hsl(280 90% 65%) 25%,
+                    hsl(160 90% 60%) 50%,
+                    hsl(220 100% 75%) 75%,
+                    hsl(280 90% 70%) 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-shadow: 0 0 50px hsl(220 90% 56% / 0.4);
+            background-size: 200% 200%;
+            animation: gradientFlow 8s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 1.8vw, 1.2rem);
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 2.5rem;
+            max-width: 52rem;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .hero p.animate-in {
+            transform: translateY(0) scale(1);
+        }
+
+        /* URL Scanner - Enhanced */
+        .scanner-container {
+            max-width: 48rem;
+            margin: 0 auto 2.5rem;
+            padding: 0 1rem;
+        }
+
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .scanner-container {
+                max-width: 100%;
+                margin: 0 auto 2rem;
+                padding: 0 0.5rem;
+            }
+
+            .scanner-form {
+                flex-direction: column;
+                gap: 1rem;
+                width: 100%;
+            }
+
+            .scanner-input {
+                height: 3.5rem;
+                font-size: 1rem;
+                padding: 0 3rem 0 1rem;
+            }
+
+            .btn-scan {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+            }
+
+            .hero-content h1 {
+                font-size: 2rem;
+                line-height: 1.2;
+            }
+
+            .hero-content p {
+                font-size: 1rem;
+                line-height: 1.5;
+            }
+
+            .hero {
+                padding: 3rem 0;
+            }
+
+            .hero-content {
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .scanner-input {
+                height: 3rem;
+                font-size: 0.9rem;
+            }
+
+            .btn-scan {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.9rem;
+            }
+
+            .hero-content h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero-content p {
+                font-size: 0.9rem;
+            }
+        }
+
+        .scanner-form {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        .scanner-input-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .scanner-input {
+            width: 100%;
+            height: 4rem;
+            padding: 0 4rem 0 1.5rem;
+            background: hsl(var(--card) / 0.9);
+            border: 2px solid hsl(var(--border) / 0.3);
+            border-radius: 1.25rem;
+            color: hsl(var(--foreground));
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            box-shadow:
+                0 4px 20px hsl(var(--background) / 0.2),
+                0 0 40px hsl(220 90% 56% / 0.1);
+        }
+
+        .scanner-input:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+            box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1), 0 4px 12px hsl(var(--primary) / 0.15);
+            background: hsl(var(--card));
+        }
+
+        .scanner-input:hover {
+            border-color: hsl(var(--primary) / 0.5);
+        }
+
+        .scanner-icon {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: hsl(var(--muted-foreground));
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 1.25rem;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .hero-buttons.animate-in {
+            transform: translateY(0) scale(1);
+        }
+
+
+        /* Mobile hero buttons */
+        @media (max-width: 768px) {
+            .hero-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .btn-lg {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+                width: 100%;
+                max-width: 320px;
+            }
+        }
+
+        /* Features Section - Professional Design */
+        .features {
+            padding: 4rem 0;
+            scroll-snap-align: start;
+            position: relative;
+            overflow: hidden;
+            background:
+                linear-gradient(180deg,
+                    hsl(240 40% 9%) 0%,
+                    hsl(250 45% 11%) 50%,
+                    hsl(240 40% 9%) 100%),
+                radial-gradient(ellipse at 30% 0%, hsl(280 80% 50% / 0.08) 0%, transparent 40%),
+                radial-gradient(ellipse at 70% 100%, hsl(220 90% 56% / 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, hsl(160 84% 45% / 0.04) 0%, transparent 60%);
+        }
+
+        .features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23007bff' fill-opacity='0.005'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm0 0c0 5.5 4.5 10 10 10s10-4.5 10-10-4.5-10-10-10-10 4.5-10 10z'/%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+
+        /* Mobile features section */
+        @media (max-width: 768px) {
+            .features {
+                padding: 3rem 0;
+            }
+
+            .features h2 {
+                font-size: 1.75rem;
+            }
+
+            .features-desc {
+                font-size: 0.95rem;
+            }
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .features h2 {
+            font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg,
+                    hsl(220 15% 95%) 0%,
+                    hsl(220 90% 70%) 50%,
+                    hsl(220 15% 90%) 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px hsl(220 90% 56% / 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .features-desc {
+            font-size: 1.1rem;
+            color: hsl(var(--muted-foreground));
+            max-width: 32rem;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Mobile features grid */
+        @media (max-width: 768px) {
+            .features-grid {
+                gap: 1.5rem;
+            }
+
+            .feature-card {
+                padding: 1.25rem;
+            }
+
+            .feature-title {
+                font-size: 1rem;
+            }
+        }
+
+        .feature-card {
+            background: hsl(var(--card) / 0.7);
+            border: 1px solid hsl(var(--border) / 0.3);
+            border-radius: 1.5rem;
+            padding: 2.25rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease-out forwards;
+            backdrop-filter: blur(30px);
+            box-shadow:
+                0 8px 30px hsl(var(--background) / 0.2),
+                0 0 40px hsl(220 90% 56% / 0.05);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feature-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .feature-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .feature-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .feature-card:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-accent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px hsl(var(--primary) / 0.15);
+            border-color: hsl(var(--primary) / 0.3);
+            background: hsl(var(--card) / 0.8);
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 8px 20px hsl(var(--primary) / 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05));
+            border: 1px solid hsl(var(--primary) / 0.3);
+            color: hsl(var(--primary));
+            font-size: 1.75rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px hsl(var(--primary) / 0.15);
+        }
+
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .feature-desc {
+            color: hsl(var(--muted-foreground));
+            line-height: 1.6;
+        }
+
+        /* Recent Scans Section */
+        .recent-scans {
+            padding: 5rem 0;
+            background: hsl(var(--card) / 0.1);
+        }
+
+        /* Mobile recent scans section */
+        @media (max-width: 768px) {
+            .recent-scans {
+                padding: 3rem 0;
+            }
+
+            .recent-scans h2 {
+                font-size: 2rem;
+            }
+
+            .recent-scans-desc {
+                font-size: 1rem;
+            }
+        }
+
+        .recent-scans-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .recent-scans h2 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .recent-scans-desc {
+            font-size: 1.25rem;
+            color: hsl(var(--muted-foreground));
+            max-width: 32rem;
+            margin: 0 auto;
+        }
+
+        .recent-scans-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (min-width: 768px) {
+            .recent-scans-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .recent-scans-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .recent-scan-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .recent-scan-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .recent-scan-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .recent-scan-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .recent-scan-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .recent-scan-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .recent-scan-card:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .recent-scan-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px hsl(var(--accent) / 0.2);
+        }
+
+        .recent-scan-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .recent-scan-url {
+            font-weight: 600;
+            color: hsl(var(--foreground));
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+        }
+
+        .recent-scan-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .recent-scan-status.safe {
+            background: hsl(142 76% 36% / 0.1);
+            color: hsl(142 76% 36%);
+        }
+
+        .recent-scan-status.warning {
+            background: hsl(38 92% 50% / 0.1);
+            color: hsl(38 92% 50%);
+        }
+
+        .recent-scan-status.danger {
+            background: hsl(0 84% 60% / 0.1);
+            color: hsl(0 84% 60%);
+        }
+
+        .recent-scan-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .recent-scan-detail {
+            text-align: center;
+        }
+
+        .recent-scan-detail-label {
+            font-size: 0.75rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 0.25rem;
+        }
+
+        .recent-scan-detail-value {
+            font-weight: 600;
+            color: hsl(var(--foreground));
+        }
+
+        .recent-scan-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .recent-scan-actions .btn {
+            flex: 1;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .recent-scan-actions .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .recent-scan-actions .btn:active {
+            transform: translateY(1px);
+        }
+
+        .recent-scans-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .recent-scans-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .recent-scans-actions .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        /* Extension CTA */
+        .extension-cta {
+            padding: 5rem 0;
+            background: hsl(var(--card) / 0.3);
+            text-align: center;
+        }
+
+        /* Mobile extension CTA */
+        @media (max-width: 768px) {
+            .extension-cta {
+                padding: 3rem 0;
+            }
+
+            .extension h2 {
+                font-size: 2rem;
+            }
+
+            .extension p {
+                font-size: 1rem;
+            }
+        }
+
+        .extension-content {
+            max-width: 48rem;
+            margin: 0 auto;
+        }
+
+        .extension-icon {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1.5rem;
+            border-radius: 1rem;
+            background: hsl(var(--primary) / 0.1);
+            border: 1px solid hsl(var(--primary) / 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: hsl(var(--primary));
+            font-size: 2rem;
+        }
+
+        .extension h2 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .extension p {
+            font-size: 1.25rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 2rem;
+        }
+
+        .extension-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        @media (min-width: 640px) {
+            .extension-buttons {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+
+        /* Mobile extension buttons */
+        @media (max-width: 768px) {
+            .extension-buttons {
+                gap: 0.75rem;
+            }
+
+            .extension-buttons .btn-lg {
+                width: 100%;
+                max-width: 280px;
+                padding: 0.75rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid hsl(var(--border) / 0.5);
+            padding: 3rem 0;
+            background: hsl(var(--card) / 0.2);
+        }
+
+        /* Mobile footer */
+        @media (max-width: 768px) {
+            .footer {
+                padding: 2rem 0;
+            }
+
+            .footer-grid {
+                gap: 1.5rem;
+            }
+
+            .footer h4 {
+                font-size: 1rem;
+            }
+
+            .footer li {
+                font-size: 0.9rem;
+            }
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .footer-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .footer h4 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .footer ul {
+            list-style: none;
+        }
+
+        .footer li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer a {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer a:hover {
+            color: hsl(var(--primary));
+        }
+
+        .footer-bottom {
+            border-top: 1px solid hsl(var(--border) / 0.5);
+            margin-top: 2rem;
+            padding-top: 2rem;
+            text-align: center;
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* Icons (simple replacements) */
+        .icon {
+            display: inline-block;
+            width: 1.25rem;
+            height: 1.25rem;
+            transition: transform 0.3s ease;
+        }
+
+        .icon-lg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        /* Enhanced animations for better performance and user experience */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        @keyframes smoothBounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes gentleFloat {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            33% {
+                transform: translateY(-8px) rotate(1deg);
+            }
+
+            66% {
+                transform: translateY(-4px) rotate(-1deg);
+            }
+        }
+
+        @keyframes slideInFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes slideInFromLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes slideInFromRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) rotate(-5deg);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        @keyframes typewriter {
+            from {
+                width: 0;
+            }
+
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes blink {
+
+            0%,
+            50% {
+                border-color: transparent;
+            }
+
+            51%,
+            100% {
+                border-color: hsl(var(--primary));
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px hsl(var(--primary) / 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 20px hsl(var(--primary) / 0.6);
+            }
+        }
+
+        @keyframes loadingDots {
+
+            0%,
+            20% {
+                color: transparent;
+                text-shadow: 0.25em 0 0 transparent, 0.5em 0 0 transparent;
+            }
+
+            40% {
+                color: hsl(var(--primary));
+                text-shadow: 0.25em 0 0 transparent, 0.5em 0 0 transparent;
+            }
+
+            60% {
+                text-shadow: 0.25em 0 0 hsl(var(--primary)), 0.5em 0 0 transparent;
+            }
+
+            80%,
+            100% {
+                text-shadow: 0.25em 0 0 hsl(var(--primary)), 0.5em 0 0 hsl(var(--primary));
+            }
+        }
+
+        @keyframes slideInFromBottom {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Enhanced loading states */
+        .loading-dots::after {
+            content: '...';
+            animation: loadingDots 1.5s infinite;
+        }
+
+        /* Enhanced scroll progress indicator */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)));
+            background-size: 200% 100%;
+            z-index: 10000;
+            transition: width 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        /* Scroll snap points for better section navigation */
+        .hero {
+            scroll-snap-align: start;
+        }
+
+        .features {
+            scroll-snap-align: start;
+        }
+
+        .recent-scans {
+            scroll-snap-align: start;
+        }
+
+        .extension-cta {
+            scroll-snap-align: start;
+        }
+
+        .footer {
+            scroll-snap-align: end;
+        }
+
+        /* Enhanced focus states for accessibility */
+        .btn:focus-visible,
+        .scanner-input:focus-visible,
+        a:focus-visible {
+            outline: 2px solid hsl(var(--primary));
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* Smooth transitions for all interactive elements */
+        * {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Logo animation - reduced frequency for better performance */
+        .logo-icon {
+            animation: pulse 4s infinite;
+        }
+
+        /* Enhanced button states */
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Loading animation for scan button */
+        .btn-scan.scanning {
+            animation: pulse 1s infinite;
+        }
+
+        /* Profile Dropdown Styles */
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px hsl(var(--background) / 0.8);
+            min-width: 200px;
+            z-index: 10000;
+            margin-top: 0.5rem;
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Mobile profile dropdown */
+        @media (max-width: 768px) {
+            .profile-menu {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                min-width: auto;
+                margin-top: 0;
+                border-radius: 0;
+                border-top: 1px solid hsl(var(--border));
+                z-index: 10001;
+            }
+
+            .profile-menu-item {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        .profile-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: hsl(var(--foreground));
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+            cursor: pointer;
+        }
+
+        .profile-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .profile-menu-item:hover {
+            background: hsl(var(--muted));
+            color: hsl(var(--primary));
+            transform: translateX(4px);
+        }
+
+        .profile-menu-item svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        /* Language Dropdown Styles */
+        .language-dropdown {
+            position: fixed;
+            top: 64px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .language-menu {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px hsl(var(--background) / 0.8);
+            min-width: 200px;
+            backdrop-filter: blur(8px);
+            overflow: hidden;
+        }
+
+        .language-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: hsl(var(--foreground));
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+            cursor: pointer;
+        }
+
+        .language-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .language-menu-item:hover {
+            background: hsl(var(--muted));
+            color: hsl(var(--primary));
+            transform: translateX(4px);
+        }
+
+        .language-menu-item .flag {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* Mobile language dropdown */
+        @media (max-width: 768px) {
+            .language-dropdown {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+            }
+
+            .language-menu {
+                min-width: auto;
+                margin: 0;
+                border-radius: 0;
+                border-top: 1px solid hsl(var(--border));
+            }
+
+            .language-menu-item {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .notification-error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .notification-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* CORS Warning Notice */
+        .cors-warning {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            border-left: 5px solid #c44569;
+        }
+
+        .warning-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+        }
+
+        .warning-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .close-warning {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-left: auto;
+            transition: background 0.3s ease;
+        }
+
+        .close-warning:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .cors-warning code {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <span class="logo-text">WebShield</span>
+                </div>
+
+                <nav class="nav no-translate" id="mobile-nav">
+                    <a href="index.html" data-translate="nav-home">Home</a>
+                    <a href="features.html" data-translate="nav-features">Features</a>
+                    <a href="scan-url.html" data-translate="nav-scanner">URL Scanner</a>
+                    <a href="learn.html" data-translate="nav-learn">Learn</a>
+                    <a href="dashboard.html" data-translate="nav-dashboard">Dashboard</a>
+                    <a href="how-to-install.html" data-translate="nav-extension">Extension</a>
+                    <a href="about.html" data-translate="nav-about">About</a>
+                </nav>
+
+                <button class="mobile-menu-btn" id="mobile-menu-btn" style="display: none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+
+                <div class="header-buttons header-actions" id="header-actions">
+                    <button id="theme-toggle" class="theme-toggle-btn no-translate" aria-label="Toggle theme"
+                        title="Toggle dark/light theme (Ctrl+Shift+T)" onclick="toggleThemeManual()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                    </button>
+                    <a href="login.html" class="btn btn-ghost" id="signin-btn" data-translate="btn-signin">
+                        <span class="icon">🔑</span>
+                        Sign In
+                    </a>
+                    <a href="register.html" class="btn btn-hero" id="getstarted-btn" data-translate="btn-getstarted">
+                        <span class="icon">👤</span>
+                        Get Started
+                    </a>
+                    <div id="profile-section" style="display: none;">
+                        <a href="profile.html" class="btn btn-ghost" id="profile-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <circle cx="12" cy="10" r="3" />
+                                <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                            </svg>
+                            <span id="user-name" data-translate="btn-profile">My Profile</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Language Selector Dropdown -->
+        <div id="language-dropdown" class="language-dropdown" style="display: none;">
+            <div class="language-menu">
+                <div class="language-menu-item" onclick="changeLanguage('en')">
+                    <span class="flag">🇺🇸</span>
+                    <span>English</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('es')">
+                    <span class="flag">🇪🇸</span>
+                    <span>Español</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('fr')">
+                    <span class="flag">🇫🇷</span>
+                    <span>Français</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('de')">
+                    <span class="flag">🇩🇪</span>
+                    <span>Deutsch</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('it')">
+                    <span class="flag">🇮🇹</span>
+                    <span>Italiano</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('pt')">
+                    <span class="flag">🇵🇹</span>
+                    <span>Português</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('ru')">
+                    <span class="flag">🇷🇺</span>
+                    <span>Русский</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('ja')">
+                    <span class="flag">🇯🇵</span>
+                    <span>日本語</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('ko')">
+                    <span class="flag">🇰🇷</span>
+                    <span>한국어</span>
+                </div>
+                <div class="language-menu-item" onclick="changeLanguage('zh')">
+                    <span class="flag">🇨🇳</span>
+                    <span>中文</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+        <div class="container">
+            <!-- CORS Warning Notice -->
+            <div class="cors-warning" id="cors-warning" style="display: none;">
+                <div class="warning-content">
+                    <span class="warning-icon">⚠️</span>
+                    <strong>Important:</strong> If you're experiencing "no scan ID generated" issues,
+                    make sure you're accessing this page through the backend server at
+                    <code>http://localhost:8000/</code> and not opening the HTML file directly.
+                    <button onclick="this.parentElement.parentElement.style.display='none'"
+                        class="close-warning">×</button>
+                </div>
+            </div>
+
+            <div class="hero-content reveal">
+                <!-- Animated Shield Icon -->
+                <div class="shield-icon" style="margin-bottom: 2rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="url(#shieldGradient)" />
+                        <defs>
+                            <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.8" />
+                                <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.8" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <h1 data-translate="hero-title" class="reveal-delay-1">
+                    Advanced <span class="hero-gradient neon-text-green">Web Security</span>
+                    <br>Protection You Can Trust
+                </h1>
+                <p data-translate="hero-description" class="reveal-delay-2">
+                    Protect yourself from malicious websites, phishing attacks, and online threats with our
+                    AI-powered security platform.
+                </p>
+
+                <div class="scanner-container">
+                    <div class="scanner-form">
+                        <div class="scanner-input-wrapper">
+                            <input type="url" class="scanner-input" id="url-input"
+                                placeholder="Enter URL to scan (e.g., https://example.com)"
+                                data-translate-placeholder="scanner-placeholder" />
+                            <span class="scanner-icon">🔍</span>
+                        </div>
+                        <button type="button" class="btn btn-scan" id="scan-btn" data-translate="btn-scan">
+                            <span class="icon">🛡️</span>
+                            Scan URL
+                        </button>
+
+                    </div>
+                </div>
+
+                <div class="hero-buttons">
+                    <button id="pwa-install-btn" class="btn btn-hero btn-lg" style="display: none;"
+                        data-translate="btn-install-app">
+                        <span class="icon">📱</span>
+                        Install App
+                    </button>
+                    <a href="how-to-install.html" class="btn btn-hero btn-lg" data-translate="btn-install">
+                        <span class="icon">🌐</span>
+                        Install Extension
+                    </a>
+                    <a href="learn.html" class="btn btn-outline btn-lg" data-translate="btn-learn">
+                        <span class="icon">🎓</span>
+                        Learn Security
+                    </a>
+                    <a href="dashboard.html" class="btn btn-outline btn-lg" data-translate="btn-dashboard">
+                        <span class="icon">📊</span>
+                        View Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="features-header">
+                <h2 data-translate="features-title">Advanced Security Features</h2>
+                <p class="features-desc" data-translate="features-description">
+                    Multi-layered protection using cutting-edge technology to keep you safe online
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card glass-card reveal reveal-delay-1">
+                    <div class="feature-header">
+                        <div class="feature-icon neon-glow">🗄️</div>
+                        <h3 class="feature-title" data-translate="feature-virustotal-title">VirusTotal Integration</h3>
+                    </div>
+                    <p class="feature-desc" data-translate="feature-virustotal-desc">
+                        Leverage 90+ antivirus scanners and URL blocklisting services for comprehensive threat
+                        detection.
+                    </p>
+                </div>
+
+                <div class="feature-card glass-card reveal reveal-delay-2">
+                    <div class="feature-header">
+                        <div class="feature-icon neon-glow">⚡</div>
+                        <h3 class="feature-title" data-translate="feature-realtime-title">Real-Time Scanning</h3>
+                    </div>
+                    <p class="feature-desc" data-translate="feature-realtime-desc">
+                        Instant URL analysis with results in milliseconds. No waiting, just immediate protection.
+                    </p>
+                </div>
+
+                <div class="feature-card glass-card reveal reveal-delay-3">
+                    <div class="feature-header">
+                        <div class="feature-icon neon-glow">👁️</div>
+                        <h3 class="feature-title" data-translate="feature-pattern-title">Pattern Analysis</h3>
+                    </div>
+                    <p class="feature-desc" data-translate="feature-pattern-desc">
+                        Detect suspicious URL patterns, typosquatting, and malicious redirects using AI algorithms.
+                    </p>
+                </div>
+
+                <div class="feature-card glass-card reveal reveal-delay-4">
+                    <div class="feature-header">
+                        <div class="feature-icon neon-glow">🔒</div>
+                        <h3 class="feature-title" data-translate="feature-ssl-title">SSL Validation</h3>
+                    </div>
+                    <p class="feature-desc" data-translate="feature-ssl-desc">
+                        Verify certificate authenticity and encryption strength to ensure secure connections.
+                    </p>
+                </div>
+
+                <div class="feature-card glass-card reveal reveal-delay-5">
+                    <div class="feature-header">
+                        <div class="feature-icon neon-glow">📜</div>
+                        <h3 class="feature-title" data-translate="feature-history-title">Scan History</h3>
+                    </div>
+                    <p class="feature-desc" data-translate="feature-history-desc">
+                        Track all your scans with detailed reports and historical threat analysis.
+                    </p>
+                </div>
+
+                <div class="feature-card glass-card reveal reveal-delay-6">
+                    <div class="feature-header">
+                        <div class="feature-icon neon-glow">📊</div>
+                        <h3 class="feature-title" data-translate="feature-dashboard-title">Security Dashboard</h3>
+                    </div>
+                    <p class="feature-desc" data-translate="feature-dashboard-desc">
+                        Comprehensive overview of your online security status with actionable insights.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Scans Section (for logged-in users) -->
+    <section id="recent-scans" class="recent-scans" style="display: none;">
+        <div class="container">
+            <div class="recent-scans-header">
+                <h2 data-translate="recent-scans-title">Your Recent Scans</h2>
+                <p class="recent-scans-desc" data-translate="recent-scans-description">
+                    Track your latest security scans and threat detections
+                </p>
+            </div>
+
+            <div class="recent-scans-grid" id="recent-scans-container">
+                <!-- Recent scans will be loaded here dynamically -->
+            </div>
+
+            <div class="recent-scans-actions">
+                <a href="reports.html" class="btn btn-outline" data-translate="btn-view-reports">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18" />
+                        <path d="M18.7 8l-5.1 5.1-2.8-2.7L7 14.3" />
+                    </svg>
+                    View All Reports
+                </a>
+                <a href="dashboard.html" class="btn btn-outline" data-translate="btn-go-dashboard">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18" />
+                        <path d="M18.7 8l-5.1 5.1-2.8-2.7L7 14.3" />
+                        <path d="M3 21h18" />
+                    </svg>
+                    Go to Dashboard
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Extension CTA -->
+    <section id="extension" class="extension-cta">
+        <div class="container">
+            <div class="extension-content">
+                <div class="extension-icon">🌐</div>
+
+                <h2 data-translate="extension-title">Seamless Browser Protection</h2>
+                <p data-translate="extension-description">
+                    Install our extension for automatic protection while browsing.
+                    Real-time alerts and one-click threat analysis.
+                </p>
+
+                <div class="extension-buttons">
+                    <a href="how-to-install.html" class="btn btn-hero btn-lg" data-translate="btn-add-chrome">
+                        <span class="icon">🌐</span>
+                        Add to Chrome - Free
+                    </a>
+                    <a href="how-to-install.html" class="btn btn-outline btn-lg" data-translate="btn-learn-more">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="logo" style="margin-bottom: 1rem;">
+                        <div class="logo-icon">🛡️</div>
+                        <span class="logo-text">WebShield</span>
+                    </div>
+                    <p style="color: hsl(var(--muted-foreground));" data-translate="footer-description">
+                        Advanced web security for everyone. Protecting millions of users worldwide.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 data-translate="footer-product">Product</h4>
+                    <ul>
+                        <li><a href="scan-url.html" data-translate="footer-url-scanner">URL Scanner</a></li>
+                        <li><a href="dashboard.html" data-translate="footer-dashboard">Dashboard</a></li>
+                        <li><a href="how-to-install.html" data-translate="footer-extension">Extension</a></li>
+                        <li><a href="api-settings.html" data-translate="footer-api-access">API Access</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 data-translate="footer-company">Company</h4>
+                    <ul>
+                        <li><a href="about.html" data-translate="footer-about">About Us</a></li>
+                        <li><a href="#" data-translate="footer-blog">Blog</a></li>
+                        <li><a href="#" data-translate="footer-careers">Careers</a></li>
+                        <li><a href="#" data-translate="footer-contact">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 data-translate="footer-support">Support</h4>
+                    <ul>
+                        <li><a href="#" data-translate="footer-help">Help Center</a></li>
+                        <li><a href="#" data-translate="footer-privacy">Privacy Policy</a></li>
+                        <li><a href="#" data-translate="footer-terms">Terms of Service</a></li>
+                        <li><a href="#" data-translate="footer-security">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="footer-copyright" data-translate="footer-copyright">
+                    &copy; 2025 WebShield. All rights reserved.
+                </div>
+                <div class="footer-links">
+                    <a href="#" data-translate="footer-privacy">Privacy</a>
+                    <a href="#" data-translate="footer-terms">Terms</a>
+                    <a href="#" data-translate="footer-security">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script>
+        // API Configuration - Using config.js for dynamic detection
+        console.log('🔍 Checking API_BASE_URL configuration...');
+        console.log('window.API_BASE_URL:', window.API_BASE_URL);
+
+        // Fallback if config.js didn't set the API_BASE_URL
+        if (!window.API_BASE_URL) {
+            console.warn('⚠️ window.API_BASE_URL not set by config.js, using fallback');
+            const protocol = window.location.protocol;
+            const hostname = window.location.hostname;
+            const port = window.location.port || (protocol === 'https:' ? '443' : '80');
+            window.API_BASE_URL = `${protocol}//${hostname}:8000/api`;
+            console.log('🔧 Fallback API_BASE_URL:', window.API_BASE_URL);
+        }
+
+        // Make API_BASE_URL globally accessible
+        window.API_BASE_URL = window.API_BASE_URL;
+        console.log('✅ Final API_BASE_URL:', window.API_BASE_URL);
+
+        // Global state for scan management
+        let currentScanId = null;
+        let lastScannedUrl = null;
+
+        // Utility functions
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => n.remove());
+
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Validate URL format
+        function isValidUrl(string) {
+            try {
+                const url = new URL(string);
+                return url.protocol === 'http:' || url.protocol === 'https:';
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // URL Scanning function with better error handling
+        async function scanURL(url) {
+            console.log('=== SCAN URL FUNCTION CALLED ===');
+            console.log('Input URL:', url);
+            console.log('API_BASE_URL:', window.API_BASE_URL);
+
+            // Reset scan state for new scan
+            currentScanId = null;
+
+            // Reduced delay to improve responsiveness
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            // Check if we're already scanning this URL
+            if (currentScanId && url === lastScannedUrl) {
+                console.log('⚠️ Already scanning this URL:', url);
+                showNotification('Already scanning this URL. Please wait for results.', 'warning');
+                return;
+            }
+
+            // Check if we're already scanning any URL
+            if (currentScanId) {
+                console.log('⚠️ Another scan is already in progress. Please wait.');
+                showNotification('Another scan is already in progress. Please wait for it to complete.', 'warning');
+                return;
+            }
+
+            // Store the URL being scanned
+            lastScannedUrl = url;
+
+            if (!url) {
+                console.log('❌ No URL provided');
+                showNotification('Please enter a URL to scan', 'error');
+                return;
+            }
+
+            // Add https:// if no protocol is specified
+            if (!url.match(/^https?:\/\//)) {
+                url = 'https://' + url;
+                console.log('🔧 Added https:// to URL:', url);
+            }
+
+            // Validate URL format
+            if (!isValidUrl(url)) {
+                console.log('❌ Invalid URL format:', url);
+                showNotification('Please enter a valid URL (e.g., https://example.com)', 'error');
+                return;
+            }
+
+            console.log('✅ URL validated:', url);
+
+            // Show loading state
+            const scanButton = document.getElementById('scan-btn');
+            const originalText = scanButton.innerHTML;
+            scanButton.innerHTML = '<span class="icon">⏳</span> Scanning...';
+            scanButton.disabled = true;
+            scanButton.classList.add('scanning');
+
+            // Disable the URL input field as well
+            const urlInput = document.getElementById('url-input');
+            const originalInputState = urlInput.disabled;
+            urlInput.disabled = true;
+
+            // Show cyber loader animation IMMEDIATELY
+            if (typeof window.showCyberLoader === 'function') {
+                window.showCyberLoader('Scanning URL...', 'Analyzing for threats and vulnerabilities');
+            }
+
+            try {
+                console.log('🚀 Starting scan for URL:', url);
+                console.log('🌐 API Base URL:', window.API_BASE_URL);
+                console.log('📡 Making API call to:', `${window.API_BASE_URL}/scan`);
+                console.log('🔍 API_BASE_URL type:', typeof window.API_BASE_URL);
+                console.log('🔍 API_BASE_URL value:', window.API_BASE_URL);
+                console.log('🔍 window.API_BASE_URL:', window.API_BASE_URL);
+                console.log('🔍 Global API_BASE_URL:', typeof window.API_BASE_URL !== 'undefined' ? window.API_BASE_URL : 'undefined');
+
+                // Fallback API URL if API_BASE_URL is not available
+                const apiUrl = (window.getApiRoot && window.getApiRoot()) || `${window.location.protocol}//${window.location.hostname}:8000/api`;
+                console.log('🔧 Using API URL:', apiUrl);
+
+                const response = await fetch(`${apiUrl}/scan/scan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        user_email: localStorage.getItem('userEmail') || null
+                    })
+                });
+
+                console.log('📥 Response received:');
+                console.log('   Status:', response.status);
+                console.log('   OK:', response.ok);
+                console.log('   Headers:', response.headers);
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    console.error('❌ Error response:', errorData);
+
+                    let errorMessage = 'Failed to start scan';
+                    try {
+                        const parsedError = JSON.parse(errorData);
+                        errorMessage = parsedError.detail || parsedError.message || errorMessage;
+                    } catch (e) {
+                        if (response.status === 404) {
+                            errorMessage = 'API endpoint not found. Please check your backend configuration.';
+                        } else if (response.status >= 500) {
+                            errorMessage = 'Server error. Please try again later.';
+                        }
+                    }
+
+                    throw new Error(errorMessage);
+                }
+
+                let data;
+                try {
+                    data = await response.json();
+                    console.log('✅ Scan response data:', data);
+                } catch (jsonError) {
+                    console.error('❌ JSON parsing error:', jsonError);
+                    const responseText = await response.text();
+                    console.error('❌ Raw response:', responseText);
+                    throw new Error('Invalid JSON response from server');
+                }
+
+                console.log('🔍 Checking for scan_id in response...');
+                console.log('  data.scan_id:', data.scan_id);
+                console.log('  data.hasOwnProperty("scan_id"):', data.hasOwnProperty('scan_id'));
+                console.log('  typeof data.scan_id:', typeof data.scan_id);
+                console.log('  data keys:', Object.keys(data));
+                console.log('  Response status:', response.status);
+                console.log('  Response headers:', response.headers);
+                console.log('  Full response data:', JSON.stringify(data, null, 2));
+                console.log('  API URL used:', `${apiUrl}/scan`);
+                console.log('  Request body sent:', JSON.stringify({
+                    url: url,
+                    user_email: localStorage.getItem('userEmail') || null
+                }, null, 2));
+
+                if (data.scan_id) {
+                    currentScanId = data.scan_id;
+                    console.log('🎯 Scan ID received:', currentScanId);
+                    console.log('📊 Initial status:', data.status);
+                    console.log('🔍 Current Scan ID after setting:', currentScanId);
+
+                    // Update button text to show progress
+                    scanButton.innerHTML = '<span class="icon">🔍</span> Analyzing...';
+
+                    showNotification('Scan started successfully! Analyzing URL...', 'success');
+
+                    // Start polling for results
+                    console.log('🔄 Starting to poll for results...');
+                    startCountdownAndRedirect();
+                } else {
+                    console.error('❌ No scan ID in response');
+                    console.error('❌ Response data:', data);
+                    console.error('❌ Response status:', response.status);
+                    console.error('❌ Response headers:', response.headers);
+
+                    let errorMessage = 'Server error - no scan ID received. Please try again.';
+                    if (data.detail) {
+                        errorMessage = data.detail;
+                    } else if (data.message) {
+                        errorMessage = data.message;
+                    } else if (response.status === 500) {
+                        errorMessage = 'Server error. Please try again in a moment.';
+                    } else if (response.status === 400) {
+                        errorMessage = 'Invalid request. Please check the URL and try again.';
+                    }
+
+                    throw new Error(errorMessage);
+                }
+            } catch (error) {
+                console.error('❌ Scan error:', error);
+                let errorMessage = 'Network error. Please check your connection and try again.';
+
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                showNotification(errorMessage, 'error');
+
+                // Restore button state on error
+                scanButton.innerHTML = originalText;
+                scanButton.disabled = false;
+                scanButton.classList.remove('scanning');
+                urlInput.disabled = originalInputState;
+                console.log('🔄 Button state restored after error');
+            }
+        }
+
+        function startCountdownAndRedirect() {
+            const scanButton = document.getElementById('scan-btn');
+
+            // Update button text
+            scanButton.innerHTML = '<span class="icon">🔍</span> Analyzing...';
+            scanButton.disabled = true;
+
+            // Remove progress bar if it exists
+            const progressBar = document.getElementById('scan-progress');
+            if (progressBar) {
+                progressBar.remove();
+            }
+
+            // Show cyber loader animation for 5 seconds
+            if (typeof window.showCyberLoader === 'function') {
+                window.showCyberLoader('Scanning URL...', 'Analyzing for threats and vulnerabilities');
+
+                // Update progress during the animation
+                setTimeout(() => {
+                    if (typeof window.updateCyberLoaderProgress === 'function') {
+                        window.updateCyberLoaderProgress(40);
+                    }
+                    if (typeof window.updateCyberLoaderText === 'function') {
+                        window.updateCyberLoaderText('Checking reputation...', 'Verifying with security databases');
+                    }
+                }, 1500);
+
+                setTimeout(() => {
+                    if (typeof window.updateCyberLoaderProgress === 'function') {
+                        window.updateCyberLoaderProgress(70);
+                    }
+                    if (typeof window.updateCyberLoaderText === 'function') {
+                        window.updateCyberLoaderText('Analyzing content...', 'Scanning for malicious patterns');
+                    }
+                }, 3000);
+
+                setTimeout(() => {
+                    if (typeof window.updateCyberLoaderProgress === 'function') {
+                        window.updateCyberLoaderProgress(95);
+                    }
+                    if (typeof window.updateCyberLoaderText === 'function') {
+                        window.updateCyberLoaderText('Finalizing report...', 'Preparing your security analysis');
+                    }
+                }, 4500);
+            }
+
+            // Wait 5 seconds, then hide animation and redirect
+            setTimeout(() => {
+                // Hide cyber loader
+                if (typeof window.hideCyberLoader === 'function') {
+                    window.hideCyberLoader();
+                }
+
+                // Redirect to scan report page
+                const protocol = window.location.protocol;
+                const hostname = window.location.hostname;
+                const port = window.location.port || (protocol === 'https:' ? '443' : '80');
+                const redirectUrl = `${protocol}//${hostname}:${port}/scan_report.html?scan_id=${currentScanId}`;
+
+                console.log('🚀 Redirecting to:', redirectUrl);
+                console.log('🔍 Current Scan ID at redirect:', currentScanId);
+
+                // Redirect to report
+                window.location.href = redirectUrl;
+            }, 5000);
+        }
+
+        function resetScanState() {
+            currentScanId = null;
+            lastScannedUrl = null;
+
+            // Remove progress bar
+            const progressBar = document.getElementById('scan-progress');
+            if (progressBar) {
+                progressBar.remove();
+            }
+
+            console.log('🔄 Scan state reset');
+        }
+
+        // Check if user is logged in and update UI accordingly
+        function checkLoginStatus() {
+            const signInBtn = document.getElementById('signin-btn');
+            const getStartedBtn = document.getElementById('getstarted-btn');
+            const profileSection = document.getElementById('profile-section');
+            const userName = document.getElementById('user-name');
+            const recentScansSection = document.getElementById('recent-scans');
+
+            // Check if user is logged in
+            const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+            const userEmail = localStorage.getItem('userEmail');
+            const userNameValue = localStorage.getItem('userName');
+
+            console.log('Login status check:', { isLoggedIn, userEmail, userNameValue });
+
+            if (isLoggedIn && profileSection) {
+                // User is logged in - show profile section, hide auth buttons
+                profileSection.style.display = 'block';
+                if (signInBtn) signInBtn.style.display = 'none';
+                if (getStartedBtn) getStartedBtn.style.display = 'none';
+                if (userName) userName.textContent = userNameValue || userEmail?.split('@')[0] || 'Profile';
+                console.log('Profile section shown');
+
+                // Show recent scans section and load user's scans
+                if (recentScansSection) {
+                    recentScansSection.style.display = 'block';
+                    loadUserRecentScans();
+                }
+            } else {
+                // User is not logged in - show auth buttons, hide profile section
+                if (profileSection) profileSection.style.display = 'none';
+                if (signInBtn) signInBtn.style.display = 'inline-flex';
+                if (getStartedBtn) getStartedBtn.style.display = 'inline-flex';
+                console.log('Auth buttons shown');
+
+                // Hide recent scans section
+                if (recentScansSection) {
+                    recentScansSection.style.display = 'none';
+                }
+            }
+        }
+
+        // Load user's recent scans
+        async function loadUserRecentScans() {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return;
+
+            try {
+                const apiUrl = (window.getApiRoot && window.getApiRoot()) || `${window.location.protocol}//${window.location.hostname}:8000/api`;
+                const response = await fetch(`${apiUrl}/admin/user_scans?email=${encodeURIComponent(userEmail)}&limit=6`);
+                if (response.ok) {
+                    const scans = await response.json();
+                    displayRecentScans(scans);
+                }
+            } catch (error) {
+                console.error('Failed to load user scans:', error);
+            }
+        }
+
+        // Display recent scans in the grid
+        function displayRecentScans(scans) {
+            const container = document.getElementById('recent-scans-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (scans.length === 0) {
+                container.innerHTML = `
+                    <div class="recent-scan-card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 1rem; color: hsl(var(--muted-foreground));">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                        <h3 style="margin-bottom: 0.5rem;">No scans yet</h3>
+                        <p style="color: hsl(var(--muted-foreground));">Start by scanning a URL to see your recent scans here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            scans.forEach(scan => {
+                const card = createRecentScanCard(scan);
+                container.appendChild(card);
+            });
+        }
+
+        // Create a recent scan card element
+        function createRecentScanCard(scan) {
+            const card = document.createElement('div');
+            card.className = 'recent-scan-card';
+
+            // Enhanced threat level display - consider SSL status
+            let statusClass, statusText;
+            if (scan.is_malicious || scan.threat_level === 'high') {
+                statusClass = 'danger';
+                statusText = 'Danger';
+            } else if (scan.threat_level === 'medium') {
+                statusClass = 'warning';
+                statusText = 'Warning';
+            } else {
+                // For low threat, check if SSL is invalid
+                if (scan.ssl_valid === false) {
+                    statusClass = 'warning';
+                    statusText = 'Insecure';
+                } else {
+                    statusClass = 'safe';
+                    statusText = 'Safe';
+                }
+            }
+
+            const scanDate = new Date(scan.created_at).toLocaleDateString();
+
+            card.innerHTML = `
+                <div class="recent-scan-header">
+                    <div class="recent-scan-url" title="${scan.url}">${scan.url}</div>
+                    <div class="recent-scan-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="recent-scan-details">
+                    <div class="recent-scan-detail">
+                        <div class="recent-scan-detail-label">Scan Date</div>
+                        <div class="recent-scan-detail-value">${scanDate}</div>
+                    </div>
+                    <div class="recent-scan-detail">
+                        <div class="recent-scan-detail-label">Threats</div>
+                        <div class="recent-scan-detail-value">${scan.malicious_count || 0}</div>
+                    </div>
+                </div>
+                <div class="recent-scan-actions">
+                    <a href="/scan_report.html?scan_id=${scan.scan_id}" class="btn btn-outline btn-sm">View Details</a>
+                    <button class="btn btn-outline btn-sm" onclick="downloadReport('${scan.scan_id}')">Download</button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Download report function
+        function downloadReport(scanId) {
+            // This would typically open a download dialog
+            // For now, we'll redirect to the scan report page
+            window.open(`/scan_report.html?scan_id=${scanId}`, '_blank');
+        }
+
+        // Setup profile dropdown functionality
+        function setupProfileDropdown() {
+            const profileBtn = document.getElementById('profile-btn');
+            const profileMenu = document.getElementById('profile-menu');
+            const logoutBtn = document.getElementById('logout-btn');
+            const profileLink = document.querySelector('a[href="profile.html"]');
+
+            console.log('🔧 Profile dropdown setup:', { profileBtn, profileMenu, logoutBtn, profileLink });
+
+            if (profileBtn && profileMenu) {
+                // Profile button click handler
+                profileBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🎯 Profile button clicked');
+
+                    const isVisible = profileMenu.style.display === 'block';
+                    profileMenu.style.display = isVisible ? 'none' : 'block';
+
+                    console.log('📋 Menu visibility changed to:', !isVisible);
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+                        profileMenu.style.display = 'none';
+                        console.log('🚪 Closing dropdown - clicked outside');
+                    }
+                });
+
+                // Prevent dropdown from closing when clicking inside the menu
+                profileMenu.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+
+            // Profile link handler
+            if (profileLink) {
+                profileLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('👤 Profile link clicked, redirecting to profile.html');
+                    window.location.href = 'profile.html';
+                });
+            }
+
+            // Logout button handler
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🚪 Logout button clicked, clearing localStorage');
+
+                    // Clear all localStorage data
+                    localStorage.clear();
+
+                    // Close the dropdown
+                    if (profileMenu) {
+                        profileMenu.style.display = 'none';
+                    }
+
+                    // Redirect to index page
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        // Mobile menu functionality
+        function setupMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            if (mobileMenuBtn && mobileNav) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileNav.classList.toggle('active');
+                });
+
+                // Close mobile menu when clicking on a link
+                const navLinks = mobileNav.querySelectorAll('a');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        mobileNav.classList.remove('active');
+                    });
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
+                        mobileNav.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // Test function to debug scan ID generation
+        async function testScanIdGeneration() {
+            console.log('🧪 Testing scan ID generation...');
+            try {
+                const testUrl = 'https://example.com';
+                const apiUrl = window.API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:8000/api`;
+                console.log('🔧 Test API URL:', apiUrl);
+
+                const response = await fetch(`${apiUrl}/scan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: testUrl,
+                        user_email: null
+                    })
+                });
+
+                console.log('🧪 Test response status:', response.status);
+                console.log('🧪 Test response headers:', response.headers);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🧪 Test response data:', data);
+                    console.log('🧪 Test scan_id received:', data.scan_id);
+                    console.log('🧪 Test scan_id type:', typeof data.scan_id);
+                    console.log('🧪 Test scan_id length:', data.scan_id ? data.scan_id.length : 0);
+
+                    if (data.scan_id) {
+                        showNotification(`Test successful! Scan ID: ${data.scan_id}`, 'success');
+                    } else {
+                        showNotification('Test failed - no scan ID received', 'error');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error('🧪 Test failed:', response.status, errorText);
+                    showNotification(`Test failed: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                console.error('🧪 Test error:', error);
+                showNotification(`Test error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test profile dropdown functionality
+        function testProfileDropdown() {
+            console.log('🧪 Testing profile dropdown functionality...');
+
+            const profileBtn = document.getElementById('profile-btn');
+            const profileMenu = document.getElementById('profile-menu');
+            const logoutBtn = document.getElementById('logout-btn');
+            const profileLink = document.querySelector('a[href="profile.html"]');
+
+            console.log('🔍 Profile elements found:', {
+                profileBtn: !!profileBtn,
+                profileMenu: !!profileMenu,
+                logoutBtn: !!logoutBtn,
+                profileLink: !!profileLink
+            });
+
+            if (profileBtn) {
+                console.log('✅ Profile button found and clickable');
+                // Simulate a click to test
+                profileBtn.click();
+                setTimeout(() => {
+                    const isVisible = profileMenu.style.display === 'block';
+                    console.log('📋 Profile menu visibility after click:', isVisible);
+                }, 100);
+            }
+
+            if (logoutBtn) {
+                console.log('✅ Logout button found');
+            }
+
+            if (profileLink) {
+                console.log('✅ Profile link found');
+            }
+        }
+
+        // Enhanced scroll animations and intersection observer
+        function initScrollAnimations() {
+            const observerOptions = {
+                threshold: [0.1, 0.3, 0.5, 0.7, 0.9],
+                rootMargin: '0px 0px -100px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const element = entry.target;
+                        const ratio = entry.intersectionRatio;
+
+                        // Staggered animation based on intersection ratio
+                        element.style.opacity = Math.min(1, ratio * 2);
+                        element.style.transform = `translateY(${Math.max(0, 30 * (1 - ratio))}px) scale(${0.95 + (ratio * 0.05)})`;
+                        element.classList.add('animate-in');
+
+                        // Add special effects for different elements
+                        if (element.classList.contains('feature-card')) {
+                            element.style.animationDelay = `${Math.random() * 0.3}s`;
+                            element.style.animation = 'slideInFromBottom 0.8s ease-out forwards';
+                        }
+
+                        if (element.classList.contains('recent-scan-card')) {
+                            element.style.animation = 'fadeInUp 0.6s ease-out forwards';
+                        }
+                    } else {
+                        // Reset animation when out of view
+                        entry.target.style.opacity = '0';
+                        entry.target.style.transform = 'translateY(30px) scale(0.95)';
+                        entry.target.classList.remove('animate-in');
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all animated elements with enhanced selectors
+            const animatedElements = document.querySelectorAll(`
+                .feature-card, 
+                .recent-scan-card, 
+                .analysis-card,
+                .hero-content,
+                .features-header,
+                .recent-scans-header,
+                .extension-content,
+                .footer-grid > div
+            `);
+
+            animatedElements.forEach((el, index) => {
+                // Add initial state
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px) scale(0.95)';
+                el.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+
+                // Stagger the observation
+                setTimeout(() => {
+                    observer.observe(el);
+                }, index * 100);
+            });
+        }
+
+        // Smooth scroll for anchor links
+        function initSmoothScroll() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Enhanced button interactions
+        function initButtonAnimations() {
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('mouseenter', function () {
+                    this.style.transform = 'translateY(-2px) scale(1.02)';
+                });
+
+                btn.addEventListener('mouseleave', function () {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+
+                btn.addEventListener('mousedown', function () {
+                    this.style.transform = 'translateY(1px) scale(0.98)';
+                });
+
+                btn.addEventListener('mouseup', function () {
+                    this.style.transform = 'translateY(-2px) scale(1.02)';
+                });
+            });
+        }
+
+        // Subtle parallax effect - reduced intensity for better performance
+        function initParallaxEffect() {
+            // Check if user prefers reduced motion
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                return; // Skip animations for accessibility
+            }
+
+            const hero = document.querySelector('.hero');
+            const heroBg = document.querySelector('.hero-bg');
+
+            let ticking = false;
+
+            function updateParallax() {
+                const scrolled = window.pageYOffset;
+
+                // Very subtle hero parallax only
+                if (hero && scrolled < window.innerHeight) {
+                    const heroRate = scrolled * -0.1; // Reduced from -0.3
+                    hero.style.transform = `translateY(${heroRate}px)`;
+                }
+
+                if (heroBg && scrolled < window.innerHeight) {
+                    const bgRate = scrolled * -0.05; // Reduced from -0.1
+                    heroBg.style.transform = `translateY(${bgRate}px)`;
+                }
+
+                ticking = false;
+            }
+
+            function requestTick() {
+                if (!ticking) {
+                    requestAnimationFrame(updateParallax);
+                    ticking = true;
+                }
+            }
+
+            // Only apply parallax on desktop for better performance
+            if (window.innerWidth > 768) {
+                window.addEventListener('scroll', requestTick, { passive: true });
+            }
+        }
+
+        // Language selector functionality
+        function toggleLanguageSelector() {
+            const dropdown = document.getElementById('language-dropdown');
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+
+            if (!isVisible) {
+                // Close dropdown when clicking outside
+                setTimeout(() => {
+                    document.addEventListener('click', closeLanguageDropdown);
+                }, 100);
+            }
+        }
+
+        function closeLanguageDropdown(e) {
+            const dropdown = document.getElementById('language-dropdown');
+            const languageBtn = document.getElementById('language-toggle');
+
+            if (!dropdown.contains(e.target) && (!languageBtn || !languageBtn.contains(e.target))) {
+                dropdown.style.display = 'none';
+                document.removeEventListener('click', closeLanguageDropdown);
+            }
+        }
+
+        function changeLanguage(languageCode) {
+            console.log('🌍 Changing language to:', languageCode);
+
+            // Close the dropdown
+            document.getElementById('language-dropdown').style.display = 'none';
+            document.removeEventListener('click', closeLanguageDropdown);
+
+            // Always use manual translation implementation for reliability
+            console.log('🔧 Using manual translation implementation');
+            performManualTranslation(languageCode);
+        }
+
+        // Manual translation implementation as fallback
+        async function performManualTranslation(languageCode) {
+            if (languageCode === 'en') {
+                // Restore original English text
+                restoreOriginalText();
+                showNotification('Restored to English', 'success');
+                return;
+            }
+
+            try {
+                // Show loading notification
+                showNotification(`Translating to ${getLanguageName(languageCode)}...`, 'info');
+
+                // Get all translatable elements
+                const elements = getTranslatableElements();
+                const textsToTranslate = [];
+
+                console.log('🔍 Found elements to translate:', elements.length);
+
+                if (elements.length === 0) {
+                    showNotification('No translatable content found', 'info');
+                    return;
+                }
+
+                // Store original texts if not already stored
+                if (!window.originalTexts) {
+                    window.originalTexts = new Map();
+                    window.originalPlaceholders = new Map();
+                }
+
+                elements.forEach(el => {
+                    const text = el.textContent.trim();
+                    if (text && text.length > 0 && text.length < 500) {
+                        if (!window.originalTexts.has(el)) {
+                            window.originalTexts.set(el, text);
+                        }
+                        textsToTranslate.push(text);
+                    }
+
+                    // Handle placeholders
+                    if (el.placeholder && !window.originalPlaceholders.has(el)) {
+                        window.originalPlaceholders.set(el, el.placeholder);
+                        textsToTranslate.push(el.placeholder);
+                    }
+                });
+
+                console.log('📤 Processing translation request:', {
+                    textsCount: textsToTranslate.length,
+                    targetLang: languageCode,
+                    apiUrl: window.API_BASE_URL
+                });
+
+                // Process translations in batches to avoid "batch size too large" error
+                const allTranslations = await processBatchTranslations(textsToTranslate, languageCode);
+
+                // Apply translations
+                applyTranslations(elements, allTranslations);
+
+                // Store current language
+                localStorage.setItem('webshield-language', languageCode);
+
+                showNotification(`Page translated to ${getLanguageName(languageCode)}`, 'success');
+
+            } catch (error) {
+                console.error('Translation error:', error);
+
+                // Fallback to basic translations if API fails
+                if (error.message.includes('400') || error.message.includes('fetch')) {
+                    console.log('🔄 Using fallback translations...');
+                    applyFallbackTranslations(elements, languageCode);
+                    localStorage.setItem('webshield-language', languageCode);
+                    showNotification(`Basic translation applied for ${getLanguageName(languageCode)}`, 'info');
+                } else {
+                    showNotification(`Translation failed: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Process translations in batches to avoid API limits
+        async function processBatchTranslations(textsToTranslate, languageCode) {
+            const BATCH_SIZE = 20; // Reduced from 90 to 20 for faster processing
+            const apiUrl = window.API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:8000`;
+            const allTranslations = {};
+
+            // Split texts into batches
+            const batches = [];
+            for (let i = 0; i < textsToTranslate.length; i += BATCH_SIZE) {
+                batches.push(textsToTranslate.slice(i, i + BATCH_SIZE));
+            }
+
+            console.log(`📦 Processing ${batches.length} batches of translations`);
+
+            // Process each batch with timeout
+            for (let i = 0; i < batches.length; i++) {
+                const batch = batches[i];
+                console.log(`📤 Sending batch ${i + 1}/${batches.length} (${batch.length} texts)`);
+
+                try {
+                    // Add timeout to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+                    const response = await fetch(`${apiUrl}/api/translations/translate/batch`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            texts: batch,
+                            target_lang: languageCode,
+                            context: 'web interface'
+                        }),
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const batchTranslations = data.translations || {};
+
+                        // Merge batch translations into all translations
+                        Object.assign(allTranslations, batchTranslations);
+
+                        // Show progress for multiple batches
+                        if (batches.length > 1) {
+                            showNotification(`Translating... ${i + 1}/${batches.length} batches complete`, 'info');
+                        }
+                    } else {
+                        // Get detailed error information
+                        let errorMessage = `Translation API error: ${response.status}`;
+                        try {
+                            const errorData = await response.text();
+                            console.error('Translation API error details:', errorData);
+                            if (errorData) {
+                                const parsedError = JSON.parse(errorData);
+                                errorMessage = parsedError.detail || errorMessage;
+                            }
+                        } catch (e) {
+                            console.error('Could not parse error response:', e);
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    // Small delay between batches to avoid overwhelming the API
+                    if (i < batches.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500)); // Increased delay
+                    }
+
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        console.error(`Batch ${i + 1} timed out after 10 seconds`);
+                        throw new Error(`Translation timed out. Try again with shorter content.`);
+                    }
+                    console.error(`Error in batch ${i + 1}:`, error);
+                    throw error;
+                }
+            }
+
+            console.log(`✅ All ${batches.length} batches processed successfully`);
+            return allTranslations;
+        }
+
+        function getTranslatableElements() {
+            // Get only essential elements for translation to avoid timeout
+            const elements = document.querySelectorAll(`
+                .hero-content h1, .hero-content p, 
+                .nav a, .btn, 
+                h1, h2, h3, 
+                .feature-title, .feature-desc,
+                [data-translate]
+            `);
+
+            return Array.from(elements).filter(el => {
+                const text = el.textContent.trim();
+                return !el.classList.contains('no-translate') &&
+                    !el.closest('.no-translate') &&
+                    text.length > 0 &&
+                    text.length < 200 && // Reduced from 500 to 200
+                    !el.querySelector('input, textarea, select') &&
+                    !el.closest('script, style, noscript') &&
+                    // Skip elements with too many child elements
+                    el.children.length < 5;
+            });
+        }
+
+        // Load saved language preference on page load
+        function loadSavedLanguage() {
+            const savedLanguage = localStorage.getItem('webshield-language');
+            if (savedLanguage && savedLanguage !== 'en') {
+                console.log('🌍 Loading saved language:', savedLanguage);
+                // Delay to ensure page is fully loaded
+                setTimeout(() => {
+                    changeLanguage(savedLanguage);
+                }, 1000);
+            }
+        }
+
+        function applyTranslations(elements, translationMap) {
+            console.log('🔄 Applying translations:', {
+                elementsCount: elements.length,
+                translationsCount: Object.keys(translationMap).length,
+                sampleTranslations: Object.entries(translationMap).slice(0, 3)
+            });
+
+            let appliedCount = 0;
+
+            elements.forEach(el => {
+                const originalText = window.originalTexts.get(el);
+                if (originalText && translationMap[originalText]) {
+                    const translation = translationMap[originalText];
+                    if (translation && translation !== originalText) {
+                        // Add smooth transition
+                        el.style.transition = 'opacity 0.2s ease';
+                        el.style.opacity = '0.7';
+
+                        setTimeout(() => {
+                            el.textContent = translation;
+                            el.style.opacity = '1';
+                        }, 100);
+
+                        appliedCount++;
+                        console.log(`✅ Translated: "${originalText}" → "${translation}"`);
+                    }
+                } else if (originalText) {
+                    console.log(`❌ No translation found for: "${originalText}"`);
+                }
+
+                // Handle placeholders
+                if (window.originalPlaceholders && window.originalPlaceholders.has(el)) {
+                    const originalPlaceholder = window.originalPlaceholders.get(el);
+                    if (translationMap[originalPlaceholder]) {
+                        el.setAttribute('placeholder', translationMap[originalPlaceholder]);
+                        appliedCount++;
+                    }
+                }
+            });
+
+            console.log(`🎯 Applied ${appliedCount} translations out of ${elements.length} elements`);
+        }
+
+        function restoreOriginalText() {
+            if (window.originalTexts) {
+                window.originalTexts.forEach((originalText, el) => {
+                    el.textContent = originalText;
+                });
+            }
+
+            if (window.originalPlaceholders) {
+                window.originalPlaceholders.forEach((originalPlaceholder, el) => {
+                    el.setAttribute('placeholder', originalPlaceholder);
+                });
+            }
+
+            localStorage.setItem('webshield-language', 'en');
+        }
+
+        // Fallback translations for basic UI elements
+        function applyFallbackTranslations(elements, languageCode) {
+            const fallbackTranslations = {
+                'es': {
+                    'Advanced': 'Avanzado',
+                    'Web Security': 'Seguridad Web',
+                    'Protection You Can Trust': 'Protección en la que Puedes Confiar',
+                    'Home': 'Inicio',
+                    'Features': 'Características',
+                    'Dashboard': 'Panel',
+                    'Extension': 'Extensión',
+                    'About': 'Acerca de',
+                    'Sign In': 'Iniciar Sesión',
+                    'Get Started': 'Comenzar',
+                    'Scan URL': 'Escanear URL',
+                    'Enter URL to scan': 'Ingresa URL para escanear',
+                    'Protect yourself from malicious websites, phishing attacks, and online threats with our AI-powered security platform. Real-time scanning, intelligent threat detection, and comprehensive protection for your digital life.': 'Protégete de sitios web maliciosos, ataques de phishing y amenazas en línea con nuestra plataforma de seguridad impulsada por IA. Escaneo en tiempo real, detección inteligente de amenazas y protección integral para tu vida digital.'
+                },
+                'fr': {
+                    'Advanced': 'Avancé',
+                    'Web Security': 'Sécurité Web',
+                    'Protection You Can Trust': 'Protection de Confiance',
+                    'Home': 'Accueil',
+                    'Features': 'Fonctionnalités',
+                    'Dashboard': 'Tableau de bord',
+                    'Extension': 'Extension',
+                    'About': 'À propos',
+                    'Sign In': 'Se connecter',
+                    'Get Started': 'Commencer',
+                    'Scan URL': 'Scanner URL',
+                    'Enter URL to scan': 'Entrez URL à scanner',
+                    'Protect yourself from malicious websites, phishing attacks, and online threats with our AI-powered security platform. Real-time scanning, intelligent threat detection, and comprehensive protection for your digital life.': 'Protégez-vous des sites web malveillants, des attaques de phishing et des menaces en ligne avec notre plateforme de sécurité alimentée par IA. Analyse en temps réel, détection intelligente des menaces et protection complète pour votre vie numérique.'
+                },
+                'de': {
+                    'Advanced': 'Erweitert',
+                    'Web Security': 'Web-Sicherheit',
+                    'Protection You Can Trust': 'Vertrauensvoller Schutz',
+                    'Home': 'Startseite',
+                    'Features': 'Funktionen',
+                    'Dashboard': 'Dashboard',
+                    'Extension': 'Erweiterung',
+                    'About': 'Über uns',
+                    'Sign In': 'Anmelden',
+                    'Get Started': 'Loslegen',
+                    'Scan URL': 'URL scannen',
+                    'Enter URL to scan': 'URL zum Scannen eingeben',
+                    'Protect yourself from malicious websites, phishing attacks, and online threats with our AI-powered security platform. Real-time scanning, intelligent threat detection, and comprehensive protection for your digital life.': 'Schützen Sie sich vor bösartigen Websites, Phishing-Angriffen und Online-Bedrohungen mit unserer KI-gestützten Sicherheitsplattform. Echtzeit-Scanning, intelligente Bedrohungserkennung und umfassender Schutz für Ihr digitales Leben.'
+                }
+            };
+
+            const translations = fallbackTranslations[languageCode] || {};
+            console.log('🔄 Applying fallback translations:', {
+                languageCode,
+                availableTranslations: Object.keys(translations).length,
+                elementsToTranslate: elements.length
+            });
+
+            let appliedCount = 0;
+
+            elements.forEach(el => {
+                const originalText = window.originalTexts.get(el);
+                if (originalText && translations[originalText]) {
+                    el.style.transition = 'opacity 0.2s ease';
+                    el.style.opacity = '0.7';
+
+                    setTimeout(() => {
+                        el.textContent = translations[originalText];
+                        el.style.opacity = '1';
+                    }, 100);
+
+                    appliedCount++;
+                    console.log(`✅ Fallback translated: "${originalText}" → "${translations[originalText]}"`);
+                } else if (originalText) {
+                    console.log(`❌ No fallback translation for: "${originalText}"`);
+                }
+            });
+
+            console.log(`🎯 Applied ${appliedCount} fallback translations`);
+        }
+
+        function getLanguageName(code) {
+            const languages = {
+                'en': 'English',
+                'es': 'Español',
+                'fr': 'Français',
+                'de': 'Deutsch',
+                'it': 'Italiano',
+                'pt': 'Português',
+                'ru': 'Русский',
+                'ja': '日本語',
+                'ko': '한국어',
+                'zh': '中文'
+            };
+            return languages[code] || code;
+        }
+
+        // Enhanced scroll progress indicator with smooth performance
+        function initScrollProgress() {
+            // Create progress bar
+            const progressBar = document.createElement('div');
+            progressBar.className = 'scroll-progress';
+            document.body.appendChild(progressBar);
+
+            let ticking = false;
+
+            function updateProgress() {
+                const scrollTop = window.pageYOffset;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollPercent = Math.min(100, Math.max(0, (scrollTop / docHeight) * 100));
+
+                // Smooth progress update with easing
+                progressBar.style.width = scrollPercent + '%';
+
+                // Add glow effect when scrolling fast
+                if (scrollPercent > 80) {
+                    progressBar.style.boxShadow = '0 2px 12px hsl(var(--primary) / 0.6)';
+                } else {
+                    progressBar.style.boxShadow = '0 2px 8px hsl(var(--primary) / 0.3)';
+                }
+
+                ticking = false;
+            }
+
+            function requestTick() {
+                if (!ticking) {
+                    requestAnimationFrame(updateProgress);
+                    ticking = true;
+                }
+            }
+
+            // Update progress on scroll with throttling
+            window.addEventListener('scroll', requestTick, { passive: true });
+
+            // Add scroll-to-top button when scrolled down
+            let scrollToTopBtn = null;
+
+            function toggleScrollToTop() {
+                const scrollTop = window.pageYOffset;
+
+                if (scrollTop > 300 && !scrollToTopBtn) {
+                    scrollToTopBtn = document.createElement('button');
+                    scrollToTopBtn.innerHTML = '↑';
+                    scrollToTopBtn.className = 'scroll-to-top';
+                    scrollToTopBtn.style.cssText = `
+                        position: fixed;
+                        bottom: 2rem;
+                        right: 2rem;
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+                        color: white;
+                        border: none;
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        z-index: 1000;
+                        opacity: 0;
+                        transform: translateY(20px);
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 0 4px 15px hsl(var(--primary) / 0.3);
+                    `;
+
+                    scrollToTopBtn.addEventListener('click', () => {
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    });
+
+                    document.body.appendChild(scrollToTopBtn);
+
+                    // Animate in
+                    setTimeout(() => {
+                        scrollToTopBtn.style.opacity = '1';
+                        scrollToTopBtn.style.transform = 'translateY(0)';
+                    }, 100);
+                } else if (scrollTop <= 300 && scrollToTopBtn) {
+                    scrollToTopBtn.style.opacity = '0';
+                    scrollToTopBtn.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        if (scrollToTopBtn) {
+                            scrollToTopBtn.remove();
+                            scrollToTopBtn = null;
+                        }
+                    }, 300);
+                }
+            }
+
+            window.addEventListener('scroll', toggleScrollToTop, { passive: true });
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('=== DOM LOADED - INITIALIZING WEBSHIELD ===');
+            console.log('🌐 API_BASE_URL:', window.API_BASE_URL);
+            console.log('🌍 Current hostname:', window.location.hostname);
+            console.log('🔗 Current URL:', window.location.href);
+            console.log('📡 Protocol:', window.location.protocol);
+            console.log('🚪 Port:', window.location.port);
+
+            // URL Scanner
+            const scannerInput = document.getElementById('url-input');
+            const scanButton = document.getElementById('scan-btn');
+
+            console.log('🔍 Found elements:');
+            console.log('   Scanner Input:', scannerInput ? '✅ Found' : '❌ Not found');
+            console.log('   Scan Button:', scanButton ? '✅ Found' : '❌ Not found');
+
+            if (scanButton) {
+                console.log('🎯 Adding click event listener to scan button');
+                scanButton.addEventListener('click', () => {
+                    const url = scannerInput.value.trim();
+                    console.log('🖱️ Scan button clicked!');
+                    console.log('📝 Input value:', url);
+                    console.log('🌐 Current hostname:', window.location.hostname);
+                    scanURL(url);
+                });
+            }
+
+            if (scannerInput) {
+                console.log('⌨️ Adding keypress event listener to scanner input');
+                scannerInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const url = scannerInput.value.trim();
+                        console.log('↵ Enter pressed!');
+                        console.log('📝 Input value:', url);
+                        scanURL(url);
+                    }
+                });
+            }
+
+            // Check if user is logged in and setup profile dropdown
+            checkLoginStatus();
+            setupProfileDropdown();
+            setupMobileMenu();
+
+            // Initialize enhanced animations and interactions
+            initScrollAnimations();
+            initSmoothScroll();
+            initButtonAnimations();
+            initParallaxEffect();
+            initScrollProgress();
+
+            // Load saved language preference
+            loadSavedLanguage();
+
+            // Test API connectivity
+            console.log('🔌 Testing API connectivity...');
+            fetch(`${window.API_BASE_URL}/api/health`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('✅ API connectivity test successful:', data);
+                })
+                .catch(error => {
+                    console.error('❌ API connectivity test failed:', error);
+                    console.log('🌐 This might be a network access issue');
+                });
+
+            console.log('✅ WebShield initialization complete');
+
+        });
+
+        // Handle page visibility change to stop polling when page is hidden
+        document.addEventListener('visibilitychange', function () {
+            // No polling to stop anymore since we use countdown
+            console.log('Page visibility changed');
+        });
+
+        // Detect if page is accessed directly and show CORS warning
+        function checkPageAccess() {
+            const isDirectAccess = window.location.protocol === 'file:';
+            const corsWarning = document.getElementById('cors-warning');
+
+            if (isDirectAccess && corsWarning) {
+                corsWarning.style.display = 'block';
+                console.warn('⚠️ Page accessed directly via file:// protocol. This will cause CORS issues with scan ID generation.');
+                console.warn('💡 Please access this page through the backend server at http://localhost:8000/');
+            }
+        }
+
+        // Check page access when DOM is loaded
+        document.addEventListener('DOMContentLoaded', checkPageAccess);
+
+        // PWA Installation Support
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('💡 PWA install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Show install button if not already installed
+            const installBtn = document.getElementById('pwa-install-btn');
+            if (installBtn) {
+                installBtn.style.display = 'inline-flex';
+                installBtn.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        console.log('PWA install result:', outcome);
+                        deferredPrompt = null;
+                        installBtn.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA installed successfully');
+            if (window.WebShieldErrorHandler) {
+                window.WebShieldErrorHandler.showSuccess(
+                    'App Installed!',
+                    'WebShield has been installed and can now be accessed from your home screen.'
+                );
+            }
+        });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('✅ Service Worker registered:', registration.scope);
+
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('🔄 New content available, refresh to update');
+                                if (window.WebShieldErrorHandler) {
+                                    window.WebShieldErrorHandler.showInfo(
+                                        'Update Available',
+                                        'A new version of WebShield is available. Refresh to update.'
+                                    );
+                                }
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.warn('⚠️ Service Worker registration failed:', error);
+                }
+            });
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.WebShieldTheme) {
+                window.WebShieldTheme.init();
+            }
+        });
+    </script>
+
+    <!-- WebShield AI Chatbot Widget -->
+    <script src="/static/js/chatbot-widget.js"></script>
+</body>
+
+</html>

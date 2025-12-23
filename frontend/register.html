@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - WebShield</title>
+    <script src="accessibility-enhancements.js"></script>
+    <script src="webshield-core.js"></script>
+    <script src="webshield-translation.js"></script>
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="premium-effects.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="cyber-effects.js" defer></script>
+    <style>
+        :root {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+            --radius: 0.5rem;
+            --gradient-primary: linear-gradient(135deg, #007bff, #0056b3);
+            --gradient-secondary: linear-gradient(135deg, #28a745, #20c997);
+            --gradient-success: linear-gradient(135deg, #28a745, #20c997);
+            --gradient-warning: linear-gradient(135deg, #ffc107, #e0a800);
+            --gradient-danger: linear-gradient(135deg, #dc3545, #c82333);
+            --gradient-primary-start: #007bff;
+            --gradient-primary-end: #0056b3;
+            --gradient-secondary-start: #28a745;
+            --gradient-secondary-end: #20c997;
+            --primary-color: #007bff;
+            --secondary-color: #0056b3;
+            --accent-color: #28a745;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            min-height: 100vh;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 25% 35%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 75% 65%, hsl(var(--accent) / 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: backgroundPulse 30s ease-in-out infinite;
+        }
+
+        @keyframes backgroundPulse {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+
+            33% {
+                transform: translate(-15px, -10px) scale(1.01);
+                opacity: 0.9;
+            }
+
+            66% {
+                transform: translate(10px, -15px) scale(0.99);
+                opacity: 1.1;
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+            background-color: hsl(var(--card) / 0.5);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: slideInFromTop 0.8s ease-out;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-content {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                height: 56px;
+                padding: 0 0.5rem;
+            }
+
+            .logo-text {
+                font-size: 1.25rem;
+            }
+
+            .logo-icon {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            animation: logoGlow 4s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .logo-icon:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+        }
+
+        @keyframes logoGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+                transform: translateY(0px);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
+                transform: translateY(-2px);
+            }
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav {
+            display: none;
+            gap: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .nav {
+                display: flex;
+            }
+        }
+
+        .nav a {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.3s;
+        }
+
+        .nav a:hover {
+            color: hsl(var(--primary));
+        }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Mobile header buttons */
+        @media (max-width: 768px) {
+            .header-buttons {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .btn .icon {
+                width: 1rem;
+                height: 1rem;
+            }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--muted) / 0.5);
+            border-color: hsl(var(--border));
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-primary-start, #007bff), var(--gradient-primary-end, #0056b3));
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(0, 123, 255, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(0, 123, 255, 0.4), 0 0 20px rgba(0, 123, 255, 0.3);
+            background: linear-gradient(135deg, var(--gradient-primary-end, #0056b3), var(--gradient-primary-start, #007bff));
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        /* Main content */
+        .main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .register-card {
+            background: var(--gradient-card);
+            border: 1px solid hsl(var(--border));
+            border-radius: 24px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(25px);
+        }
+
+        .register-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .register-card:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .register-title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .register-subtitle {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--foreground));
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            color: hsl(var(--foreground));
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+            box-shadow:
+                0 0 0 3px rgba(59, 130, 246, 0.15),
+                0 4px 12px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            transition: opacity 0.2s ease;
+        }
+
+        .form-input:focus::placeholder {
+            opacity: 0.6;
+        }
+
+        /* Loading animation */
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Error message styling */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Success message styling */
+        .success-message {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        /* Password strength indicator */
+        .password-strength {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .strength-weak {
+            width: 25%;
+            background: #ef4444;
+        }
+
+        .strength-fair {
+            width: 50%;
+            background: #f59e0b;
+        }
+
+        .strength-good {
+            width: 75%;
+            background: #10b981;
+        }
+
+        .strength-strong {
+            width: 100%;
+            background: #22c55e;
+        }
+
+        .form-input::placeholder {
+            color: hsl(var(--muted-foreground));
+        }
+
+        .btn-full {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox {
+            width: 1rem;
+            height: 1rem;
+            accent-color: hsl(var(--primary));
+        }
+
+        .checkbox-label {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .checkbox-label a {
+            color: hsl(var(--primary));
+            text-decoration: none;
+        }
+
+        .checkbox-label a:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: hsl(var(--border));
+        }
+
+        .divider span {
+            padding: 0 1rem;
+        }
+
+        .register-footer {
+            text-align: center;
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .register-footer a {
+            color: hsl(var(--primary));
+            text-decoration: none;
+        }
+
+        .register-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Google button */
+        .btn-google {
+            background: #ffffff;
+            color: #1f2937;
+            border: 1px solid hsl(var(--border));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-google::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.05), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-google:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-google:hover::before {
+            left: 100%;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                height: 56px;
+                padding: 0 0.5rem;
+            }
+
+            .nav {
+                display: none;
+            }
+
+            .register-card {
+                margin: 1rem;
+                padding: 1.5rem;
+                max-width: 100%;
+                border-radius: 1rem;
+            }
+
+            .register-title {
+                font-size: 1.75rem;
+            }
+
+            .form-input,
+            .btn-full {
+                height: 3rem;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .register-card {
+                margin: 0.5rem;
+                padding: 1.25rem;
+            }
+
+            .register-title {
+                font-size: 1.5rem;
+            }
+
+            .form-input,
+            .btn-full {
+                height: 2.75rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Mobile Navigation */
+        @media (max-width: 767px) {
+            .nav {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                background: hsl(var(--card));
+                border-bottom: 1px solid hsl(var(--border));
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                z-index: 1000;
+                transform: translateY(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .nav.active {
+                transform: translateY(0);
+            }
+
+            .nav a {
+                color: hsl(var(--foreground));
+                text-decoration: none;
+                font-size: 0.875rem;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid hsl(var(--border) / 0.3);
+                transition: color 0.3s;
+            }
+
+            .nav a:hover {
+                color: hsl(var(--primary));
+            }
+
+            .nav a:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo" style="text-decoration:none;">
+                    <div class="logo-icon">🛡️</div>
+                    <span class="logo-text">WebShield</span>
+                </a>
+
+                <nav class="nav" id="mobile-nav">
+                    <a href="index.html">Home</a>
+                    <a href="features.html">Features</a>
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="how-to-install.html">Extension</a>
+                    <a href="about.html">About</a>
+                </nav>
+
+                <div class="header-buttons">
+                    <a href="login.html" class="btn btn-ghost">Login</a>
+                    <a href="register.html" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="register-card">
+            <div class="register-header">
+                <h1 class="register-title">Join WebShield</h1>
+                <p class="register-subtitle">Create your account for enhanced web security</p>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <form>
+                <div class="form-group">
+                    <label for="name" class="form-label">Full Name</label>
+                    <input type="text" id="name" class="form-input" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Create a strong password"
+                        required>
+                    <div class="password-strength" id="password-strength" style="display: none;">
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="strength-fill"></div>
+                        </div>
+                        <span id="strength-text"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password" class="form-label">Confirm Password</label>
+                    <input type="password" id="confirm-password" class="form-input" placeholder="Confirm your password"
+                        required>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="terms" class="checkbox" required>
+                    <label for="terms" class="checkbox-label">
+                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" id="register-btn">
+                    <span class="btn-text">Create Account</span>
+                    <span class="btn-loading" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" class="animate-spin">
+                            <path d="M21 12a9 9 0 11-6.219-8.56" />
+                        </svg>
+                        Creating Account...
+                    </span>
+                </button>
+            </form>
+
+            <div class="divider"><span>or</span></div>
+
+            <button class="btn btn-google btn-full">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M21.35 11.1H12v2.9h5.3c-.23 1.48-1.6 4.33-5.3 4.33-3.19 0-5.8-2.63-5.8-5.88s2.61-5.88 5.8-5.88c1.81 0 3.03.77 3.73 1.43l2.55-2.46C16.86 3.76 14.65 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c5.31 0 8.8-3.73 8.8-9 0-.6-.07-1.02-.15-1.5Z"
+                        fill="#4285F4" />
+                </svg>
+                Continue with Google
+            </button>
+
+            <div class="register-footer">
+                <p>Already have an account? <a href="login.html">Sign in</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Mobile menu functionality
+        function setupMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            if (mobileMenuBtn && mobileNav) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileNav.classList.toggle('active');
+                });
+
+                // Close mobile menu when clicking on a link
+                const navLinks = mobileNav.querySelectorAll('a');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        mobileNav.classList.remove('active');
+                    });
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
+                        mobileNav.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // Enhanced register page functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            setupMobileMenu();
+
+            const registerForm = document.querySelector('form');
+            const registerBtn = document.getElementById('register-btn');
+            const btnText = registerBtn.querySelector('.btn-text');
+            const btnLoading = registerBtn.querySelector('.btn-loading');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm-password');
+            const passwordStrength = document.getElementById('password-strength');
+            const strengthFill = document.getElementById('strength-fill');
+            const strengthText = document.getElementById('strength-text');
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            }
+
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+            }
+
+            function setLoading(loading) {
+                if (loading) {
+                    registerBtn.disabled = true;
+                    btnText.style.display = 'none';
+                    btnLoading.style.display = 'flex';
+                    registerBtn.style.opacity = '0.8';
+                } else {
+                    registerBtn.disabled = false;
+                    btnText.style.display = 'block';
+                    btnLoading.style.display = 'none';
+                    registerBtn.style.opacity = '1';
+                }
+            }
+
+            function checkPasswordStrength(password) {
+                let strength = 0;
+                let feedback = '';
+
+                if (password.length >= 8) strength += 1;
+                if (/[a-z]/.test(password)) strength += 1;
+                if (/[A-Z]/.test(password)) strength += 1;
+                if (/[0-9]/.test(password)) strength += 1;
+                if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+
+                strengthFill.className = 'strength-fill';
+
+                switch (strength) {
+                    case 0:
+                    case 1:
+                        strengthFill.classList.add('strength-weak');
+                        feedback = 'Weak password';
+                        break;
+                    case 2:
+                        strengthFill.classList.add('strength-fair');
+                        feedback = 'Fair password';
+                        break;
+                    case 3:
+                    case 4:
+                        strengthFill.classList.add('strength-good');
+                        feedback = 'Good password';
+                        break;
+                    case 5:
+                        strengthFill.classList.add('strength-strong');
+                        feedback = 'Strong password';
+                        break;
+                }
+
+                strengthText.textContent = feedback;
+                return strength;
+            }
+
+            // Password strength indicator
+            passwordInput.addEventListener('input', function () {
+                const password = this.value;
+                if (password.length > 0) {
+                    passwordStrength.style.display = 'block';
+                    checkPasswordStrength(password);
+                } else {
+                    passwordStrength.style.display = 'none';
+                }
+            });
+
+            // Real-time password confirmation validation
+            confirmPasswordInput.addEventListener('input', function () {
+                const password = passwordInput.value;
+                const confirmPassword = this.value;
+
+                if (confirmPassword.length > 0) {
+                    if (password === confirmPassword) {
+                        this.style.borderColor = '#22c55e';
+                    } else {
+                        this.style.borderColor = '#ef4444';
+                    }
+                } else {
+                    this.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                }
+            });
+
+            registerForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                const terms = document.getElementById('terms').checked;
+
+                // Enhanced validation
+                if (!name || !email || !password || !confirmPassword) {
+                    showError('Please fill in all fields.');
+                    return;
+                }
+
+                if (name.length < 2) {
+                    showError('Full name must be at least 2 characters long.');
+                    return;
+                }
+
+                if (!email.includes('@') || !email.includes('.')) {
+                    showError('Please enter a valid email address.');
+                    return;
+                }
+
+                if (password.length < 8) {
+                    showError('Password must be at least 8 characters long.');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    showError('Passwords do not match.');
+                    return;
+                }
+
+                if (checkPasswordStrength(password) < 2) {
+                    showError('Please choose a stronger password.');
+                    return;
+                }
+
+                if (!terms) {
+                    showError('Please accept the Terms of Service and Privacy Policy.');
+                    return;
+                }
+
+                setLoading(true);
+                console.log('📝 Registration attempt for:', email);
+
+                try {
+                    const response = await fetch(`${window.API_BASE_URL}/api/auth/register`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            full_name: name,
+                            email: email,
+                            password: password
+                        })
+                    });
+
+                    console.log('📡 Registration response status:', response.status);
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ Registration successful:', result);
+
+                        showSuccess('Account created successfully! Redirecting to login...');
+
+                        // Show success message on login page
+                        const flashMessage = result.message || 'Account created successfully! Please sign in.';
+                        console.log('💬 Setting flash message:', flashMessage);
+                        sessionStorage.setItem('flashMessage', flashMessage);
+
+                        // Redirect to login page after delay
+                        setTimeout(() => {
+                            console.log('🔄 Redirecting to login page...');
+                            window.location.href = 'login.html';
+                        }, 1500);
+                    } else {
+                        const error = await response.json();
+                        console.error('❌ Registration failed:', error);
+                        showError(error.detail || 'Registration failed. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('❌ Registration error:', error);
+                    showError('Connection error. Please check your internet connection and try again.');
+                } finally {
+                    setLoading(false);
+                }
+            });
+        });
+    </script>
+    <script src="config.js"></script>
+    <!-- Include enhanced animations -->
+    <script src="enhanced-animations.js"></script>
+
+    <!-- Initialize theme on page load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.WebShieldTheme) {
+                window.WebShieldTheme.init();
+            }
+        });
+    </script>
+</body>
+
+</html>

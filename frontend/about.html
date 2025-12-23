@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - WebShield</title>
+    <script src="accessibility-enhancements.js"></script>
+    <script src="webshield-core.js"></script>
+    <script src="webshield-translation.js"></script>
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="premium-effects.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="cyber-effects.js" defer></script>
+    <style>
+        /* Translation Styles */
+        .translation-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .translation-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            height: 40px;
+            padding: 0 12px;
+            border: none;
+            border-radius: 8px;
+            background: hsl(var(--muted) / .5);
+            color: hsl(var(--foreground));
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .translation-btn:hover {
+            background: hsl(var(--muted));
+            transform: scale(1.05);
+        }
+
+        .translation-btn.translating {
+            opacity: .7;
+            cursor: wait;
+        }
+
+        .translation-text {
+            font-size: .9rem;
+            font-weight: 500;
+        }
+
+        .language-selector {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 200px;
+            border: 1px solid hsl(var(--border));
+            background: hsl(var(--card) / .95);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px hsl(var(--background) / .8);
+            z-index: 1000;
+        }
+
+        .language-selector.hidden {
+            display: none;
+        }
+
+        .language-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: .5rem 0;
+        }
+
+        .language-option {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            padding: .6rem 1rem;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .language-option.active {
+            background: hsl(var(--primary) / .1);
+            color: hsl(var(--primary));
+            font-weight: 600;
+        }
+
+        .lang-code {
+            width: 32px;
+            height: 20px;
+            display: grid;
+            place-items: center;
+            border-radius: 4px;
+            background: hsl(var(--muted) / .3);
+            font-size: .75rem;
+            font-weight: 700;
+        }
+
+        .translation-error {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: hsl(var(--destructive));
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+    </style>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="config.js"></script>
+
+    <style>
+        /* WebShield Unified Design System */
+        /* This file contains all the standardized styles for the WebShield application */
+
+        :root {
+            /* Enhanced Color System - Vibrant */
+            --primary: 220 95% 58%;
+            --primary-foreground: 220 15% 98%;
+            --primary-hover: 220 90% 65%;
+            --accent: 160 85% 48%;
+            --accent-foreground: 220 15% 98%;
+            --accent-hover: 160 80% 55%;
+            --success: 142 76% 40%;
+            --warning: 45 93% 50%;
+            --destructive: 0 75% 55%;
+            --info: 210 100% 65%;
+
+            /* Dark Theme - Rich Colors */
+            --background: 240 35% 8%;
+            --foreground: 220 15% 96%;
+            --card: 240 30% 10%;
+            --card-foreground: 220 15% 96%;
+            --popover: 240 30% 10%;
+            --popover-foreground: 220 15% 96%;
+            --secondary: 240 25% 15%;
+            --secondary-foreground: 220 15% 96%;
+            --muted: 240 20% 12%;
+            --muted-foreground: 220 10% 65%;
+            --border: 240 20% 18%;
+            --input: 240 20% 18%;
+            --ring: 220 95% 58%;
+            --radius: 0.75rem;
+
+            /* Enhanced Gradients */
+            --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+            --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-hover)));
+            --gradient-cyber: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+        }
+
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(125deg,
+                    hsl(220 40% 8%) 0%,
+                    hsl(230 45% 12%) 20%,
+                    hsl(240 40% 10%) 40%,
+                    hsl(250 45% 12%) 60%,
+                    hsl(260 40% 10%) 80%,
+                    hsl(220 40% 8%) 100%),
+                radial-gradient(ellipse at top left, hsl(220 90% 56% / 0.15) 0%, transparent 40%),
+                radial-gradient(ellipse at bottom right, hsl(280 80% 50% / 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, hsl(160 84% 45% / 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                conic-gradient(from 180deg at 50% 50%,
+                    hsl(220 90% 56% / 0.03) 0deg,
+                    hsl(280 80% 50% / 0.02) 60deg,
+                    hsl(160 84% 45% / 0.03) 120deg,
+                    hsl(220 90% 56% / 0.02) 180deg,
+                    hsl(280 80% 50% / 0.03) 240deg,
+                    hsl(160 84% 45% / 0.02) 300deg,
+                    hsl(220 90% 56% / 0.03) 360deg);
+            pointer-events: none;
+            z-index: -1;
+            animation: meshRotate 60s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes backgroundShift {
+
+            0%,
+            100% {
+                filter: hue-rotate(0deg) brightness(1);
+            }
+
+            25% {
+                filter: hue-rotate(10deg) brightness(1.05);
+            }
+
+            50% {
+                filter: hue-rotate(-10deg) brightness(0.95);
+            }
+
+            75% {
+                filter: hue-rotate(5deg) brightness(1.02);
+            }
+        }
+
+        @keyframes meshRotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes backgroundPulse {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+
+            33% {
+                transform: translate(-15px, -10px) scale(1.01);
+                opacity: 0.9;
+            }
+
+            66% {
+                transform: translate(10px, -15px) scale(0.99);
+                opacity: 1.1;
+            }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header Styles */
+        .header {
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+            background-color: hsl(var(--card) / 0.5);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            animation: slideInFromTop 0.8s ease-out;
+        }
+
+        .header-content {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, hsl(210 100% 60%), hsl(160 84% 45%));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            animation: logoGlow 4s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .logo-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px hsl(var(--primary) / 0.6);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, hsl(210 100% 60%), hsl(160 84% 45%));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav a {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        .nav a:hover {
+            color: hsl(var(--primary));
+        }
+
+        .nav a.active {
+            color: hsl(var(--primary));
+        }
+
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: hsl(var(--foreground));
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            transition: background 0.3s;
+        }
+
+        .mobile-menu-btn:hover {
+            background: hsl(var(--muted));
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gradient-primary-start, #007bff), var(--gradient-primary-end, #0056b3));
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(0, 123, 255, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(0, 123, 255, 0.4), 0 0 20px rgba(0, 123, 255, 0.3);
+            background: linear-gradient(135deg, var(--gradient-primary-end, #0056b3), var(--gradient-primary-start, #007bff));
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 2px solid hsl(var(--border));
+        }
+
+        .btn-outline:hover {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 86, 179, 0.1));
+            border-color: var(--gradient-primary-start, #007bff);
+            color: var(--gradient-primary-start, #007bff);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--muted) / 0.5);
+            border-color: hsl(var(--border));
+        }
+
+        .btn-hero {
+            background: linear-gradient(135deg, var(--gradient-primary-start, #007bff), var(--gradient-primary-end, #0056b3));
+            color: white;
+            border: 1px solid transparent;
+            box-shadow: 0 4px 14px 0 rgba(0, 123, 255, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(0, 123, 255, 0.4), 0 0 20px rgba(0, 123, 255, 0.3);
+            background: linear-gradient(135deg, var(--gradient-primary-end, #0056b3), var(--gradient-primary-start, #007bff));
+        }
+
+        .btn-hero:hover::before {
+            left: 100%;
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        /* Profile Dropdown */
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            box-shadow: 0 10px 25px -5px hsl(var(--background) / 0.8);
+            min-width: 200px;
+            z-index: 1000;
+            margin-top: 0.5rem;
+        }
+
+        .profile-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: hsl(var(--foreground));
+            text-decoration: none;
+            transition: background 0.2s;
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+        }
+
+        .profile-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .profile-menu-item:hover {
+            background: hsl(var(--surface));
+            color: hsl(var(--primary));
+        }
+
+        .profile-menu-item svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Main Content */
+        .main {
+            min-height: calc(100vh - 80px);
+            padding: 2rem 0;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-cyber);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: hsl(var(--muted-foreground));
+            font-size: 1.125rem;
+        }
+
+        /* Content Sections */
+        .content-section {
+            margin-bottom: 3rem;
+        }
+
+        .content-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: var(--shadow-elegant);
+        }
+
+        .content-card h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: hsl(var(--foreground));
+        }
+
+        .content-card p {
+            color: hsl(var(--muted-foreground));
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+
+        /* Grid Layouts */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .tech-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: hsl(var(--surface));
+            border-radius: var(--radius);
+            border: 1px solid hsl(var(--border));
+        }
+
+        .tech-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .tech-item h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--foreground));
+        }
+
+        .tech-item p {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .team-member {
+            text-align: center;
+            padding: 1.5rem;
+            background: hsl(var(--surface));
+            border-radius: var(--radius);
+            border: 1px solid hsl(var(--border));
+        }
+
+        .member-avatar {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .team-member h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: hsl(var(--foreground));
+        }
+
+        .team-member p {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: hsl(var(--surface));
+            border-radius: var(--radius);
+            border: 1px solid hsl(var(--border));
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: hsl(var(--primary));
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* CTA Card */
+        .cta-card {
+            text-align: center;
+            background: var(--hero-gradient);
+            border: 1px solid hsl(var(--primary) / 0.3);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: hsl(var(--foreground));
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background: hsl(var(--surface));
+            color: hsl(var(--foreground));
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: hsl(var(--primary));
+            box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+        }
+
+        .form-input::placeholder {
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* Icons */
+        .icon {
+            display: inline-block;
+            width: 1.25rem;
+            height: 1.25rem;
+            transition: transform 0.3s ease;
+        }
+
+        .icon-lg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        /* Footer styles removed - using enhanced-styles.css */
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification .cta-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--gradient-primary-start, #007bff), var(--gradient-primary-end, #0056b3));
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+
+        .notification .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .notification .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.5), 0 0 20px rgba(0, 123, 255, 0.3);
+            background: linear-gradient(135deg, var(--gradient-primary-end, #0056b3), var(--gradient-primary-start, #007bff));
+        }
+
+        .notification .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .notification .cta-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(0, 123, 255, 0.4);
+        }
+
+        .notification .cta-button:focus-visible {
+            outline: 2px solid var(--accent-color, #28a745);
+            outline-offset: 2px;
+        }
+
+        .notification-error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .notification-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .notification-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid hsl(var(--border));
+            border-top: 2px solid hsl(var(--primary));
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .footer-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                height: 56px;
+                padding: 0 0.5rem;
+            }
+
+            .nav {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+
+            .header-actions {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .content-card {
+                padding: 1.5rem;
+            }
+
+            .tech-grid,
+            .team-grid,
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cta-buttons .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+            }
+
+            .content-card {
+                padding: 1rem;
+            }
+
+            .btn-lg {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Mobile Navigation */
+        @media (max-width: 767px) {
+            .nav {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                background: hsl(var(--card));
+                border-bottom: 1px solid hsl(var(--border));
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                z-index: 1000;
+                transform: translateY(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .nav.active {
+                transform: translateY(0);
+            }
+
+            .nav a {
+                padding: 0.75rem 1rem;
+                border-radius: var(--radius);
+                background: hsl(var(--muted) / 0.3);
+            }
+
+            .profile-menu {
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                min-width: auto;
+                margin-top: 0;
+                border-radius: 0;
+                border-top: 1px solid hsl(var(--border));
+            }
+
+            .profile-menu-item {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Accessibility Improvements */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Focus styles for keyboard navigation */
+        .btn:focus,
+        .form-input:focus,
+        .nav a:focus {
+            outline: 2px solid hsl(var(--primary));
+            outline-offset: 2px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --border: 0 0% 50%;
+                --muted-foreground: 0 0% 40%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <span class="logo-text">WebShield</span>
+                </div>
+
+                <nav class="nav" id="mobile-nav">
+                    <a href="index.html" data-translate="nav-home">Home</a>
+                    <a href="features.html" data-translate="nav-features">Features</a>
+                    <a href="dashboard.html" data-translate="nav-dashboard">Dashboard</a>
+                    <a href="how-to-install.html" data-translate="nav-extension">Extension</a>
+                    <a href="about.html" class="active" data-translate="nav-about">About</a>
+                </nav>
+
+                <button class="mobile-menu-btn" id="mobile-menu-btn" style="display: none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+
+                <div class="header-actions" id="header-actions">
+                    <a href="login.html" class="btn btn-ghost" id="signin-btn">
+                        <span class="icon">🔑</span>
+                        <span data-translate="btn-sign-in">Sign In</span>
+                    </a>
+                    <a href="register.html" class="btn btn-hero" id="getstarted-btn">
+                        <span class="icon">👤</span>
+                        <span data-translate="btn-get-started">Get Started</span>
+                    </a>
+                    <div id="profile-section" style="display: none;">
+                        <div class="profile-dropdown">
+                            <button class="btn btn-ghost" id="profile-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <circle cx="12" cy="10" r="3" />
+                                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                                </svg>
+                                <span id="user-name" data-translate="btn-profile">Profile</span>
+                            </button>
+                            <div class="profile-menu" id="profile-menu" style="display: none;">
+                                <a href="profile.html" class="profile-menu-item">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <circle cx="12" cy="10" r="3" />
+                                        <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                                    </svg>
+                                    <span data-translate="menu-my-profile">My Profile</span>
+                                </a>
+                                <a href="#" class="profile-menu-item" id="logout-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                        <polyline points="16,17 21,12 16,7" />
+                                        <line x1="21" y1="12" x2="9" y2="12" />
+                                    </svg>
+                                    <span data-translate="btn-sign-out">Sign Out</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title" data-translate="page-title-about">About WebShield</h1>
+                <p class="page-subtitle" data-translate="page-subtitle-about">Protecting the web, one URL at a time</p>
+            </div>
+
+            <!-- Mission Section -->
+            <section class="content-section">
+                <div class="content-card">
+                    <h2 data-translate="section-our-mission">Our Mission</h2>
+                    <p data-translate="mission-paragraph-1">
+                        WebShield was created with a simple yet powerful mission: to make the internet safer for
+                        everyone.
+                        In today's digital landscape, cyber threats are constantly evolving, and users need reliable,
+                        real-time protection against malicious websites, phishing scams, and malware.
+                    </p>
+                    <p data-translate="mission-paragraph-2">
+                        We believe that cybersecurity should be accessible, transparent, and effective. Our advanced
+                        threat detection system combines cutting-edge AI algorithms with comprehensive security
+                        databases
+                        to provide instant protection for users worldwide.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Technology Section -->
+            <section class="content-section">
+                <div class="content-card">
+                    <h2 data-translate="section-our-technology">Our Technology</h2>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <div class="tech-icon">🤖</div>
+                            <h3 data-translate="tech-ai-powered">AI-Powered Analysis</h3>
+                            <p data-translate="tech-ai-description">Advanced machine learning algorithms detect patterns
+                                and anomalies that traditional security tools might miss.</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🌐</div>
+                            <h3 data-translate="tech-realtime-scanning">Real-Time Scanning</h3>
+                            <p data-translate="tech-realtime-description">Instant URL analysis with results in
+                                milliseconds, ensuring you never wait for protection.</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🔗</div>
+                            <h3 data-translate="tech-virustotal">VirusTotal Integration</h3>
+                            <p data-translate="tech-virustotal-description">Leverage 90+ antivirus engines and URL
+                                blocklisting services for comprehensive threat detection.</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🔒</div>
+                            <h3 data-translate="tech-ssl-validation">SSL Validation</h3>
+                            <p data-translate="tech-ssl-description">Verify certificate authenticity and encryption
+                                strength to ensure secure connections.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Team Section -->
+            <section class="content-section">
+                <div class="content-card">
+                    <h2 data-translate="section-our-team">Our Team</h2>
+                    <p data-translate="team-description">
+                        WebShield is built by a passionate team of cybersecurity experts, developers, and designers
+                        who are committed to creating the most effective web protection solution available.
+                    </p>
+                    <div class="team-grid">
+                        <div class="team-member">
+                            <div class="member-avatar">
+                                <svg width="60" height="60" viewBox="0 0 100 100" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="50" r="45" fill="url(#avatarGradient1)" />
+                                    <circle cx="50" cy="35" r="15" fill="white" opacity="0.9" />
+                                    <path d="M25 75C25 65 35 55 50 55C65 55 75 65 75 75" fill="white" opacity="0.9" />
+                                    <defs>
+                                        <linearGradient id="avatarGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#007bff" />
+                                            <stop offset="100%" style="stop-color:#0056b3" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <h3 data-translate="team-security-engineers">Security Engineers</h3>
+                            <p data-translate="team-security-description">Experts in threat detection and cybersecurity
+                            </p>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-avatar">
+                                <svg width="60" height="60" viewBox="0 0 100 100" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="50" r="45" fill="url(#avatarGradient2)" />
+                                    <circle cx="50" cy="35" r="15" fill="white" opacity="0.9" />
+                                    <path d="M25 75C25 65 35 55 50 55C65 55 75 65 75 75" fill="white" opacity="0.9" />
+                                    <defs>
+                                        <linearGradient id="avatarGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#28a745" />
+                                            <stop offset="100%" style="stop-color:#20c997" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <h3 data-translate="team-ux-designers">UX Designers</h3>
+                            <p data-translate="team-ux-description">Creating intuitive and accessible user experiences
+                            </p>
+                        </div>
+                        <div class="team-member">
+                            <div class="member-avatar">
+                                <svg width="60" height="60" viewBox="0 0 100 100" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="50" cy="50" r="45" fill="url(#avatarGradient3)" />
+                                    <circle cx="50" cy="35" r="15" fill="white" opacity="0.9" />
+                                    <path d="M25 75C25 65 35 55 50 55C65 55 75 65 75 75" fill="white" opacity="0.9" />
+                                    <defs>
+                                        <linearGradient id="avatarGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#ffc107" />
+                                            <stop offset="100%" style="stop-color:#e0a800" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <h3 data-translate="team-backend-developers">Backend Developers</h3>
+                            <p data-translate="team-backend-description">Building robust and scalable infrastructure</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stats Section -->
+            <section class="content-section">
+                <div class="content-card">
+                    <h2 data-translate="section-impact-numbers">Impact by the Numbers</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">1M+</div>
+                            <div class="stat-label" data-translate="stat-urls-scanned">URLs Scanned</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">50K+</div>
+                            <div class="stat-label" data-translate="stat-threats-detected">Threats Detected</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">99.9%</div>
+                            <div class="stat-label" data-translate="stat-accuracy-rate">Accuracy Rate</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label" data-translate="stat-protection">Protection</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA Section -->
+            <section class="content-section">
+                <div class="content-card cta-card">
+                    <h2 data-translate="cta-join-movement">Join the Movement</h2>
+                    <p data-translate="cta-description">
+                        Help us make the internet a safer place. Start protecting yourself and your loved ones today.
+                    </p>
+                    <div class="cta-buttons">
+                        <a href="index.html" class="btn btn-hero btn-lg">
+                            <span class="icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z"
+                                        stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                                    <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </span>
+                            <span data-translate="btn-start-scanning">Start Scanning</span>
+                        </a>
+                        <a href="how-to-install.html" class="btn btn-outline btn-lg">
+                            <span class="icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12S6.48 22 12 22 22 17.52 22 12 17.52 2 12 2Z"
+                                        stroke="currentColor" stroke-width="2" />
+                                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </span>
+                            <span data-translate="btn-install-extension">Install Extension</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <div class="footer-copyright" data-translate="footer-copyright">
+                    &copy; 2025 WebShield. All rights reserved.
+                </div>
+                <div class="footer-links">
+                    <a href="#" data-translate="footer-privacy">Privacy</a>
+                    <a href="#" data-translate="footer-terms">Terms</a>
+                    <a href="#" data-translate="footer-security">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Check login status and update UI accordingly
+        function checkLoginStatus() {
+            const signInBtn = document.getElementById('signin-btn');
+            const getStartedBtn = document.getElementById('getstarted-btn');
+            const profileSection = document.getElementById('profile-section');
+            const userName = document.getElementById('user-name');
+
+            const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+            const userEmail = localStorage.getItem('userEmail');
+            const userNameValue = localStorage.getItem('userName');
+
+            if (isLoggedIn && profileSection) {
+                profileSection.style.display = 'block';
+                if (signInBtn) signInBtn.style.display = 'none';
+                if (getStartedBtn) getStartedBtn.style.display = 'none';
+                if (userName) userName.textContent = userNameValue || userEmail?.split('@')[0] || 'Profile';
+            } else {
+                if (profileSection) profileSection.style.display = 'none';
+                if (signInBtn) signInBtn.style.display = 'inline-flex';
+                if (getStartedBtn) getStartedBtn.style.display = 'inline-flex';
+            }
+        }
+
+        // Setup profile dropdown functionality
+        function setupProfileDropdown() {
+            const profileBtn = document.getElementById('profile-btn');
+            const profileMenu = document.getElementById('profile-menu');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            if (profileBtn && profileMenu) {
+                profileBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isVisible = profileMenu.style.display === 'block';
+                    profileMenu.style.display = isVisible ? 'none' : 'block';
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+                        profileMenu.style.display = 'none';
+                    }
+                });
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    localStorage.clear();
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        // Mobile menu functionality
+        function setupMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            if (mobileMenuBtn && mobileNav) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileNav.classList.toggle('active');
+                });
+
+                const navLinks = mobileNav.querySelectorAll('a');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        mobileNav.classList.remove('active');
+                    });
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
+                        mobileNav.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function () {
+            checkLoginStatus();
+            setupProfileDropdown();
+            setupMobileMenu();
+        });
+    </script>
+    <script src="enhanced-animations.js"></script>
+    <!-- Initialize theme on page load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.WebShieldTheme) {
+                window.WebShieldTheme.init();
+            }
+        });
+    </script>
+</body>
+
+</html>

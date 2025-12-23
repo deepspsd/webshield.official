@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebShield Integration Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .test-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .test-item {
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .status.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .data-display {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .highlight {
+            background: #fffacd;
+            padding: 0.25rem;
+            border-radius: 3px;
+        }
+
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛡️ WebShield LLM Integration Test</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 2rem;">
+            This page tests all features of the scan report integration
+        </p>
+
+        <div class="test-section">
+            <h2>📋 Test Configuration</h2>
+            <div class="test-item">
+                <span>Server Status</span>
+                <span class="status pending" id="server-status">Checking...</span>
+            </div>
+            <div class="test-item">
+                <span>HuggingFace API Key</span>
+                <span class="status pending" id="hf-key-status">Checking...</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Scan Test Results</h2>
+            <div class="test-item">
+                <span>Scan Initiated</span>
+                <span class="status pending" id="scan-init">Pending</span>
+            </div>
+            <div class="test-item">
+                <span>Scan Completed</span>
+                <span class="status pending" id="scan-complete">Pending</span>
+            </div>
+            <div class="test-item">
+                <span>LLM Analysis Present</span>
+                <span class="status pending" id="llm-present">Pending</span>
+            </div>
+            <div class="test-item">
+                <span>LLM Using Real Models (Not Fallback)</span>
+                <span class="status pending" id="llm-real">Pending</span>
+            </div>
+            <div class="test-item">
+                <span>SSL Data Correct</span>
+                <span class="status pending" id="ssl-correct">Pending</span>
+            </div>
+            <div class="test-item">
+                <span>Charts Data Valid</span>
+                <span class="status pending" id="charts-valid">Pending</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Scan Data Preview</h2>
+            <div class="data-display" id="data-preview">
+                Click "Run Full Test" to see scan data...
+            </div>
+        </div>
+
+        <button id="run-test" onclick="runFullTest()">🚀 Run Full Test</button>
+
+        <div id="results" style="margin-top: 2rem;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let scanData = null;
+
+        async function checkServer() {
+            try {
+                const response = await fetch(`${API_BASE}/`, { timeout: 5000 });
+                updateStatus('server-status', 'pass', 'Online');
+                return true;
+            } catch (e) {
+                updateStatus('server-status', 'fail', 'Offline');
+                return false;
+            }
+        }
+
+        function updateStatus(id, status, text) {
+            const element = document.getElementById(id);
+            element.className = `status ${status}`;
+            element.textContent = text;
+        }
+
+        async function runFullTest() {
+            const button = document.getElementById('run-test');
+            button.disabled = true;
+            button.textContent = '⏳ Testing...';
+
+            // Reset statuses
+            ['scan-init', 'scan-complete', 'llm-present', 'llm-real', 'ssl-correct', 'charts-valid'].forEach(id => {
+                updateStatus(id, 'pending', 'Testing...');
+            });
+
+            try {
+                // Step 1: Check server
+                const serverOk = await checkServer();
+                if (!serverOk) {
+                    alert('Server is not running! Start with: python start_server.py');
+                    button.disabled = false;
+                    button.textContent = '🚀 Run Full Test';
+                    return;
+                }
+
+                // Step 2: Initiate scan
+                console.log('Initiating scan...');
+                const scanResponse = await fetch(`${API_BASE}/api/scan/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: 'https://www.google.com',
+                        user_email: 'test@webshield.com'
+                    })
+                });
+
+                if (!scanResponse.ok) {
+                    throw new Error(`Scan failed: ${scanResponse.status}`);
+                }
+
+                const scanInit = await scanResponse.json();
+                updateStatus('scan-init', 'pass', 'Success');
+                console.log('Scan initiated:', scanInit);
+
+                const scanId = scanInit.scan_id;
+
+                // Step 3: Wait for scan to complete
+                console.log('Waiting for scan to complete...');
+                let attempts = 0;
+                const maxAttempts = 30;
+
+                while (attempts < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    const resultResponse = await fetch(`${API_BASE}/api/scan/scan/${scanId}`);
+                    const resultData = await resultResponse.json();
+
+                    if (resultData.status === 'completed') {
+                        scanData = resultData;
+                        updateStatus('scan-complete', 'pass', 'Completed');
+                        console.log('Scan completed:', scanData);
+                        break;
+                    }
+
+                    attempts++;
+                    console.log(`Waiting... attempt ${attempts}/${maxAttempts}`);
+                }
+
+                if (!scanData) {
+                    throw new Error('Scan did not complete in time');
+                }
+
+                // Step 4: Validate LLM Analysis
+                const results = scanData.results;
+                const detectionDetails = results.detection_details;
+
+                // Check if LLM analysis exists
+                if (detectionDetails.llm_analysis) {
+                    updateStatus('llm-present', 'pass', 'Present');
+
+                    const llmData = detectionDetails.llm_analysis;
+
+                    // Check if using real models (not fallback)
+                    const isRealLLM = llmData.llm_analysis &&
+                        !llmData.llm_analysis.url_classification?.fallback &&
+                        !llmData.llm_analysis.content_classification?.fallback;
+
+                    if (isRealLLM) {
+                        updateStatus('llm-real', 'pass', 'Real Models');
+                        updateStatus('hf-key-status', 'pass', 'Configured');
+                    } else {
+                        updateStatus('llm-real', 'fail', 'Using Fallback');
+                        updateStatus('hf-key-status', 'fail', 'Not Set or Invalid');
+                    }
+                } else {
+                    updateStatus('llm-present', 'fail', 'Missing');
+                    updateStatus('llm-real', 'fail', 'N/A');
+                }
+
+                // Step 5: Validate SSL Data
+                const sslAnalysis = detectionDetails.ssl_analysis;
+                if (sslAnalysis && typeof sslAnalysis.valid !== 'undefined') {
+                    updateStatus('ssl-correct', 'pass', `SSL Valid: ${sslAnalysis.valid}`);
+                } else {
+                    updateStatus('ssl-correct', 'fail', 'SSL data missing or incorrect');
+                }
+
+                // Step 6: Validate Charts Data
+                const urlScore = detectionDetails.url_analysis?.suspicious_score;
+                const contentScore = detectionDetails.content_analysis?.phishing_score;
+                const sslScore = detectionDetails.ssl_analysis?.threat_score;
+
+                const chartsValid = (
+                    typeof urlScore === 'number' &&
+                    typeof contentScore === 'number' &&
+                    typeof sslScore === 'number'
+                );
+
+                if (chartsValid) {
+                    updateStatus('charts-valid', 'pass', 'All scores present');
+                } else {
+                    updateStatus('charts-valid', 'fail', 'Missing scores');
+                }
+
+                // Display data
+                displayScanData(scanData);
+
+            } catch (error) {
+                console.error('Test error:', error);
+                alert(`Test failed: ${error.message}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = '🔄 Run Test Again';
+            }
+        }
+
+        function displayScanData(data) {
+            const preview = document.getElementById('data-preview');
+            const results = data.results;
+            const details = results.detection_details;
+
+            let html = '<div style="line-height: 1.8;">';
+
+            html += '<div class="success">✅ SCAN RESULTS</div><br>';
+            html += `<strong>URL:</strong> ${results.url}<br>`;
+            html += `<strong>Threat Level:</strong> <span class="highlight">${results.threat_level}</span><br>`;
+            html += `<strong>Is Malicious:</strong> ${results.is_malicious}<br><br>`;
+
+            // SSL Analysis
+            html += '<div class="success">🔒 SSL ANALYSIS</div><br>';
+            if (details.ssl_analysis) {
+                const ssl = details.ssl_analysis;
+                html += `<strong>Valid:</strong> <span class="highlight">${ssl.valid}</span><br>`;
+                html += `<strong>Threat Score:</strong> ${ssl.threat_score || 0}<br>`;
+                if (ssl.issuer) html += `<strong>Issuer:</strong> ${ssl.issuer}<br>`;
+                if (ssl.subject) html += `<strong>Subject:</strong> ${ssl.subject}<br>`;
+            } else {
+                html += '<span class="error">SSL data not available</span><br>';
+            }
+            html += '<br>';
+
+            // LLM Analysis
+            html += '<div class="success">🤖 LLM ANALYSIS</div><br>';
+            if (details.llm_analysis && details.llm_analysis.llm_analysis) {
+                const llm = details.llm_analysis.llm_analysis;
+
+                // URL Classification
+                if (llm.url_classification) {
+                    html += `<strong>URL Classification:</strong><br>`;
+                    html += `  - Label: <span class="highlight">${llm.url_classification.label}</span><br>`;
+                    html += `  - Confidence: ${(llm.url_classification.confidence * 100).toFixed(1)}%<br>`;
+                    html += `  - Model: ${llm.url_classification.model}<br>`;
+                    if (llm.url_classification.fallback) {
+                        html += `  - <span class="error">⚠️ FALLBACK MODE</span><br>`;
+                    }
+                }
+
+                // Content Classification
+                if (llm.content_classification) {
+                    html += `<strong>Content Classification:</strong><br>`;
+                    html += `  - Label: <span class="highlight">${llm.content_classification.label}</span><br>`;
+                    html += `  - Confidence: ${(llm.content_classification.confidence * 100).toFixed(1)}%<br>`;
+                    html += `  - Model: ${llm.content_classification.model}<br>`;
+                    if (llm.content_classification.fallback) {
+                        html += `  - <span class="error">⚠️ FALLBACK MODE</span><br>`;
+                    }
+                }
+
+                // Explanation
+                if (llm.explanation) {
+                    html += `<strong>Explanation:</strong><br>`;
+                    html += `<div style="padding: 0.5rem; background: #f0f0f0; border-radius: 5px; margin: 0.5rem 0;">${llm.explanation.explanation || llm.explanation.risk_summary}</div>`;
+                    html += `<strong>Recommended Action:</strong> <span class="highlight">${llm.explanation.recommended_action}</span><br>`;
+                }
+            } else {
+                html += '<span class="error">LLM analysis not available</span><br>';
+            }
+
+            html += '<br>';
+
+            // Chart Data
+            html += '<div class="success">📊 CHART DATA</div><br>';
+            html += `<strong>URL Score:</strong> ${details.url_analysis?.suspicious_score || 0}<br>`;
+            html += `<strong>Content Score:</strong> ${details.content_analysis?.phishing_score || 0}<br>`;
+            html += `<strong>SSL Score:</strong> ${details.ssl_analysis?.threat_score || 0}<br>`;
+            html += `<strong>Malicious Count:</strong> ${results.malicious_count || 0}<br>`;
+            html += `<strong>Suspicious Count:</strong> ${results.suspicious_count || 0}<br>`;
+            html += `<strong>Total Engines:</strong> ${results.total_engines || 0}<br>`;
+
+            html += '</div>';
+            preview.innerHTML = html;
+        }
+
+        // Check server on load
+        window.addEventListener('load', checkServer);
+    </script>
+</body>
+
+</html>

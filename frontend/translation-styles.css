@@ -1,0 +1,352 @@
+/* WebShield Translation System Styles */
+
+/* Translation Container */
+.translation-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Translation Button */
+.translation-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1));
+    box-shadow: var(--shadow-md, 0 4px 12px hsl(var(--background) / 0.15));
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.translation-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-glass, linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)));
+    transition: left 0.5s ease;
+}
+
+.translation-btn:hover {
+    background: hsl(var(--muted));
+    border-color: hsl(var(--primary));
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-lg, 0 8px 25px hsl(var(--background) / 0.2)), var(--shadow-glow, 0 0 30px hsl(var(--primary) / 0.3));
+}
+
+.translation-btn:hover::before {
+    left: 100%;
+}
+
+.translation-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.translation-btn:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.1);
+}
+
+.translation-btn svg {
+    transition: transform 0.3s var(--ease-spring, cubic-bezier(0.68, -0.55, 0.265, 1.55));
+    z-index: 1;
+}
+
+.translation-btn:hover svg {
+    transform: rotate(180deg) scale(1.1);
+}
+
+/* Translation Button States */
+.translation-btn.translating {
+    opacity: 0.7;
+    cursor: wait;
+    pointer-events: none;
+}
+
+.translation-btn.translating svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Translation Text (for expanded button variant) */
+.translation-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Language Selector Dropdown */
+.language-selector {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 220px;
+    max-width: 280px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card) / 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    box-shadow: 
+        0 10px 25px -5px hsl(var(--background) / 0.8),
+        0 0 0 1px hsl(var(--border) / 0.5);
+    z-index: 1000;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: all 0.2s var(--ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1));
+    animation: slideInDown 0.3s ease-out;
+}
+
+.language-selector.hidden {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+    pointer-events: none;
+    display: none;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Language List */
+.language-list {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+}
+
+.language-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.language-list::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+}
+
+.language-list::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 3px;
+}
+
+.language-list::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary-hover, var(--primary)));
+}
+
+/* Language Options */
+.language-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.language-option:hover {
+    background: hsl(var(--muted) / 0.5);
+    color: hsl(var(--primary));
+    transform: translateX(2px);
+}
+
+.language-option:active {
+    transform: translateX(0) scale(0.98);
+}
+
+.language-option.active {
+    background: hsl(var(--primary) / 0.1);
+    color: hsl(var(--primary));
+    font-weight: 600;
+    border-left: 3px solid hsl(var(--primary));
+}
+
+.language-option.active::after {
+    content: '✓';
+    font-size: 0.8rem;
+    color: hsl(var(--primary));
+    font-weight: bold;
+}
+
+/* Language Code Badge */
+.lang-code {
+    width: 36px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: hsl(var(--muted) / 0.3);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.language-option:hover .lang-code {
+    background: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
+    transform: scale(1.05);
+}
+
+.language-option.active .lang-code {
+    background: hsl(var(--primary));
+    color: white;
+}
+
+/* Language Name */
+.lang-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+/* Translation Error Messages */
+.translation-error {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: hsl(var(--destructive));
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px hsl(var(--destructive) / 0.3);
+    z-index: 1000;
+    animation: slideInRight 0.3s ease-out;
+    max-width: 300px;
+    font-size: 0.9rem;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Translation Success Messages */
+.translation-success {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: hsl(var(--success));
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px hsl(var(--success) / 0.3);
+    z-index: 1000;
+    animation: slideInRight 0.3s ease-out;
+    max-width: 300px;
+    font-size: 0.9rem;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .translation-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .language-selector {
+        min-width: 200px;
+        right: -10px;
+    }
+    
+    .language-option {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .lang-code {
+        width: 32px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+    
+    .translation-error,
+    .translation-success {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .translation-btn {
+        border: 2px solid hsl(var(--foreground));
+    }
+    
+    .language-selector {
+        border: 2px solid hsl(var(--foreground));
+    }
+    
+    .language-option.active {
+        border-left-width: 4px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .translation-btn,
+    .language-selector,
+    .language-option,
+    .lang-code {
+        transition: none;
+        animation: none;
+    }
+    
+    .translation-btn:hover svg {
+        transform: none;
+    }
+}
+
+/* Dark/Light Theme Specific Adjustments */
+[data-theme="light"] .language-selector {
+    background: hsl(var(--card) / 0.98);
+    box-shadow: 
+        0 10px 25px -5px hsl(var(--foreground) / 0.1),
+        0 0 0 1px hsl(var(--border));
+}
+
+[data-theme="light"] .translation-error {
+    box-shadow: 0 4px 12px hsl(var(--destructive) / 0.2);
+}
+
+[data-theme="light"] .translation-success {
+    box-shadow: 0 4px 12px hsl(var(--success) / 0.2);
+}

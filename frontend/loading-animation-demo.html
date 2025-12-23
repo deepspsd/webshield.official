@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Animation Demo - WebShield</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: hsl(220 25% 3%);
+            color: hsl(220 25% 98%);
+            overflow: hidden;
+        }
+
+        /* Loading Container */
+        .loading-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: hsl(220 25% 3%);
+            z-index: 9999;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Loading Spinner - Two Circle Design */
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        /* Outer circle - outline with rotation */
+        .loading-spinner::before {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: hsl(210 100% 60% / 0.3);
+            border-right-color: hsl(210 100% 60% / 0.3);
+            animation: spin 1.5s linear infinite;
+        }
+
+        /* Inner filled circle with pulse */
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, hsl(210 100% 60%), hsl(160 84% 45%));
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 30px hsl(210 100% 60% / 0.5);
+        }
+
+        /* Spin animation for outer circle */
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Pulse animation for inner circle */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Fade in animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loading Text */
+        .loading-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, hsl(210 100% 60%), hsl(160 84% 45%));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.75rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Loading Subtext */
+        .loading-subtext {
+            color: hsl(220 25% 70%);
+            font-size: 1rem;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        /* Animated Dots */
+        .loading-dots {
+            display: inline-flex;
+            gap: 0.25rem;
+            margin-left: 0.25rem;
+        }
+
+        .loading-dots span {
+            width: 6px;
+            height: 6px;
+            background: hsl(210 100% 60%);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Progress Bar */
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: hsl(220 25% 12%);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, hsl(210 100% 60%), hsl(160 84% 45%));
+            border-radius: 2px;
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% {
+                width: 0%;
+                margin-left: 0%;
+            }
+
+            50% {
+                width: 70%;
+                margin-left: 15%;
+            }
+
+            100% {
+                width: 0%;
+                margin-left: 100%;
+            }
+        }
+
+        /* Demo Controls */
+        .demo-controls {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: hsl(220 25% 10%);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: 1px solid hsl(220 25% 15%);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .demo-button {
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, hsl(210 100% 60%), hsl(160 84% 45%));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px hsl(210 100% 60% / 0.4);
+        }
+
+        .demo-info {
+            color: hsl(220 25% 70%);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Animation Screen -->
+    <div class="loading-container" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Scan Report</div>
+        <div class="loading-subtext">
+            Analyzing security data<span class="loading-dots"><span></span><span></span><span></span></span>
+        </div>
+        <div class="loading-progress">
+            <div class="loading-progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="demo-controls">
+        <span class="demo-info">✨ Loading Animation Demo</span>
+        <button class="demo-button" onclick="location.reload()">Restart Animation</button>
+    </div>
+
+    <script>
+        console.log('🎨 Loading Animation Demo - WebShield');
+        console.log('This is the loading screen shown while scan reports are being fetched');
+    </script>
+</body>
+
+</html>

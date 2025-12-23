@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - WebShield</title>
+    <script src="accessibility-enhancements.js"></script>
+    <script src="webshield-core.js"></script>
+    <script src="webshield-translation.js"></script>
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="premium-effects.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="cyber-effects.js" defer></script>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        :root {
+            /* Enhanced Color System - Vibrant */
+            --primary: 220 95% 58%;
+            --primary-foreground: 220 15% 98%;
+            --primary-hover: 220 90% 65%;
+            --accent: 160 85% 48%;
+            --accent-foreground: 220 15% 98%;
+            --accent-hover: 160 80% 55%;
+            --success: 142 76% 40%;
+            --warning: 45 93% 50%;
+            --destructive: 0 75% 55%;
+            --info: 210 100% 65%;
+
+            /* Enhanced Gradients */
+            --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+            --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-hover)));
+            --gradient-cyber: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+            --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+
+            /* Enhanced Shadows */
+            --shadow-sm: 0 2px 4px hsl(var(--background) / 0.1);
+            --shadow-md: 0 4px 12px hsl(var(--background) / 0.15);
+            --shadow-lg: 0 8px 25px hsl(var(--background) / 0.2);
+            --shadow-xl: 0 20px 40px hsl(var(--background) / 0.25);
+            --shadow-glow: 0 0 30px hsl(var(--primary) / 0.3);
+
+            /* Animation Timing */
+            --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+            --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+            --ease-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+            /* Dark Theme - Rich Colors */
+            --background: 240 35% 8%;
+            --surface: 240 30% 10%;
+            --card: 240 30% 10%;
+            --muted: 240 20% 12%;
+            --border: 240 20% 18%;
+            --foreground: 220 15% 96%;
+            --muted-foreground: 220 10% 65%;
+        }
+
+        [data-theme="light"] {
+            /* Light Theme Colors */
+            --background: 0 0% 98%;
+            --surface: 0 0% 96%;
+            --card: 0 0% 100%;
+            --muted: 210 40% 95%;
+            --border: 214 32% 91%;
+            --foreground: 222 84% 5%;
+            --muted-foreground: 215 16% 47%;
+
+            /* Light theme specific adjustments */
+            --shadow-sm: 0 2px 4px hsl(var(--foreground) / 0.05);
+            --shadow-md: 0 4px 12px hsl(var(--foreground) / 0.08);
+            --shadow-lg: 0 8px 25px hsl(var(--foreground) / 0.12);
+            --shadow-xl: 0 20px 40px hsl(var(--foreground) / 0.15);
+            --shadow-glow: 0 0 30px hsl(var(--primary) / 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(125deg,
+                    hsl(220 40% 8%) 0%,
+                    hsl(230 45% 12%) 20%,
+                    hsl(240 40% 10%) 40%,
+                    hsl(250 45% 12%) 60%,
+                    hsl(260 40% 10%) 80%,
+                    hsl(220 40% 8%) 100%),
+                radial-gradient(ellipse at top left, hsl(220 90% 56% / 0.15) 0%, transparent 40%),
+                radial-gradient(ellipse at bottom right, hsl(280 80% 50% / 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, hsl(160 84% 45% / 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                conic-gradient(from 180deg at 50% 50%,
+                    hsl(220 90% 56% / 0.03) 0deg,
+                    hsl(280 80% 50% / 0.02) 60deg,
+                    hsl(160 84% 45% / 0.03) 120deg,
+                    hsl(220 90% 56% / 0.02) 180deg,
+                    hsl(280 80% 50% / 0.03) 240deg,
+                    hsl(160 84% 45% / 0.02) 300deg,
+                    hsl(220 90% 56% / 0.03) 360deg);
+            pointer-events: none;
+            z-index: -1;
+            animation: meshRotate 60s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes backgroundShift {
+
+            0%,
+            100% {
+                filter: hue-rotate(0deg) brightness(1);
+            }
+
+            25% {
+                filter: hue-rotate(10deg) brightness(1.05);
+            }
+
+            50% {
+                filter: hue-rotate(-10deg) brightness(0.95);
+            }
+
+            75% {
+                filter: hue-rotate(5deg) brightness(1.02);
+            }
+        }
+
+        @keyframes meshRotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes backgroundFloat {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(-10px, -15px) scale(1.02);
+            }
+
+            50% {
+                transform: translate(15px, -10px) scale(0.98);
+            }
+
+            75% {
+                transform: translate(-5px, 10px) scale(1.01);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header styles */
+        .header {
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+            background-color: hsl(var(--card) / 0.5);
+            backdrop-filter: blur(8px);
+            animation: slideInDown 0.6s ease-out;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-content {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            animation: logoFloat 3s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .logo-icon:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: var(--glow);
+        }
+
+        @keyframes logoFloat {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-2px) rotate(2deg);
+            }
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav a {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.3s;
+        }
+
+        .nav a:hover {
+            color: hsl(var(--primary));
+        }
+
+        .nav a.active {
+            color: hsl(var(--primary));
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                height: 56px;
+                padding: 0 0.5rem;
+            }
+
+            .nav {
+                display: none;
+            }
+
+            .header-actions {
+                gap: 0.5rem;
+            }
+        }
+
+        .theme-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 0.5rem;
+            background: hsl(var(--muted) / 0.5);
+            color: hsl(var(--foreground));
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-toggle-btn:hover {
+            background: hsl(var(--muted));
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px hsl(var(--primary) / 0.2);
+        }
+
+        .theme-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        .theme-toggle-btn svg {
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle-btn:hover svg {
+            transform: rotate(15deg);
+        }
+
+        /* Enhanced Buttons with Animations */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 2px;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 14px 0 hsl(var(--primary) / 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--primary) / 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 2px solid hsl(var(--border));
+        }
+
+        .btn-outline:hover {
+            background: hsl(var(--muted) / 0.5);
+            border-color: hsl(var(--primary));
+            color: hsl(var(--primary));
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--muted) / 0.5);
+            border-color: hsl(var(--border));
+        }
+
+        .btn-hero {
+            background: var(--gradient-primary);
+            color: white;
+            border: 1px solid transparent;
+            box-shadow: 0 4px 14px 0 hsl(var(--primary) / 0.25);
+        }
+
+        .btn-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--primary) / 0.4);
+        }
+
+        .btn-hero:hover::before {
+            left: 100%;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        /* Additional button variants */
+        .btn-success {
+            background: linear-gradient(135deg, hsl(var(--success)), hsl(142 76% 36%));
+            color: white;
+            box-shadow: 0 4px 14px 0 hsl(var(--success) / 0.25);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--success) / 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, hsl(var(--warning)), hsl(38 92% 50%));
+            color: white;
+            box-shadow: 0 4px 14px 0 hsl(var(--warning) / 0.25);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--warning) / 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, hsl(var(--destructive)), hsl(0 72% 51%));
+            color: white;
+            box-shadow: 0 4px 14px 0 hsl(var(--destructive) / 0.25);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 hsl(var(--destructive) / 0.4);
+        }
+
+        /* Button states */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn:disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Profile Dropdown Styles */
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px hsl(var(--background) / 0.8);
+            min-width: 200px;
+            z-index: 1000;
+            margin-top: 0.5rem;
+        }
+
+        .profile-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: hsl(var(--foreground));
+            text-decoration: none;
+            transition: background 0.2s;
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+        }
+
+        .profile-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .profile-menu-item:hover {
+            background: hsl(var(--surface));
+            color: hsl(var(--primary));
+        }
+
+        .profile-menu-item svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Dashboard Layout */
+        .main {
+            padding: 2rem 0;
+        }
+
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-subtitle {
+            font-size: 1.25rem;
+            color: hsl(var(--muted-foreground));
+            margin-bottom: 1.5rem;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card {
+            background: hsl(var(--card) / 0.6);
+            border: 1px solid hsl(var(--border) / 0.3);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px hsl(var(--background) / 0.1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: hsl(var(--primary) / 0.3);
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.2),
+                0 0 0 1px hsl(var(--primary) / 0.1) inset,
+                0 0 20px hsl(var(--primary) / 0.1);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05));
+            border: 1px solid hsl(var(--primary) / 0.2);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: hsl(var(--primary));
+            font-size: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px hsl(var(--primary) / 0.1);
+        }
+
+        .stat-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.1));
+            border-color: hsl(var(--primary) / 0.3);
+        }
+
+        .stat-card:hover .stat-icon::before {
+            left: 100%;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: all 0.3s ease;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-card:hover .stat-value {
+            transform: scale(1.02);
+        }
+
+        .stat-label {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .trend-positive {
+            color: hsl(var(--success));
+        }
+
+        .trend-negative {
+            color: hsl(var(--destructive));
+        }
+
+
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: hsl(var(--card) / 0.6);
+            border: 1px solid hsl(var(--border) / 0.3);
+            border-radius: 1.25rem;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px hsl(var(--background) / 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-subtitle {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        /* Recent Scans */
+        .scan-item {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 1.25rem;
+            background: hsl(var(--background) / 0.3);
+            border: 1px solid hsl(var(--border) / 0.2);
+            border-radius: 0.875rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+
+        .scan-item:hover {
+            border-color: hsl(var(--border));
+        }
+
+        .scan-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .scan-icon {
+            width: 32px;
+            height: 32px;
+            background: hsl(var(--primary) / 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: hsl(var(--primary));
+        }
+
+        .scan-details h4 {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .scan-meta {
+            font-size: 0.75rem;
+            color: hsl(var(--muted-foreground));
+            display: flex;
+            gap: 1rem;
+        }
+
+        .scan-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid;
+        }
+
+        .badge-safe {
+            background: hsl(var(--success) / 0.1);
+            color: hsl(var(--success));
+            border-color: hsl(var(--success) / 0.2);
+        }
+
+        .badge-warning {
+            background: hsl(var(--warning) / 0.1);
+            color: hsl(var(--warning));
+            border-color: hsl(var(--warning) / 0.2);
+        }
+
+        .badge-danger {
+            background: hsl(var(--destructive) / 0.1);
+            color: hsl(var(--destructive));
+            border-color: hsl(var(--destructive) / 0.2);
+        }
+
+        /* Security Score */
+        .score-display {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: bold;
+            color: hsl(var(--primary));
+            margin-bottom: 0.5rem;
+        }
+
+        .score-label {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: hsl(var(--muted));
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            width: 94%;
+            transition: width 0.5s ease;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .metric-value {
+            font-weight: 500;
+        }
+
+        .metric-value.success {
+            color: hsl(var(--success));
+        }
+
+        .metric-value.warning {
+            color: hsl(var(--warning));
+        }
+
+        /* Sidebar Cards */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .quick-action {
+            width: 100%;
+            justify-content: flex-start;
+            text-align: left;
+        }
+
+        /* Threat Trends */
+        .threat-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .threat-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .threat-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .threat-indicator.danger {
+            background: hsl(var(--destructive));
+        }
+
+        .threat-indicator.warning {
+            background: hsl(var(--warning));
+        }
+
+        .threat-indicator.primary {
+            background: hsl(var(--primary));
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 0.75rem;
+            }
+
+            .dashboard-header {
+                text-align: center;
+                padding: 1rem 0;
+            }
+
+            .dashboard-header h1 {
+                font-size: 1.75rem;
+            }
+
+            .dashboard-header p {
+                font-size: 1rem;
+            }
+
+            .dashboard-actions {
+                justify-content: center;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .dashboard-actions .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.25rem;
+            }
+
+            .stat-card h3 {
+                font-size: 1.5rem;
+            }
+
+            .scan-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .scan-info {
+                text-align: center;
+            }
+
+            .scan-url {
+                font-size: 0.9rem;
+                word-break: break-all;
+            }
+
+            .scan-actions {
+                justify-content: center;
+                gap: 0.5rem;
+            }
+
+            .scan-actions .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .header-content {
+                padding: 0.75rem 0;
+            }
+
+            .nav {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            .dashboard-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-card h3 {
+                font-size: 1.25rem;
+            }
+
+            .scan-item {
+                padding: 0.75rem;
+            }
+
+            .scan-actions .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Refresh Button Styles */
+        .btn-refresh:hover {
+            background: hsl(var(--primary) / 0.1);
+            border-color: hsl(var(--primary));
+            color: hsl(var(--primary));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px hsl(var(--primary) / 0.2);
+        }
+
+        .btn-refresh:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Quick Actions Styles */
+        .dashboard-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .quick-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.25rem;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            color: hsl(var(--foreground));
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s var(--ease-out-quart);
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .quick-action-btn:hover {
+            background: hsl(var(--primary) / 0.1);
+            border-color: hsl(var(--primary));
+            color: hsl(var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px hsl(var(--primary) / 0.2);
+        }
+
+        .quick-action-btn:hover::before {
+            left: 100%;
+        }
+
+        .quick-action-btn svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .quick-action-text {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Mobile responsiveness for quick actions */
+        @media (max-width: 768px) {
+            .dashboard-actions {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: stretch;
+            }
+
+            .quick-actions {
+                justify-content: center;
+                gap: 0.5rem;
+            }
+
+            .quick-action-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Spin Animation */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .footer {
+            background: hsl(var(--surface) / 0.8);
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon"
+                        style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        🛡️</div>
+                    <span class="logo-text"
+                        style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">WebShield</span>
+                </div>
+
+                <nav class="nav" id="mobile-nav">
+                    <a href="index.html" data-translate="nav-home">Home</a>
+                    <a href="features.html" data-translate="nav-features">Features</a>
+                    <a href="learn.html" data-translate="nav-learn">Learn</a>
+                    <a href="dashboard.html" class="active" data-translate="nav-dashboard">Dashboard</a>
+                    <a href="how-to-install.html" data-translate="nav-extension">Extension</a>
+                    <a href="about.html" data-translate="nav-about">About</a>
+                </nav>
+
+                <button class="mobile-menu-btn" id="mobile-menu-btn" style="display: none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+
+                <div class="header-actions" id="header-actions">
+                    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme"
+                        title="Toggle dark/light theme (Ctrl+Shift+T)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                    </button>
+                    <a href="#" class="btn btn-ghost" id="logout-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16,17 21,12 16,7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        <span data-translate="btn-sign-out">Sign Out</span>
+                    </a>
+                    <a href="profile.html" class="btn btn-hero" id="profile-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <circle cx="12" cy="10" r="3" />
+                            <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                        </svg>
+                        <span data-translate="btn-profile">Profile</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title" data-translate="dashboard-title">Security Dashboard</h1>
+                <div class="dashboard-actions">
+                    <button id="refreshBtn" class="btn btn-outline btn-refresh">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                            <path d="M21 3v5h-5" />
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                            <path d="M3 21v-5h5" />
+                        </svg>
+                        <span data-translate="btn-refresh">Refresh</span>
+                    </button>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <a href="scan-url.html" class="quick-action-btn" title="Scan New URL">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                            </svg>
+                            <span class="quick-action-text" data-translate="btn-scan-url">Scan URL</span>
+                        </a>
+
+                        <a href="learn.html" class="quick-action-btn" title="Learn Security">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                                <path d="M6 12v5c0 2 8 2 8 0v-5" />
+                            </svg>
+                            <span class="quick-action-text">🎓 Learn</span>
+                        </a>
+
+                        <a href="reports.html" class="quick-action-btn" title="View Reports">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 3v18h18" />
+                                <path d="M18.7 8l-5.1 5.1-2.8-2.7L7 14.3" />
+                            </svg>
+                            <span class="quick-action-text" data-translate="btn-reports">Reports</span>
+                        </a>
+
+                        <a href="api-settings.html" class="quick-action-btn" title="API Settings">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            </svg>
+                            <span class="quick-action-text" data-translate="btn-api">API</span>
+                        </a>
+
+                        <a href="export.html" class="quick-action-btn" title="Export Data">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7,10 12,15 17,10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            <span class="quick-action-text" data-translate="btn-export">Export</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card animate-slide-up delay-100" title="Includes actual scans + ML training data">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" />
+                                <line x1="8" y1="21" x2="16" y2="21" />
+                                <line x1="12" y1="17" x2="12" y2="21" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="urls-scanned">-</div>
+                    <div class="stat-label">
+                        <span data-translate="stat-urls-scanned">URLs Scanned</span>
+                        <span class="ml-badge" id="ml-badge"
+                            style="display: none; background: hsl(var(--accent)); color: hsl(var(--background)); padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.625rem; margin-left: 0.5rem; font-weight: normal;"
+                            data-translate="badge-ml-enhanced">ML Enhanced</span>
+                    </div>
+                    <div class="stat-trend trend-positive">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22,7 13.5,15.5 8.5,10.5 2,17" />
+                        </svg>
+                        <span id="urls-trend">Loading...</span>
+                    </div>
+
+                </div>
+
+                <div class="stat-card animate-slide-up delay-200" title="Includes actual threats + ML training threats">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                <line x1="12" y1="9" x2="12" y2="13" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="threats-blocked">-</div>
+                    <div class="stat-label">
+                        <span data-translate="stat-threats-blocked">Threats Blocked</span>
+                        <span class="ml-badge" id="threats-ml-badge"
+                            style="display: none; background: hsl(var(--accent)); color: hsl(var(--background)); padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.625rem; margin-left: 0.5rem; font-weight: normal;"
+                            data-translate="badge-ml-enhanced">ML Enhanced</span>
+                    </div>
+                    <div class="stat-trend trend-negative">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22,17 13.5,8.5 8.5,13.5 2,7" />
+                        </svg>
+                        <span id="threats-trend">Loading...</span>
+                    </div>
+
+                </div>
+
+                <div class="stat-card animate-slide-up delay-300">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22,4 12,14.01 9,11.01" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="users-count">-</div>
+                    <div class="stat-label" data-translate="stat-users">Users</div>
+                    <div class="stat-trend trend-positive">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22,7 13.5,15.5 8.5,10.5 2,17" />
+                        </svg>
+                        <span id="users-trend">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="stat-card animate-slide-up delay-100">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="uptime">99.99 %</div>
+                    <div class="stat-label" data-translate="stat-uptime">Uptime</div>
+                    <div class="stat-trend trend-positive">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22,7 13.5,15.5 8.5,10.5 2,17" />
+                        </svg>
+                        <span data-translate="stat-always-online">Always online</span>
+                    </div>
+                </div>
+
+                <div class="stat-card animate-slide-up delay-200" title="Your enrolled security courses">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                                <path d="M6 12v5c0 2 8 2 8 0v-5" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="enrolled-courses-stat">0</div>
+                    <div class="stat-label">Courses Enrolled</div>
+                    <div class="stat-trend trend-positive">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22,7 13.5,15.5 8.5,10.5 2,17" />
+                        </svg>
+                        <span id="courses-trend">Start learning!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="content-grid">
+                <!-- Recent Scans -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12,6 12,12 16,14" />
+                            </svg>
+                            <span data-translate="card-recent-scans">Recent Scans</span>
+                        </div>
+                        <div class="card-subtitle" data-translate="card-recent-scans-subtitle">Your latest URL security
+                            scans</div>
+                    </div>
+
+                    <div class="scan-item">
+                        <div class="scan-info">
+                            <div class="scan-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <circle cx="12" cy="10" r="3" />
+                                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                                </svg>
+                            </div>
+                            <div class="scan-details">
+                                <h4>https://example-secure.com</h4>
+                                <div class="scan-meta">
+                                    <span data-translate="time-2-min-ago">2 minutes ago</span>
+                                    <span>0.8s</span>
+                                    <span data-translate="threats-count-0">0 threats</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="scan-actions">
+                            <span class="badge badge-safe" data-translate="badge-safe">Safe</span>
+                            <button class="btn btn-ghost">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="scan-item">
+                        <div class="scan-info">
+                            <div class="scan-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <circle cx="12" cy="10" r="3" />
+                                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                                </svg>
+                            </div>
+                            <div class="scan-details">
+                                <h4>https://suspicious-site.net</h4>
+                                <div class="scan-meta">
+                                    <span data-translate="time-15-min-ago">15 minutes ago</span>
+                                    <span>1.2s</span>
+                                    <span data-translate="threats-count-2">2 threats</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="scan-actions">
+                            <span class="badge badge-warning" data-translate="badge-warning">Warning</span>
+                            <button class="btn btn-ghost">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="scan-item">
+                        <div class="scan-info">
+                            <div class="scan-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <circle cx="12" cy="10" r="3" />
+                                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                                </svg>
+                            </div>
+                            <div class="scan-details">
+                                <h4>https://malicious-domain.org</h4>
+                                <div class="scan-meta">
+                                    <span data-translate="time-1-hour-ago">1 hour ago</span>
+                                    <span>2.1s</span>
+                                    <span data-translate="threats-count-8">8 threats</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="scan-actions">
+                            <span class="badge badge-danger" data-translate="badge-danger">Danger</span>
+                            <button class="btn btn-ghost">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border) / 0.5);">
+                        <button class="btn btn-outline" style="width: 100%;" data-translate="btn-view-all-scans">View
+                            All Scans</button>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <!-- Security Score -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                                </svg>
+                                <span data-translate="card-security-score">Security Score</span>
+                            </div>
+                            <div class="card-subtitle" data-translate="card-security-score-subtitle">Your current
+                                protection level</div>
+                        </div>
+
+                        <div class="score-display">
+                            <div class="score-value">94</div>
+                            <div class="score-label" data-translate="score-excellent">Excellent</div>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+
+                        <div>
+                            <div class="metric-row">
+                                <span data-translate="metric-ssl-validation">SSL Validation</span>
+                                <span class="metric-value success">100%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span data-translate="metric-malware-detection">Malware Detection</span>
+                                <span class="metric-value success">98%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span data-translate="metric-phishing-protection">Phishing Protection</span>
+                                <span class="metric-value warning">85%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title" data-translate="card-quick-actions">Quick Actions</div>
+                            <div class="card-subtitle" data-translate="card-quick-actions-subtitle">Common security
+                                tasks</div>
+                        </div>
+
+                        <div class="quick-actions">
+                            <a href="scan-url.html" class="btn btn-outline quick-action">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" />
+                                    <line x1="8" y1="21" x2="16" y2="21" />
+                                    <line x1="12" y1="17" x2="12" y2="21" />
+                                </svg>
+                                <span data-translate="btn-scan-new-url">Scan New URL</span>
+                            </a>
+                            <a href="bulk-scan.html" class="btn btn-outline quick-action">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="9" y1="15" x2="15" y2="15" />
+                                </svg>
+                                <span>🚀 Bulk Scan</span>
+                            </a>
+                            <a href="analytics.html" class="btn btn-outline quick-action">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="18" y1="20" x2="18" y2="10" />
+                                    <line x1="12" y1="20" x2="12" y2="4" />
+                                    <line x1="6" y1="20" x2="6" y2="14" />
+                                </svg>
+                                <span>📊 Analytics</span>
+                            </a>
+                            <a href="api-settings.html" class="btn btn-outline quick-action">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
+                                </svg>
+                                <span data-translate="btn-api-settings">API Settings</span>
+                            </a>
+                            <a href="export.html" class="btn btn-outline quick-action">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7,10 12,15 17,10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                <span data-translate="btn-export-data">Export Data</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Threat Trends -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <polyline points="22,7 13.5,15.5 8.5,10.5 2,17" />
+                                    <polyline points="16,6 22,6 22,12" />
+                                </svg>
+                                <span data-translate="card-threat-trends">Threat Trends</span>
+                            </div>
+                            <div class="card-subtitle" data-translate="card-threat-trends-subtitle">Last 30 days</div>
+                        </div>
+
+                        <div>
+                            <div class="threat-item">
+                                <div class="threat-info">
+                                    <div class="threat-indicator danger"></div>
+                                    <span data-translate="threat-malware">Malware</span>
+                                </div>
+                                <span class="metric-value">45%</span>
+                            </div>
+                            <div class="threat-item">
+                                <div class="threat-info">
+                                    <div class="threat-indicator warning"></div>
+                                    <span data-translate="threat-phishing">Phishing</span>
+                                </div>
+                                <span class="metric-value">30%</span>
+                            </div>
+                            <div class="threat-item">
+                                <div class="threat-info">
+                                    <div class="threat-indicator primary"></div>
+                                    <span data-translate="threat-suspicious">Suspicious</span>
+                                </div>
+                                <span class="metric-value">25%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Learning Progress (New Educational Feature) -->
+                    <div class="card" id="learning-progress-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                                    <path d="M6 12v5c0 2 8 2 8 0v-5" />
+                                </svg>
+                                <span>Learning Progress</span>
+                            </div>
+                            <div class="card-subtitle">Your security education journey</div>
+                        </div>
+
+                        <div class="score-display" style="margin-bottom: 1rem;">
+                            <div class="score-value" id="learning-score" style="font-size: 2.5rem;">0</div>
+                            <div class="score-label">Security Awareness Score</div>
+                        </div>
+
+                        <div>
+                            <div class="metric-row">
+                                <span>📚 Courses Enrolled</span>
+                                <span class="metric-value" id="courses-enrolled">0</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>✅ Courses Completed</span>
+                                <span class="metric-value success" id="courses-completed">0</span>
+                            </div>
+                            <div class="metric-row">
+                                <span>🏆 Achievements</span>
+                                <span class="metric-value" id="achievements-earned"
+                                    style="color: hsl(45 93% 50%);">0</span>
+                            </div>
+                        </div>
+
+                        <div
+                            style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border) / 0.5);">
+                            <a href="learn.html" class="btn btn-hero"
+                                style="width: 100%; background: linear-gradient(135deg, hsl(280 80% 50%), hsl(220 90% 56%));">
+                                🎓 Continue Learning
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check login status and update header accordingly
+        function checkLoginStatus() {
+            const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+            const userEmail = localStorage.getItem('userEmail');
+            const userName = localStorage.getItem('userName');
+
+            console.log('🔍 Dashboard Authentication Check:');
+            console.log('  isLoggedIn:', isLoggedIn);
+            console.log('  userEmail:', userEmail);
+            console.log('  userName:', userName);
+            console.log('  localStorage keys:', Object.keys(localStorage));
+
+            // Since we're on the dashboard, we assume user should be logged in
+            // If not logged in, redirect to login page
+            if (!isLoggedIn || !userEmail) {
+                console.log('❌ User not authenticated, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // User is logged in, dashboard buttons are already visible
+            console.log('✅ User authenticated, proceeding to dashboard');
+        }
+
+        // Setup logout functionality
+        function setupLogout() {
+            const logoutBtn = document.getElementById('logout-btn');
+
+            if (logoutBtn) {
+                // Logout functionality
+                logoutBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // Clear all user data from localStorage
+                    localStorage.clear();
+
+                    // Show confirmation message
+                    alert('You have been signed out successfully.');
+
+                    // Redirect to login page
+                    window.location.href = 'login.html';
+                });
+            }
+        }
+
+        // Load user scan history if logged in
+        async function loadUserScans() {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return;
+
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/admin/user_scans?email=${encodeURIComponent(userEmail)}&limit=5`);
+                if (response.ok) {
+                    const scans = await response.json();
+                    updateRecentScans(scans);
+                }
+            } catch (error) {
+                console.error('Failed to load user scans:', error);
+            }
+        }
+
+        // Update recent scans section
+        function updateRecentScans(scans) {
+            const recentScansContainer = document.querySelector('.card:first-of-type');
+            const scanItems = recentScansContainer.querySelectorAll('.scan-item');
+
+            // Clear existing scan items (except the first 3 demo ones)
+            scanItems.forEach((item, index) => {
+                if (index >= 3) {
+                    item.remove();
+                }
+            });
+
+            // Add user's recent scans
+            scans.forEach(scan => {
+                const scanItem = createScanItem(scan);
+                const container = recentScansContainer.querySelector('.card-header').nextElementSibling;
+                container.appendChild(scanItem);
+            });
+        }
+
+        // Create scan item element
+        function createScanItem(scan) {
+            const scanItem = document.createElement('div');
+            scanItem.className = 'scan-item';
+
+            const threatLevel = scan.threat_level || 'unknown';
+            // Enhanced threat level display - consider SSL status
+            let badgeClass, badgeText;
+            if (threatLevel === 'high') {
+                badgeClass = 'badge-danger';
+                badgeText = 'Danger';
+            } else if (threatLevel === 'medium') {
+                badgeClass = 'badge-warning';
+                badgeText = 'Warning';
+            } else {
+                // For low threat, check if SSL is invalid
+                if (scan.ssl_valid === false) {
+                    badgeClass = 'badge-warning';
+                    badgeText = 'Insecure';
+                } else {
+                    badgeClass = 'badge-safe';
+                    badgeText = 'Safe';
+                }
+            }
+
+            const timeAgo = new Date(scan.created_at).toLocaleDateString();
+
+            scanItem.innerHTML = `
+                <div class="scan-info">
+                    <div class="scan-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="10" r="3"/>
+                            <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
+                        </svg>
+                    </div>
+                    <div class="scan-details">
+                        <h4>${scan.url}</h4>
+                        <div class="scan-meta">
+                            <span>${timeAgo}</span>
+                            <span>${scan.malicious_count || 0} threats</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="scan-actions">
+                    <span class="badge ${badgeClass}">${badgeText}</span>
+                    <button class="btn btn-ghost" onclick="viewScanDetails('${scan.scan_id}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            return scanItem;
+        }
+
+        // View scan details
+        function viewScanDetails(scanId) {
+            const redirectUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port}/scan_report.html?scan_id=${scanId}`;
+            window.location.href = redirectUrl;
+        }
+
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/admin/dashboard-stats`);
+                if (response.ok) {
+                    const stats = await response.json();
+                    updateDashboardStats(stats);
+                } else {
+                    console.error('Failed to load dashboard stats');
+                    // Set default values if API fails - using Kaggle dataset statistics
+                    updateDashboardStats({
+                        urls_scanned: 615000,  // 615k+ from Kaggle dataset
+                        threats_blocked: 250000,  // 250k high-threat URLs from Kaggle dataset
+                        users: 0,
+                        uptime: '99.99 %',
+                        actual_scanned: 0,
+                        ml_training_urls: 615000,  // ML training data from Kaggle
+                        ml_training_threats: 250000  // ML training threats from Kaggle
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+                // Set default values if API fails - using Kaggle dataset statistics
+                updateDashboardStats({
+                    urls_scanned: 615000,  // 615k+ from Kaggle dataset
+                    threats_blocked: 250000,  // 250k high-threat URLs from Kaggle dataset
+                    users: 0,
+                    uptime: '99.99 %',
+                    actual_scanned: 0,
+                    ml_training_urls: 615000,  // ML training data from Kaggle
+                    ml_training_threats: 250000  // ML training threats from Kaggle
+                });
+            }
+        }
+
+        // Update dashboard statistics display
+        function updateDashboardStats(stats) {
+            // Format numbers with k, M, B suffixes for better readability
+            const formatNumber = (num) => {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                } else if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'k';
+                }
+                return num.toString();
+            };
+
+            // Update URLs Scanned
+            const urlsScannedElement = document.getElementById('urls-scanned');
+            if (urlsScannedElement) {
+                urlsScannedElement.textContent = formatNumber(stats.urls_scanned);
+            }
+
+            // Update ML badge for URLs Scanned
+            const mlBadgeElement = document.getElementById('ml-badge');
+            if (mlBadgeElement) {
+                const mlTraining = stats.ml_training_urls || 0;
+                if (mlTraining > 0) {
+                    mlBadgeElement.style.display = 'inline-block';
+                } else {
+                    mlBadgeElement.style.display = 'none';
+                }
+            }
+
+            // Update Threats Blocked
+            const threatsBlockedElement = document.getElementById('threats-blocked');
+            if (threatsBlockedElement) {
+                threatsBlockedElement.textContent = formatNumber(stats.threats_blocked);
+            }
+
+            // Update ML badge for Threats Blocked
+            const threatsMlBadgeElement = document.getElementById('threats-ml-badge');
+            if (threatsMlBadgeElement) {
+                const mlTrainingThreats = stats.ml_training_threats || 0;
+                if (mlTrainingThreats > 0) {
+                    threatsMlBadgeElement.style.display = 'inline-block';
+                } else {
+                    threatsMlBadgeElement.style.display = 'none';
+                }
+            }
+
+            // Update Users count
+            const usersCountElement = document.getElementById('users-count');
+            if (usersCountElement) {
+                usersCountElement.textContent = formatNumber(stats.users);
+            }
+
+            // Update Uptime (always 99.99%)
+            const uptimeElement = document.getElementById('uptime');
+            if (uptimeElement) {
+                uptimeElement.textContent = '99.99 %';
+            }
+
+            // Update trend text
+            const urlsTrendElement = document.getElementById('urls-trend');
+            if (urlsTrendElement) {
+                const actualScanned = stats.actual_scanned || 0;
+                const mlTraining = stats.ml_training_urls || 0;
+
+                if (mlTraining > 0) {
+                    urlsTrendElement.textContent = `${actualScanned > 0 ? 'Active' : 'No'} scans + ${formatNumber(mlTraining)} ML trained`;
+                } else {
+                    urlsTrendElement.textContent = `${actualScanned > 0 ? 'Active' : 'No'} scans`;
+                }
+            }
+
+            const threatsTrendElement = document.getElementById('threats-trend');
+            if (threatsTrendElement) {
+                const actualThreats = stats.actual_threats || 0;
+                const mlTrainingThreats = stats.ml_training_threats || 0;
+
+                if (mlTrainingThreats > 0) {
+                    threatsTrendElement.textContent = `${actualThreats > 0 ? 'Threats' : 'No'} detected + ${formatNumber(mlTrainingThreats)} ML trained`;
+                } else {
+                    threatsTrendElement.textContent = `${actualThreats > 0 ? 'Threats' : 'No'} detected`;
+                }
+            }
+
+            const usersTrendElement = document.getElementById('users-trend');
+            if (usersTrendElement) {
+                usersTrendElement.textContent = `${stats.users > 0 ? 'Active' : 'No'} users`;
+            }
+        }
+
+        // Refresh Dashboard Data
+        function refreshDashboard() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = refreshBtn.querySelector('svg');
+
+            // Add loading state
+            refreshBtn.disabled = true;
+            refreshIcon.style.animation = 'spin 1s linear infinite';
+            refreshBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M3 21v-5h5"/>
+                </svg>
+                Refreshing...
+            `;
+
+            // Refresh all dashboard data
+            Promise.all([
+                loadUserScans(),
+                loadDashboardStats()
+            ]).then(() => {
+                // Remove loading state
+                refreshBtn.disabled = false;
+
+                // Show success feedback
+                refreshBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Updated
+                `;
+
+                setTimeout(() => {
+                    refreshBtn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                            <path d="M3 21v-5h5"/>
+                        </svg>
+                        Refresh
+                    `;
+                }, 2000);
+            }).catch((error) => {
+                console.error('Error refreshing dashboard:', error);
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                    </svg>
+                    Refresh
+                `;
+            });
+        }
+
+        // Setup Refresh Button
+        function setupRefreshButton() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', refreshDashboard);
+            }
+        }
+
+        // Mobile menu functionality
+        function setupMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            if (mobileMenuBtn && mobileNav) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileNav.classList.toggle('active');
+                });
+
+                // Close mobile menu when clicking on a link
+                const navLinks = mobileNav.querySelectorAll('a');
+                navLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        mobileNav.classList.remove('active');
+                    });
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!mobileMenuBtn.contains(e.target) && !mobileNav.contains(e.target)) {
+                        mobileNav.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function () {
+            checkLoginStatus();
+            setupLogout();
+            setupRefreshButton();
+            setupMobileMenu();
+            loadUserScans();
+            loadDashboardStats(); // Load dashboard statistics
+            setupThemeToggle(); // Setup theme toggle functionality
+            loadLearningProgress(); // Load learning progress
+        });
+
+        // Load learning progress from courses API
+        async function loadLearningProgress() {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) {
+                // Hide learning progress card if not logged in
+                const card = document.getElementById('learning-progress-card');
+                if (card) card.style.display = 'none';
+                return;
+            }
+
+            try {
+                const apiUrl = window.API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:8000/api`;
+                const response = await fetch(`${apiUrl}/courses/user/${encodeURIComponent(userEmail)}/stats`);
+
+                if (response.ok) {
+                    const stats = await response.json();
+
+                    // Update the UI
+                    const learningScore = document.getElementById('learning-score');
+                    const coursesEnrolled = document.getElementById('courses-enrolled');
+                    const coursesCompleted = document.getElementById('courses-completed');
+                    const achievementsEarned = document.getElementById('achievements-earned');
+                    const enrolledCourseStat = document.getElementById('enrolled-courses-stat');
+                    const coursesTrend = document.getElementById('courses-trend');
+
+                    if (learningScore) learningScore.textContent = stats.security_awareness_score || 0;
+                    if (coursesEnrolled) coursesEnrolled.textContent = stats.total_enrollments || 0;
+                    if (coursesCompleted) coursesCompleted.textContent = stats.completed_courses || 0;
+                    if (achievementsEarned) achievementsEarned.textContent = stats.achievements_count || 0;
+
+                    // Update the stat card
+                    if (enrolledCourseStat) enrolledCourseStat.textContent = stats.total_enrollments || 0;
+                    if (coursesTrend) {
+                        const enrollments = stats.total_enrollments || 0;
+                        if (enrollments > 0) {
+                            coursesTrend.textContent = `${stats.completed_courses || 0} completed`;
+                        } else {
+                            coursesTrend.textContent = 'Start learning!';
+                        }
+                    }
+
+                    console.log('📚 Learning progress loaded:', stats);
+                } else {
+                    console.log('📚 No learning progress found, using defaults');
+                }
+            } catch (error) {
+                console.log('📚 Learning API not available, using defaults');
+            }
+        }
+
+        function setupThemeToggle() {
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle && window.WebShieldTheme) {
+                themeToggle.addEventListener('click', () => {
+                    console.log('🎨 Dashboard theme toggle clicked');
+                    window.WebShieldTheme.toggleTheme();
+                    updateThemeToggleIcon();
+                });
+
+                function updateThemeToggleIcon() {
+                    const isDark = window.WebShieldTheme.getCurrentTheme() === 'dark';
+                    themeToggle.innerHTML = isDark ?
+                        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>' :
+                        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+                    themeToggle.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+                }
+
+                updateThemeToggleIcon();
+                window.addEventListener('themeChanged', updateThemeToggleIcon);
+            }
+        }
+    </script>
+
+    <!-- Include configuration for API base URL -->
+    <script src="config.js"></script>
+    <!-- Include enhanced animations -->
+    <script src="enhanced-animations.js"></script>
+
+    <!-- Initialize theme on page load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.WebShieldTheme) {
+                window.WebShieldTheme.init();
+            }
+        });
+    </script>
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <div class="footer-copyright" data-translate="footer-copyright">
+                    &copy; 2025 WebShield. All rights reserved.
+                </div>
+                <div class="footer-links">
+                    <a href="#" data-translate="footer-privacy">Privacy</a>
+                    <a href="#" data-translate="footer-terms">Terms</a>
+                    <a href="#" data-translate="footer-security">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
