@@ -487,7 +487,7 @@ if __name__ == "__main__":
         # Optimized uvicorn configuration for better performance
         uvicorn.run(
             "backend.server:app",
-            host="0.0.0.0",
+            host="0.0.0.0",  # nosec B104
             port=8000,
             reload=False,  # Disable reload for production
             log_level="warning",  # Reduced logging for better performance

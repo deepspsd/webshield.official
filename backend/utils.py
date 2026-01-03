@@ -387,8 +387,8 @@ class WebShieldDetector:
                                     for rdn in name_tuple:
                                         for key, value in rdn:
                                             flattened[key] = value
-                                except Exception:
-                                    pass
+                                except Exception as e_flat:
+                                    logger.debug(f"Error flattening cert name tuple: {e_flat}")
                                 return flattened
 
                             issuer = "Unknown"
@@ -724,8 +724,8 @@ class WebShieldDetector:
                             cached_result["cached"] = True
                             cached_result["vt_cache"] = True
                             return cached_result
-            except Exception:
-                pass
+            except Exception as e_cache:
+                logger.debug(f"VT cache lookup failed: {e_cache}")
 
             url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
             headers = {"x-apikey": VT_API_KEY, "Content-Type": "application/json"}
@@ -751,8 +751,8 @@ class WebShieldDetector:
                     }
                     try:
                         _VT_CACHE_BY_URL[url] = {"_cached_at": time.time(), "result": result}
-                    except Exception:
-                        pass
+                    except Exception as e_cache_w:
+                        logger.debug(f"VT cache write failed: {e_cache_w}")
                     return result
             except asyncio.TimeoutError:
                 logger.warning(f"VirusTotal check timed out after 3s for {url}")
@@ -801,11 +801,11 @@ class WebShieldDetector:
                                             }
                                             try:
                                                 _VT_CACHE_BY_URL[url] = {"_cached_at": time.time(), "result": result}
-                                            except Exception:
-                                                pass
+                                            except Exception as e_cache_w2:
+                                                logger.debug(f"VT cache write failed (poll): {e_cache_w2}")
                                             return result
-                    except Exception:
-                        pass
+                    except Exception as e_poll:
+                        logger.debug(f"VT polling error: {e_poll}")
 
             # Indicate that no real-time data is available
             result = {

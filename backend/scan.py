@@ -822,8 +822,8 @@ async def _do_scan(url: str, scan_id: str):
                         logger.error(f"Failed to update scan {scan_id}: {e}")
                         try:
                             conn.rollback()
-                        except Exception:
-                            pass
+                        except Exception as e_rollback:
+                            logger.warning(f"Failed to rollback DB on scan completion error: {e_rollback}")
                     finally:
                         cursor.close()
                 else:
@@ -832,8 +832,8 @@ async def _do_scan(url: str, scan_id: str):
             resp = ThreatReport(scan_id=scan_id, url=url, status="completed", results=result)
             try:
                 SCAN_REPORTS_BY_ID[scan_id] = resp
-            except Exception:
-                pass
+            except Exception as e_mem:
+                logger.warning(f"Failed to update scan cache: {e_mem}")
     except Exception as e:
         logger.error(f"Scan error: {str(e)}")
         # Always store a completed scan result, even on error
@@ -887,8 +887,8 @@ async def _do_scan(url: str, scan_id: str):
                     logger.error(f"Failed to update scan {scan_id} in error case: {e}")
                     try:
                         conn.rollback()
-                    except Exception:
-                        pass
+                    except Exception as e_rollback:
+                        logger.warning(f"Failed to rollback DB on scan error handling: {e_rollback}")
                 finally:
                     cursor.close()
             else:
@@ -896,8 +896,8 @@ async def _do_scan(url: str, scan_id: str):
         resp = ThreatReport(scan_id=scan_id, url=url, status="completed", results=result)
         try:
             SCAN_REPORTS_BY_ID[scan_id] = resp
-        except Exception:
-            pass
+        except Exception as e_mem:
+            logger.warning(f"Failed to update scan cache in error handler: {e_mem}")
     finally:
         # Clean up scan tracking
         SCAN_IN_PROGRESS.pop(url, None)
@@ -996,12 +996,12 @@ async def scan_url(request: URLScanRequest, background_tasks: BackgroundTasks):
                 completed = ThreatReport(scan_id=scan_id, url=url, status="completed", results=result)
                 try:
                     SCAN_REPORTS_BY_ID[scan_id] = completed
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to cache whitelist scan: {e}")
                 return completed
-        except Exception:
+        except Exception as e:
             # Never fail the request due to whitelist fast-path issues
-            pass
+            logger.warning(f"Whitelist fast-path failed, proceeding to full scan: {e}")
 
         # Check if URL is already being scanned
         if url in SCAN_IN_PROGRESS:
@@ -1023,8 +1023,8 @@ async def scan_url(request: URLScanRequest, background_tasks: BackgroundTasks):
         # Store initial processing state in-memory so UI can poll even if DB is down
         try:
             SCAN_REPORTS_BY_ID[scan_id] = ThreatReport(scan_id=scan_id, url=url, status="processing", results=None)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to cache initial scan state: {e}")
 
     except Exception as e:
         # Comprehensive error handling for zero failures
@@ -1057,8 +1057,8 @@ async def scan_url(request: URLScanRequest, background_tasks: BackgroundTasks):
                     logger.error(f"Failed to insert scan {scan_id}: {e}")
                     try:
                         conn.rollback()
-                    except Exception:
-                        pass
+                    except Exception as e_rollback:
+                        logger.warning(f"Failed to rollback DB on insert error: {e_rollback}")
                 finally:
                     cursor.close()
             else:
@@ -1147,8 +1147,8 @@ async def get_scan_result(scan_id: str):
                     "status": cached_report.status,
                     "results": None,
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Cache lookup failed in get_scan_result: {e}")
 
         with get_db_connection_with_retry() as conn:
             if conn:
