@@ -16,6 +16,7 @@ auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 try:
     import bcrypt as _bcrypt_test
+
     pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated=["bcrypt"])
     logger.info("Password context initialized with bcrypt support for legacy passwords")
 except Exception as e:
@@ -28,14 +29,14 @@ async def register_user(request: RegisterRequest):
     # Step 1: Validate passwords match
     if request.confirm_password is not None and request.password != request.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
-    
+
     # Step 2: Hash password BEFORE database operations
     try:
         hashed_pw = pwd_context.hash(request.password)
     except Exception as e:
         logger.error(f"Password hashing error: {e}")
         raise HTTPException(status_code=500, detail="Registration failed - password processing error")
-    
+
     # Step 3: Database operations
     try:
         with get_db_connection_with_retry() as conn:
@@ -80,7 +81,7 @@ def login_user(request: LoginRequest):
     """
     user = None
     stored_hash = None
-    
+
     # Step 1: Fetch user from database
     try:
         with get_db_connection_with_retry() as conn:
@@ -112,7 +113,7 @@ def login_user(request: LoginRequest):
         if not user or not stored_hash:
             logger.warning(f"Failed login attempt for email: {request.email} (user not found)")
             raise HTTPException(status_code=401, detail="Invalid email or password")
-        
+
         if not pwd_context.verify(request.password, stored_hash):
             logger.warning(f"Failed login attempt for email: {request.email} (wrong password)")
             raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -215,7 +216,7 @@ def change_password(data: ChangePasswordRequest):
     try:
         if not user or not stored_hash:
             raise HTTPException(status_code=401, detail="Current password is incorrect.")
-        
+
         if not pwd_context.verify(old_password, stored_hash):
             raise HTTPException(status_code=401, detail="Current password is incorrect.")
     except HTTPException:

@@ -483,7 +483,7 @@ class WebShieldDetector:
                 "issuer": "N/A",
                 "expires": "N/A",
             }
-                
+
         except ssl.SSLError as e:
             logger.warning(f"SSL error for {url}: {e}")
             return {
@@ -524,10 +524,11 @@ class WebShieldDetector:
     async def analyze_content(self, url: str, max_bytes=1 * 1024) -> Dict[str, Any]:
         """Analyze webpage content for phishing indicators with aggressive timeout handling"""
         try:
-            
+
             import ssl as ssl_module
+
             ssl_context = ssl_module.create_default_context()
-            
+
             connector = aiohttp.TCPConnector(
                 ssl=ssl_context,  # ✅ FIXED: Proper SSL validation enabled
                 limit=5,  # Reduced connection limit

@@ -504,7 +504,7 @@ async def _do_scan(url: str, scan_id: str):
             # - HIGH: VirusTotal engines >= 2
             # - MODERATE: VirusTotal engines == 1 OR (VirusTotal == 0 AND No SSL)
             # - LOW: VirusTotal engines == 0 AND Valid SSL
-            
+
             if vt_available:
                 detection_details["primary_assessment"] = "virustotal_ssl"
                 vt_threat_level = None
@@ -514,7 +514,7 @@ async def _do_scan(url: str, scan_id: str):
                 if isinstance(ssl_analysis, dict):
                     # Consider SSL valid if explicit valid=True and no errors
                     is_ssl_valid = ssl_analysis.get("valid", False) is True and not ssl_analysis.get("error")
-                
+
                 # Check User Defined Logic
                 if vt_flagged >= 2:
                     # High if VT engines >= 2
@@ -524,10 +524,10 @@ async def _do_scan(url: str, scan_id: str):
                 elif vt_flagged == 1:
                     # Moderate if VT engine == 1
                     vt_threat_level = "medium"
-                    is_malicious = False # Suspicious but not confirmed malicious
+                    is_malicious = False  # Suspicious but not confirmed malicious
                     logger.info(f"Threat Check: MEDIUM (VT engines {vt_flagged} == 1)")
                 elif vt_flagged == 0 and not is_ssl_valid:
-                     # Moderate if VT==0 but No SSL/Expired SSL
+                    # Moderate if VT==0 but No SSL/Expired SSL
                     vt_threat_level = "medium"
                     is_malicious = False
                     logger.info(f"Threat Check: MEDIUM (VT engines 0 but No SSL/Expired)")

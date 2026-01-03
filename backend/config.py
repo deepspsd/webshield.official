@@ -35,16 +35,13 @@ class Settings(BaseSettings):
     # ============================================
     # SECURITY SETTINGS
     # ============================================
-    SECRET_KEY: str = Field(..., env="SECRET_KEY")  
-    JWT_SECRET: str = Field(..., env="JWT_SECRET")  
+    SECRET_KEY: str = Field(..., env="SECRET_KEY")
+    JWT_SECRET: str = Field(..., env="JWT_SECRET")
     JWT_EXPIRATION_HOURS: int = Field(default=24, env="JWT_EXPIRATION_HOURS")
     API_KEY_HEADER: str = "X-API-Key"
-    
+
     # CORS Settings
-    ALLOWED_ORIGINS: list = Field(
-        default=["http://localhost:8000", "http://127.0.0.1:8000"],
-        env="ALLOWED_ORIGINS"
-    )
+    ALLOWED_ORIGINS: list = Field(default=["http://localhost:8000", "http://127.0.0.1:8000"], env="ALLOWED_ORIGINS")
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     CORS_ALLOW_HEADERS: list = ["*"]
@@ -52,11 +49,11 @@ class Settings(BaseSettings):
     # ============================================
     # DATABASE SETTINGS
     # ============================================
-    DB_HOST: str = Field(..., env="DB_HOST")  
+    DB_HOST: str = Field(..., env="DB_HOST")
     DB_PORT: int = Field(default=3306, env="DB_PORT")
-    DB_USER: str = Field(..., env="DB_USER")  
-    DB_PASSWORD: str = Field(..., env="DB_PASSWORD")  
-    DB_NAME: str = Field(..., env="DB_NAME")  
+    DB_USER: str = Field(..., env="DB_USER")
+    DB_PASSWORD: str = Field(..., env="DB_PASSWORD")
+    DB_NAME: str = Field(..., env="DB_NAME")
     DB_POOL_SIZE: int = Field(default=20, env="DB_POOL_SIZE")
     DB_SSL_CA: Optional[str] = Field(default=None, env="DB_SSL_CA")
     DB_SSL_MODE: str = Field(default="PREFERRED", env="DB_SSL_MODE")
@@ -68,17 +65,14 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
     HUGGINGFACE_API_KEY: Optional[str] = Field(default=None, env="HUGGINGFACE_API_KEY")
     GROQ_API_KEY: Optional[str] = Field(default=None, env="GROQ_API_KEY")
-    GROQ_EXPLANATION_MODEL: str = Field(
-        default="llama-3.1-8b-instant", 
-        env="GROQ_EXPLANATION_MODEL"
-    )
+    GROQ_EXPLANATION_MODEL: str = Field(default="llama-3.1-8b-instant", env="GROQ_EXPLANATION_MODEL")
 
     # ============================================
     # CACHING & PERFORMANCE
     # ============================================
     CACHE_TTL: int = Field(default=300, env="CACHE_TTL")
     CACHE_MAX_SIZE: int = Field(default=1000, env="CACHE_MAX_SIZE")
-    
+
     # Redis (optional)
     REDIS_HOST: str = Field(default="localhost", env="REDIS_HOST")
     REDIS_PORT: int = Field(default=6379, env="REDIS_PORT")
