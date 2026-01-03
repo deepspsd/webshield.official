@@ -1,69 +1,161 @@
 version: '3.8'
 
 services:
-  # MySQL Database
-  mysql:
-    image: mysql:8.0
-    container_name: webshield-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-webshield_root_pass}
-      MYSQL_DATABASE: ${DB_NAME:-webshield}
-      MYSQL_USER: ${DB_USER:-webshield_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-webshield_pass}
+  # WebShield API Service
+  webshield-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: webshield-api
+    restart: unless-stopped
     ports:
-      - "3306:3306"
+      - "${API_PORT:-8000}:8000"
+    environment:
+      # Application
+      - ENVIRONMENT=production
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DEBUG=false
+
+      # Security (loaded from .env file - NEVER commit .env!)
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+
+      # Database
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_SSL_MODE=${DB_SSL_MODE:-REQUIRED}
+
+      # External APIs
+      - VT_API_KEY=${VT_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FILE=/app/logs/webshield.log
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./backend/ml_models/saved_models:/app/backend/ml_models/saved_models:ro
+    networks:
+      - webshield-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Redis Cache Service
+  redis:
+    image: redis:7-alpine
+    container_name: webshield-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec
+    volumes:
+      - redis-data:/data
     networks:
       - webshield-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # WebShield Application
-  webshield:
-    build: .
-    container_name: webshield-app
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: ${DB_USER:-webshield_user}
-      DB_PASSWORD: ${DB_PASSWORD:-webshield_pass}
-      DB_NAME: ${DB_NAME:-webshield}
-      VT_API_KEY: ${VT_API_KEY}
-      ENVIRONMENT: production
-    ports:
-      - "8000:8000"
-    depends_on:
-      mysql:
-        condition: service_healthy
-    networks:
-      - webshield-network
-    volumes:
-      - ./uploads:/app/uploads
-    restart: unless-stopped
-
-  # Nginx Reverse Proxy
+  # Nginx Reverse Proxy (optional, for production)
   nginx:
     image: nginx:alpine
     container_name: webshield-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - webshield
+      - ./frontend:/usr/share/nginx/html:ro
     networks:
       - webshield-network
-    restart: unless-stopped
+    depends_on:
+      - webshield-api
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-volumes:
-  mysql_data:
+  # Prometheus Monitoring (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: webshield-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - webshield-network
+    profiles:
+      - monitoring
+
+  # Grafana Dashboards (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: webshield-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - webshield-network
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
 
 networks:
   webshield-network:
     driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local

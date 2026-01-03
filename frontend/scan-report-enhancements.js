@@ -260,7 +260,7 @@ function createUserEducationSection(result, details) {
     const riskSummary = explanation.risk_summary ||
         (threatLevel === 'unknown'
             ? 'We could not retrieve enough real-time data (VirusTotal/ML) to make a confident risk call. Please review the component results below.'
-            : (isMalicious
+            : ((isMalicious || threatLevel === 'medium' || threatLevel === 'high')
                 ? 'This website shows signs that may indicate security risks. Review the details below before proceeding.'
                 : 'This website appears to be safe based on our analysis. No major security concerns were detected.'));
 

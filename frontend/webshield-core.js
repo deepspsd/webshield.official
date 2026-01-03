@@ -1,6 +1,39 @@
 // WebShield Core - Advanced Theme and Translation Management
 (function() {
     'use strict';
+
+    // Attach Bearer token automatically for API calls when strict auth is enabled.
+    // This keeps existing pages working without changing every fetch call site.
+    (function patchFetchForAuth() {
+        if (window.__webshieldFetchPatched) return;
+        window.__webshieldFetchPatched = true;
+
+        const originalFetch = window.fetch.bind(window);
+
+        window.fetch = async function(input, init) {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+
+                // Only attach token for /api requests (including API_BASE_URL-derived URLs).
+                const shouldAttach = !!token && typeof url === 'string' && url.includes('/api/');
+                if (!shouldAttach) {
+                    return originalFetch(input, init);
+                }
+
+                const nextInit = init ? { ...init } : {};
+                nextInit.headers = { ...(nextInit.headers || {}) };
+
+                // Preserve any existing Authorization header.
+                if (!('Authorization' in nextInit.headers) && !('authorization' in nextInit.headers)) {
+                    nextInit.headers['Authorization'] = `Bearer ${token}`;
+                }
+                return originalFetch(input, nextInit);
+            } catch (e) {
+                return originalFetch(input, init);
+            }
+        };
+    })();
     
     // Enhanced Global Theme Manager with Smooth Transitions
     const WebShieldTheme = {

@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - WebShield</title>
+    <!-- Config must load first to set API_BASE_URL -->
+    <script src="config.js"></script>
     <script src="accessibility-enhancements.js"></script>
     <script src="webshield-core.js"></script>
     <script src="webshield-translation.js"></script>
@@ -1002,7 +1004,7 @@
                         // Redirect to login page after delay
                         setTimeout(() => {
                             console.log('🔄 Redirecting to login page...');
-                            window.location.href = 'login.html';
+                            window.location.replace('login.html');
                         }, 1500);
                     } else {
                         const error = await response.json();
@@ -1018,7 +1020,6 @@
             });
         });
     </script>
-    <script src="config.js"></script>
     <!-- Include enhanced animations -->
     <script src="enhanced-animations.js"></script>
 

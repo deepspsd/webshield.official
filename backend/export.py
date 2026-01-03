@@ -1,19 +1,41 @@
-import logging
-import json
+import asyncio
 import csv
+import json
+import logging
 import os
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import Dict, Any, List, Optional
 from pathlib import Path
-import asyncio
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+
 from .db import get_mysql_connection
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
 # Create export router
-export_router = APIRouter(prefix="/api/export", tags=["Export"])
+def _require_auth_enabled() -> bool:
+    env = os.getenv("ENVIRONMENT", "development").lower()
+    if env in ("production", "prod"):
+        return True
+    return os.getenv("REQUIRE_AUTH", "false").lower() in ("1", "true", "yes")
+
+
+def _export_dependencies():
+    if not _require_auth_enabled():
+        return []
+    try:
+        from .jwt_auth import get_current_user
+    except Exception:
+        return []
+    from fastapi import Depends
+
+    return [Depends(get_current_user)]
+
+
+export_router = APIRouter(prefix="/api/export", tags=["Export"], dependencies=_export_dependencies())
 
 
 def _run_export_background(export_id: int, request: Dict[str, Any]):
@@ -57,18 +79,22 @@ async def create_export(background_tasks: BackgroundTasks, payload: Dict[str, An
             INSERT INTO export_history (user_email, export_type, format, file_name, status, created_at)
             VALUES (%s, %s, %s, %s, %s, %s)
             """,
-            (user_email, export_type, format_type, file_name, "processing", datetime.now())
+            (user_email, export_type, format_type, file_name, "processing", datetime.now()),
         )
         conn.commit()
         export_id = cursor.lastrowid
         cursor.close()
         conn.close()
 
-        background_tasks.add_task(_run_export_background, export_id, {
-            "user_email": user_email,
-            "export_type": export_type,
-            "format": format_type,
-        })
+        background_tasks.add_task(
+            _run_export_background,
+            export_id,
+            {
+                "user_email": user_email,
+                "export_type": export_type,
+                "format": format_type,
+            },
+        )
 
         return {
             "success": True,
@@ -102,7 +128,7 @@ async def get_export_history(user_email: str, limit: int = 10):
             ORDER BY created_at DESC
             LIMIT %s
             """,
-            (user_email, limit)
+            (user_email, limit),
         )
         exports = cursor.fetchall() or []
         cursor.close()
@@ -114,6 +140,7 @@ async def get_export_history(user_email: str, limit: int = 10):
     except Exception as e:
         logger.error(f"Error getting export history: {e}")
         raise HTTPException(status_code=500, detail="Failed to get export history")
+
 
 async def process_export(export_id: int, request: Dict[str, Any]):
     """Process export in background"""
@@ -132,7 +159,7 @@ async def process_export(export_id: int, request: Dict[str, Any]):
             FROM export_history
             WHERE id = %s
             """,
-            (export_id,)
+            (export_id,),
         )
 
         export_data = cursor.fetchone()
@@ -159,16 +186,16 @@ async def process_export(export_id: int, request: Dict[str, Any]):
 
         # Write data to file
         if format_type.lower() == "json":
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, default=str)
         elif format_type.lower() == "csv":
             if data and isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
-                with open(file_path, 'w', newline='', encoding='utf-8') as f:
+                with open(file_path, "w", newline="", encoding="utf-8") as f:
                     writer = csv.DictWriter(f, fieldnames=list(data[0].keys()))
                     writer.writeheader()
                     writer.writerows(data)
             else:
-                with open(file_path, 'w', newline='', encoding='utf-8') as f:
+                with open(file_path, "w", newline="", encoding="utf-8") as f:
                     f.write("No data available\n")
 
         # Update export status
@@ -179,7 +206,7 @@ async def process_export(export_id: int, request: Dict[str, Any]):
             SET status = 'completed', file_path = %s, file_size = %s, completed_at = %s
             WHERE id = %s
             """,
-            (str(file_path), file_size, datetime.now(), export_id)
+            (str(file_path), file_size, datetime.now(), export_id),
         )
 
         conn.commit()
@@ -200,12 +227,13 @@ async def process_export(export_id: int, request: Dict[str, Any]):
                     SET status = 'failed', completed_at = %s
                     WHERE id = %s
                     """,
-                    (datetime.now(), export_id)
+                    (datetime.now(), export_id),
                 )
                 conn.commit()
                 cursor.close()
         except Exception as update_error:
             logger.error(f"Error updating export status: {update_error}")
+
 
 async def export_scan_data(format_type: str = "json"):
     """Export scan data"""
@@ -234,7 +262,9 @@ async def export_scan_data(format_type: str = "json"):
             for row in scans:
                 if isinstance(row.get("detection_details"), str):
                     try:
-                        row["detection_details"] = json.loads(row["detection_details"]) if row["detection_details"] else {}
+                        row["detection_details"] = (
+                            json.loads(row["detection_details"]) if row["detection_details"] else {}
+                        )
                     except Exception:
                         pass
             return scans
@@ -244,6 +274,7 @@ async def export_scan_data(format_type: str = "json"):
     except Exception as e:
         logger.error(f"Error exporting scan data: {e}")
         raise HTTPException(status_code=500, detail=f"Error exporting scan data: {str(e)}")
+
 
 async def export_report_data(format_type: str = "json"):
     """Export report data"""
@@ -273,7 +304,9 @@ async def export_report_data(format_type: str = "json"):
             for row in reports:
                 if isinstance(row.get("detection_details"), str):
                     try:
-                        row["detection_details"] = json.loads(row["detection_details"]) if row["detection_details"] else {}
+                        row["detection_details"] = (
+                            json.loads(row["detection_details"]) if row["detection_details"] else {}
+                        )
                     except Exception:
                         pass
             return reports
@@ -284,23 +317,25 @@ async def export_report_data(format_type: str = "json"):
         logger.error(f"Error exporting report data: {e}")
         raise HTTPException(status_code=500, detail=f"Error exporting report data: {str(e)}")
 
+
 async def export_all_data(format_type: str = "json"):
     """Export all data"""
     try:
         scan_data = await export_scan_data(format_type)
         report_data = await export_report_data(format_type)
-        
+
         return {
             "scans": scan_data,
             "reports": report_data,
             "export_timestamp": datetime.now().isoformat(),
             "total_scans": len(scan_data),
-            "total_reports": len(report_data)
+            "total_reports": len(report_data),
         }
-        
+
     except Exception as e:
         logger.error(f"Error exporting all data: {e}")
         raise HTTPException(status_code=500, detail=f"Error exporting all data: {str(e)}")
+
 
 @export_router.get("/status/{export_id}")
 async def get_export_status(export_id: int):
@@ -318,7 +353,7 @@ async def get_export_status(export_id: int):
             FROM export_history
             WHERE id = %s
             """,
-            (export_id,)
+            (export_id,),
         )
 
         export = cursor.fetchone()
@@ -335,12 +370,13 @@ async def get_export_status(export_id: int):
             "file_size": export[4],
             "status": export[5],
             "created_at": export[6],
-            "completed_at": export[7]
+            "completed_at": export[7],
         }
 
     except Exception as e:
         logger.error(f"Error getting export status: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting export status: {str(e)}")
+
 
 @export_router.get("/files/{export_id}")
 async def download_export_file(export_id: int):
@@ -356,7 +392,7 @@ async def download_export_file(export_id: int):
             SELECT file_name, file_path, status FROM export_history
             WHERE id = %s
             """,
-            (export_id,)
+            (export_id,),
         )
 
         export = cursor.fetchone()
@@ -365,7 +401,7 @@ async def download_export_file(export_id: int):
         if not export:
             raise HTTPException(status_code=404, detail="Export not found")
 
-        if export[2] != 'completed':
+        if export[2] != "completed":
             raise HTTPException(status_code=400, detail="Export not completed yet")
 
         file_path = Path(export[1])
@@ -373,11 +409,7 @@ async def download_export_file(export_id: int):
             raise HTTPException(status_code=404, detail="Export file not found")
 
         # Return file path for download
-        return {
-            "file_name": export[0],
-            "file_path": str(file_path),
-            "file_size": file_path.stat().st_size
-        }
+        return {"file_name": export[0], "file_path": str(file_path), "file_size": file_path.stat().st_size}
 
     except Exception as e:
         logger.error(f"Error downloading export file: {e}")

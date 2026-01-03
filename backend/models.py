@@ -1,7 +1,9 @@
-from pydantic import BaseModel, HttpUrl, Field
-from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, HttpUrl
+
 
 # Authentication Models
 class RegisterRequest(BaseModel):
@@ -10,20 +12,24 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(..., description="User full name")
     confirm_password: Optional[str] = Field(None, description="Password confirmation (optional)")
 
+
 class LoginRequest(BaseModel):
     email: str = Field(..., description="User email address")
     password: str = Field(..., description="User password")
+
 
 class ChangePasswordRequest(BaseModel):
     email: str = Field(..., description="User email address")
     old_password: str = Field(..., description="Current password")
     new_password: str = Field(..., description="New password")
 
+
 class UpdateProfileRequest(BaseModel):
     email: str = Field(..., description="User email address")
     name: Optional[str] = Field(None, description="User display name")
     email_notifications: Optional[bool] = Field(None, description="Email notifications enabled")
     sms_notifications: Optional[bool] = Field(None, description="SMS notifications enabled")
+
 
 # API Models
 class ApiKeyRequest(BaseModel):
@@ -34,9 +40,11 @@ class ApiKeyRequest(BaseModel):
     webhook_url: Optional[str] = Field(default=None, description="Optional webhook URL")
     webhook_settings: Optional[Dict[str, Any]] = Field(default=None, description="Optional webhook settings")
 
+
 class ApiSettingsRequest(BaseModel):
     user_email: str = Field(..., description="User email address")
     settings: Dict[str, Any] = Field(..., description="API settings configuration")
+
 
 class ReportRequest(BaseModel):
     url: HttpUrl = Field(..., description="URL to report")
@@ -44,14 +52,17 @@ class ReportRequest(BaseModel):
     reason: Optional[str] = Field(None, description="Reason for reporting")
     user_email: Optional[str] = Field(None, description="User email address")
 
+
 class DownloadReportRequest(BaseModel):
     scan_id: str = Field(..., description="Scan ID to download the report for")
     format: str = Field(default="json", description="Report format: json or csv")
+
 
 class ExportRequest(BaseModel):
     user_email: str = Field(..., description="User email address")
     export_type: str = Field(..., description="Type of data to export (scans/reports/all)")
     format: str = Field(default="json", description="Export format (json/csv)")
+
 
 # Scan Models
 class URLScanRequest(BaseModel):
@@ -59,6 +70,7 @@ class URLScanRequest(BaseModel):
     user_email: Optional[str] = Field(None, description="User email address")
     scan_type: Optional[str] = Field("full", description="Type of scan to perform")
     force_rescan: Optional[bool] = Field(True, description="Force fresh scan, bypass cache")
+
 
 class ScanResult(BaseModel):
     url: str = Field(..., description="Scanned URL")
@@ -72,7 +84,7 @@ class ScanResult(BaseModel):
     domain_reputation: str = Field(default="unknown", description="Domain reputation")
     content_analysis: Dict[str, Any] = Field(default_factory=dict, description="Content analysis results")
     scan_timestamp: Optional[datetime] = Field(None, description="Scan timestamp")
-    
+
     # Legacy fields for backward compatibility
     scan_id: Optional[str] = Field(None, description="Unique scan identifier")
     status: Optional[str] = Field(None, description="Scan status")
@@ -83,12 +95,14 @@ class ScanResult(BaseModel):
     created_at: Optional[datetime] = Field(None, description="Scan creation timestamp")
     completed_at: Optional[datetime] = Field(None, description="Scan completion timestamp")
 
+
 class ThreatReport(BaseModel):
     scan_id: str = Field(..., description="Unique scan identifier")
     url: str = Field(..., description="Scanned URL")
     status: str = Field(..., description="Scan status")
     results: Optional[ScanResult] = Field(None, description="Scan results")
     error_message: Optional[str] = Field(None, description="Error message if scan failed")
+
 
 # Database Models
 class User(BaseModel):
@@ -98,6 +112,7 @@ class User(BaseModel):
     created_at: Optional[datetime] = Field(None, description="User creation timestamp")
     last_login: Optional[datetime] = Field(None, description="Last login timestamp")
     is_active: bool = Field(default=True, description="User active status")
+
 
 class ScanHistory(BaseModel):
     id: Optional[int] = Field(None, description="Scan history ID")
@@ -110,6 +125,7 @@ class ScanHistory(BaseModel):
     user_email: Optional[str] = Field(None, description="User email")
     created_at: Optional[datetime] = Field(None, description="Creation timestamp")
 
+
 class ApiKey(BaseModel):
     id: Optional[int] = Field(None, description="API key ID")
     user_email: str = Field(..., description="User email")
@@ -119,6 +135,7 @@ class ApiKey(BaseModel):
     created_at: Optional[datetime] = Field(None, description="Creation timestamp")
     last_used: Optional[datetime] = Field(None, description="Last usage timestamp")
     is_active: bool = Field(default=True, description="API key active status")
+
 
 class ExportHistory(BaseModel):
     id: Optional[int] = Field(None, description="Export ID")
@@ -133,17 +150,20 @@ class ExportHistory(BaseModel):
     completed_at: Optional[datetime] = Field(None, description="Completion timestamp")
     error_message: Optional[str] = Field(None, description="Error message")
 
+
 # Response Models
 class ApiResponse(BaseModel):
     success: bool = Field(..., description="Request success status")
     message: str = Field(..., description="Response message")
     data: Optional[Dict[str, Any]] = Field(None, description="Response data")
 
+
 class ScanResponse(BaseModel):
     success: bool = Field(..., description="Scan success status")
     scan_id: str = Field(..., description="Scan identifier")
     message: str = Field(..., description="Response message")
     results: Optional[ScanResult] = Field(None, description="Scan results")
+
 
 # Enums
 class RiskLevel(str, Enum):
@@ -152,11 +172,13 @@ class RiskLevel(str, Enum):
     HIGH = "high"
     CRITICAL = "critical"
 
+
 class ScanStatus(str, Enum):
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+
 
 class ExportStatus(str, Enum):
     PENDING = "pending"
@@ -164,10 +186,12 @@ class ExportStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+
 class ExportType(str, Enum):
     SCANS = "scans"
     REPORTS = "reports"
     ALL = "all"
+
 
 class ExportFormat(str, Enum):
     JSON = "json"

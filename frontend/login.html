@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - WebShield</title>
+    <script src="config.js"></script>
     <script src="accessibility-enhancements.js"></script>
     <script src="webshield-core.js"></script>
     <script src="webshield-translation.js"></script>
@@ -862,17 +863,28 @@
                         localStorage.setItem('userEmail', email);
                         localStorage.setItem('userName', userData.name || email.split('@')[0]);
 
+                        // Store tokens for authenticated API calls
+                        if (userData.access_token) {
+                            localStorage.setItem('accessToken', userData.access_token);
+                        }
+                        if (userData.refresh_token) {
+                            localStorage.setItem('refreshToken', userData.refresh_token);
+                        }
+
                         console.log('💾 Stored in localStorage:', {
                             userLoggedIn: localStorage.getItem('userLoggedIn'),
                             userEmail: localStorage.getItem('userEmail'),
-                            userName: localStorage.getItem('userName')
+                            userName: localStorage.getItem('userName'),
+                            hasAccessToken: !!localStorage.getItem('accessToken'),
+                            hasRefreshToken: !!localStorage.getItem('refreshToken')
                         });
 
                         // Redirect after a short delay to show success message
                         setTimeout(() => {
                             console.log('🔄 Redirecting to dashboard...');
-                            window.location.href = 'dashboard.html';
-                        }, 1500);
+                            // Use replace instead of href for cleaner navigation
+                            window.location.replace('dashboard.html');
+                        }, 800);
                     } else {
                         const error = await response.json();
                         console.error('❌ Login failed:', error);
@@ -887,7 +899,6 @@
             });
         });
     </script>
-    <script src="config.js"></script>
     <!-- Include enhanced animations -->
     <script src="enhanced-animations.js"></script>
 

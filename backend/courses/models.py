@@ -4,14 +4,16 @@ WebShield Course Models
 Pydantic models for the course management system.
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Optional
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class DifficultyLevel(str, Enum):
     """Course difficulty levels"""
+
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
@@ -19,6 +21,7 @@ class DifficultyLevel(str, Enum):
 
 class ContentType(str, Enum):
     """Lesson content types"""
+
     VIDEO = "video"
     TEXT = "text"
     INTERACTIVE = "interactive"
@@ -27,6 +30,7 @@ class ContentType(str, Enum):
 
 class QuestionType(str, Enum):
     """Quiz question types"""
+
     MULTIPLE_CHOICE = "multiple_choice"
     TRUE_FALSE = "true_false"
     FILL_BLANK = "fill_blank"
@@ -36,8 +40,10 @@ class QuestionType(str, Enum):
 # Course Models
 # ============================================
 
+
 class CourseBase(BaseModel):
     """Base course model with common fields"""
+
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     difficulty_level: DifficultyLevel = DifficultyLevel.BEGINNER
@@ -49,6 +55,7 @@ class CourseBase(BaseModel):
 
 class Course(CourseBase):
     """Full course model"""
+
     course_id: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -62,6 +69,7 @@ class Course(CourseBase):
 
 class CourseCreate(CourseBase):
     """Model for creating a new course"""
+
     pass
 
 
@@ -69,8 +77,10 @@ class CourseCreate(CourseBase):
 # Module Models
 # ============================================
 
+
 class ModuleBase(BaseModel):
     """Base module model"""
+
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
     order_index: int = Field(default=0, ge=0)
@@ -78,9 +88,10 @@ class ModuleBase(BaseModel):
 
 class CourseModule(ModuleBase):
     """Full module model"""
+
     module_id: str
     course_id: str
-    lessons: Optional[List['Lesson']] = None
+    lessons: Optional[List["Lesson"]] = None
 
     class Config:
         from_attributes = True
@@ -88,6 +99,7 @@ class CourseModule(ModuleBase):
 
 class ModuleCreate(ModuleBase):
     """Model for creating a new module"""
+
     course_id: str
 
 
@@ -95,8 +107,10 @@ class ModuleCreate(ModuleBase):
 # Lesson Models
 # ============================================
 
+
 class LessonBase(BaseModel):
     """Base lesson model"""
+
     title: str = Field(..., min_length=1, max_length=255)
     content_type: ContentType = ContentType.TEXT
     content: Optional[str] = None
@@ -107,6 +121,7 @@ class LessonBase(BaseModel):
 
 class Lesson(LessonBase):
     """Full lesson model"""
+
     lesson_id: str
     module_id: str
 
@@ -116,6 +131,7 @@ class Lesson(LessonBase):
 
 class LessonCreate(LessonBase):
     """Model for creating a new lesson"""
+
     module_id: str
 
 
@@ -123,14 +139,17 @@ class LessonCreate(LessonBase):
 # Enrollment Models
 # ============================================
 
+
 class EnrollmentRequest(BaseModel):
     """Request model for course enrollment"""
+
     user_email: str = Field(..., min_length=1)
     course_id: str = Field(..., min_length=1)
 
 
 class Enrollment(BaseModel):
     """Full enrollment model"""
+
     enrollment_id: str
     user_email: str
     course_id: str
@@ -138,7 +157,7 @@ class Enrollment(BaseModel):
     completed_at: Optional[datetime] = None
     progress_percentage: float = Field(default=0.0, ge=0, le=100)
     last_accessed: Optional[datetime] = None
-    
+
     # Optional joined fields
     title: Optional[str] = None
     thumbnail_url: Optional[str] = None
@@ -152,8 +171,10 @@ class Enrollment(BaseModel):
 # Progress Models
 # ============================================
 
+
 class ProgressUpdate(BaseModel):
     """Request model for updating lesson progress"""
+
     user_email: str = Field(..., min_length=1)
     lesson_id: str = Field(..., min_length=1)
     completed: bool = False
@@ -163,6 +184,7 @@ class ProgressUpdate(BaseModel):
 
 class LessonProgress(BaseModel):
     """Full lesson progress model"""
+
     progress_id: str
     user_email: str
     lesson_id: str
@@ -180,8 +202,10 @@ class LessonProgress(BaseModel):
 # Quiz Models
 # ============================================
 
+
 class QuizOptionBase(BaseModel):
     """Base quiz option model"""
+
     option_text: str = Field(..., min_length=1)
     is_correct: bool = False
     order_index: int = Field(default=0, ge=0)
@@ -189,6 +213,7 @@ class QuizOptionBase(BaseModel):
 
 class QuizOption(QuizOptionBase):
     """Full quiz option model"""
+
     option_id: str
     question_id: str
 
@@ -198,6 +223,7 @@ class QuizOption(QuizOptionBase):
 
 class QuizQuestionBase(BaseModel):
     """Base quiz question model"""
+
     question_text: str = Field(..., min_length=1)
     question_type: QuestionType = QuestionType.MULTIPLE_CHOICE
     correct_answer: Optional[str] = None
@@ -208,6 +234,7 @@ class QuizQuestionBase(BaseModel):
 
 class QuizQuestion(QuizQuestionBase):
     """Full quiz question model"""
+
     question_id: str
     lesson_id: str
     options: Optional[List[QuizOption]] = None
@@ -218,6 +245,7 @@ class QuizQuestion(QuizQuestionBase):
 
 class QuizSubmission(BaseModel):
     """Model for quiz submission"""
+
     user_email: str
     lesson_id: str
     answers: dict  # {question_id: selected_answer}
@@ -225,6 +253,7 @@ class QuizSubmission(BaseModel):
 
 class QuizResult(BaseModel):
     """Model for quiz results"""
+
     score: float
     total_points: int
     earned_points: int
@@ -236,8 +265,10 @@ class QuizResult(BaseModel):
 # Achievement Models
 # ============================================
 
+
 class AchievementBase(BaseModel):
     """Base achievement model"""
+
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
     icon: str = Field(default="🏆", max_length=100)
@@ -247,6 +278,7 @@ class AchievementBase(BaseModel):
 
 class Achievement(AchievementBase):
     """Full achievement model"""
+
     achievement_id: str
 
     class Config:
@@ -255,11 +287,12 @@ class Achievement(AchievementBase):
 
 class UserAchievement(BaseModel):
     """Model for user's earned achievements"""
+
     user_achievement_id: str
     user_email: str
     achievement_id: str
     earned_at: Optional[datetime] = None
-    
+
     # Optional joined fields
     name: Optional[str] = None
     description: Optional[str] = None
@@ -274,8 +307,10 @@ class UserAchievement(BaseModel):
 # Certificate Models
 # ============================================
 
+
 class Certificate(BaseModel):
     """Model for course completion certificates"""
+
     certificate_id: str
     user_email: str
     course_id: str
@@ -291,13 +326,16 @@ class Certificate(BaseModel):
 # Composite Models
 # ============================================
 
+
 class CourseWithModules(Course):
     """Course model with nested modules and lessons"""
+
     modules: Optional[List[CourseModule]] = None
 
 
 class UserLearningStats(BaseModel):
     """User's overall learning statistics"""
+
     user_email: str
     total_enrollments: int = 0
     completed_courses: int = 0
@@ -309,6 +347,7 @@ class UserLearningStats(BaseModel):
 
 class DashboardStats(BaseModel):
     """Dashboard statistics for courses"""
+
     total_courses: int = 0
     total_enrollments: int = 0
     average_completion_rate: float = 0.0
