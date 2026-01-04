@@ -1,19 +1,15 @@
-import hashlib
 import logging
-import math
 import re
-from collections import Counter
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List
 
 import joblib
 import numpy as np
 import pandas as pd
-import requests
 from bs4 import BeautifulSoup
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, VotingClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.metrics import accuracy_score, classification_report, precision_recall_fscore_support
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 
@@ -196,12 +192,12 @@ class ContentPhishingDetector:
 
         # Get all links
         links = soup.find_all("a", href=True)
-        link_texts = [link.get_text(strip=True).lower() for link in links]
+        [link.get_text(strip=True).lower() for link in links]
         link_hrefs = [link.get("href", "").lower() for link in links]
 
         # Get all forms
         forms = soup.find_all("form")
-        form_actions = [form.get("action", "").lower() for form in forms]
+        [form.get("action", "").lower() for form in forms]
 
         # Get all images
         images = soup.find_all("img")

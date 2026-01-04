@@ -47,7 +47,7 @@ def main():
     try:
         import httpx
 
-        response = httpx.get("http://localhost:8000/", timeout=5.0)
+        httpx.get("http://localhost:8000/", timeout=5.0)
         print("✅ Server is running\n")
     except:
         print("⚠️  WARNING: Server may not be running at http://localhost:8000")

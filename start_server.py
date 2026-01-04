@@ -23,7 +23,6 @@ if sys.platform == "win32":
         pass
 
 import logging
-import signal
 import subprocess
 import time
 from pathlib import Path

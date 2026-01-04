@@ -3,7 +3,7 @@ Input Validation Layer for WebShield
 Comprehensive validation for all user inputs to prevent injection attacks
 """
 
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, validator
 
 try:
     from pydantic import EmailStr
@@ -84,7 +84,7 @@ class SafeURLValidator:
             return url
 
         except Exception as e:
-            raise ValueError(f"Invalid URL format: {str(e)}")
+            raise ValueError(f"Invalid URL format: {str(e)}") from e
 
     @staticmethod
     def validate_domain(domain: str) -> str:

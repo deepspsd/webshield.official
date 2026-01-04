@@ -35,13 +35,13 @@ print(f"   DB_SSL_CA: {os.getenv('DB_SSL_CA')}")
 # Check SSL certificate
 ssl_ca_path = os.getenv("DB_SSL_CA")
 if ssl_ca_path:
-    print(f"\n2. SSL Certificate Check:")
+    print("\n2. SSL Certificate Check:")
     print(f"   Path: {ssl_ca_path}")
     print(f"   Exists: {os.path.exists(ssl_ca_path)}")
     if not os.path.exists(ssl_ca_path):
-        print(f"   ❌ ERROR: SSL certificate file not found!")
+        print("   ❌ ERROR: SSL certificate file not found!")
 else:
-    print(f"\n2. SSL Certificate: Not configured")
+    print("\n2. SSL Certificate: Not configured")
 
 # Test connection
 print("\n3. Testing Database Connection:")

@@ -5,7 +5,6 @@ Run from project root: python tests/quick_validation.py
 """
 
 import asyncio
-import json
 import os
 import sys
 

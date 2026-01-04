@@ -4,7 +4,6 @@ Unit tests for authentication
 
 import uuid
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.server import app

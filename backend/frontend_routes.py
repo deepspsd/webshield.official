@@ -199,7 +199,7 @@ async def serve_favicon():
         else:
             # Return a default favicon if none exists
             return HTMLResponse(content="", status_code=404)
-    except Exception as e:
+    except Exception:
         return HTMLResponse(content="", status_code=500)
 
 

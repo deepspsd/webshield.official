@@ -1,12 +1,11 @@
 import logging
 import os
-import time
 from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from passlib.context import CryptContext
 
-from .db import get_db_connection_with_retry, get_mysql_connection
+from .db import get_db_connection_with_retry
 from .models import ChangePasswordRequest, LoginRequest, RegisterRequest, UpdateProfileRequest
 from .validators import Sanitizer
 
@@ -15,7 +14,6 @@ logger = logging.getLogger(__name__)
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 try:
-    import bcrypt as _bcrypt_test
 
     pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated=["bcrypt"])
     logger.info("Password context initialized with bcrypt support for legacy passwords")

@@ -1,15 +1,12 @@
-import hashlib
 import json
 import logging
 import os
 import time
 from datetime import datetime
 
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, HTTPException
 
-from .db import execute_db_operation, get_db_connection_with_retry, get_mysql_connection, get_pool_status
-from .models import ApiKeyRequest, ApiSettingsRequest, DownloadReportRequest, ExportRequest, ReportRequest
+from .db import get_db_connection_with_retry, get_pool_status
 
 logger = logging.getLogger(__name__)
 
@@ -195,9 +192,9 @@ def create_ml_training_table():
                 # Insert default data
                 cursor.execute(
                     """
-                    INSERT INTO ml_training_stats 
-                    (model_name, dataset_name, total_urls_trained, malicious_urls_count, benign_urls_count, model_version, accuracy_score) 
-                    VALUES 
+                    INSERT INTO ml_training_stats
+                    (model_name, dataset_name, total_urls_trained, malicious_urls_count, benign_urls_count, model_version, accuracy_score)
+                    VALUES
                     ('URL Threat Classifier', 'Kaggle Malicious URLs Dataset', 450000, 225000, 225000, '1.0', 0.95),
                     ('Content Phishing Detector', 'Kaggle Malicious URLs Dataset', 450000, 225000, 225000, '1.0', 0.92)
                 """
@@ -239,8 +236,8 @@ def get_ml_training_statistics():
 
                     # Get all ML training statistics
                     query = """
-                        SELECT model_name, dataset_name, total_urls_trained, 
-                               malicious_urls_count, benign_urls_count, 
+                        SELECT model_name, dataset_name, total_urls_trained,
+                               malicious_urls_count, benign_urls_count,
                                model_version, accuracy_score, training_date, last_updated
                         FROM ml_training_stats
                         ORDER BY training_date DESC

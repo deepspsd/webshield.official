@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Dict, List
+from typing import List
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -41,7 +41,7 @@ async def get_ui_translations(lang_code: str):
         return {"language": lang_code, "translations": translations}
     except Exception as e:
         logger.error(f"Failed to get UI translations for {lang_code}: {e}")
-        raise HTTPException(status_code=500, detail="Translation service error")
+        raise HTTPException(status_code=500, detail="Translation service error") from e
 
 
 @translation_router.post("/translate")
@@ -57,7 +57,7 @@ async def translate_text(request: TranslateRequest):
         return {"original": request.text, "translated": translated, "target_language": request.target_lang}
     except Exception as e:
         logger.error(f"Translation failed: {e}")
-        raise HTTPException(status_code=500, detail="Translation failed")
+        raise HTTPException(status_code=500, detail="Translation failed") from e
 
 
 @translation_router.post("/translate/batch")
@@ -152,4 +152,4 @@ async def get_scan_result_translations(lang_code: str):
         return {"language": lang_code, "messages": translated_messages}
     except Exception as e:
         logger.error(f"Failed to get scan result translations: {e}")
-        raise HTTPException(status_code=500, detail="Translation service error")
+        raise HTTPException(status_code=500, detail="Translation service error") from e

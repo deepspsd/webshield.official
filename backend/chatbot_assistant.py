@@ -5,7 +5,6 @@ AI-powered help system for users to understand security features and scan result
 
 import json
 import os
-from datetime import datetime
 from typing import Dict, List, Optional
 
 import google.generativeai as genai
@@ -175,7 +174,7 @@ When explaining scan results:
             }
         }
 
-        prompt = f"Explain this scan result to a non-technical user in 2-3 sentences. What does it mean and what should they do?"
+        prompt = "Explain this scan result to a non-technical user in 2-3 sentences. What does it mean and what should they do?"
 
         return self.get_response(prompt, context)
 

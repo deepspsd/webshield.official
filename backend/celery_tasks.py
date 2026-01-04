@@ -4,12 +4,11 @@ Async processing for scans and maintenance
 """
 
 import asyncio
-import json
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import List
 from uuid import uuid4
 
 from .celery_app import celery_app
@@ -412,7 +411,7 @@ def update_threat_intel():
                     # Update threat intelligence metadata
                     cursor.execute(
                         """
-                        INSERT INTO threat_intel_updates 
+                        INSERT INTO threat_intel_updates
                         (update_timestamp, feeds_updated, new_threats, status)
                         VALUES (%s, %s, %s, %s)
                         ON DUPLICATE KEY UPDATE

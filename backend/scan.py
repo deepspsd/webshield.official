@@ -10,10 +10,9 @@ from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
-from .db import get_db_connection_with_retry, get_mysql_connection
+from .db import get_db_connection_with_retry
 from .llm_service import LLMService
 from .models import ScanResult, ThreatReport, URLScanRequest
-from .performance_config import config
 from .utils import WebShieldDetector
 
 # Configure optimized logging
@@ -191,7 +190,7 @@ async def _do_scan(url: str, scan_id: str):
 
             # ===== STEP 2: TRADITIONAL SCANS IN PARALLEL (VALIDATION) =====
             # These run concurrently to validate and supplement LLM findings
-            logger.info(f"STEP 2: Running traditional scans in parallel for validation")
+            logger.info("STEP 2: Running traditional scans in parallel for validation")
 
             # Tight timeouts to keep scans responsive (<10s total), but not so aggressive that
             # we mark everything as timed out.
@@ -464,7 +463,7 @@ async def _do_scan(url: str, scan_id: str):
             # Ensure SSL issues contribute meaningfully
             if ssl_issues and ssl_score > 50:
                 score_total = max(score_total, 55)  # Significant SSL issues = moderate score
-                logger.info(f"SSL issues detected - enforcing minimum score 55")
+                logger.info("SSL issues detected - enforcing minimum score 55")
 
             detection_details["score_breakdown"] = {
                 "total_score": score_total,
@@ -530,19 +529,19 @@ async def _do_scan(url: str, scan_id: str):
                     # Moderate if VT==0 but No SSL/Expired SSL
                     vt_threat_level = "medium"
                     is_malicious = False
-                    logger.info(f"Threat Check: MEDIUM (VT engines 0 but No SSL/Expired)")
+                    logger.info("Threat Check: MEDIUM (VT engines 0 but No SSL/Expired)")
                 else:
                     # Low if VT==0 and SSL Valid (implied else)
                     vt_threat_level = "low"
                     is_malicious = False
-                    logger.info(f"Threat Check: LOW (VT engines 0 and SSL Valid)")
+                    logger.info("Threat Check: LOW (VT engines 0 and SSL Valid)")
 
                 # LLM CONFLICT RESOLUTION (per user: show moderate if VT low + LLM high)
                 if vt_threat_level == "low" and llm_initial_risk == "high" and llm_initial_confidence > 0.85:
                     logger.warning(
                         f"🤖 LLM OVERRIDE: VT says LOW (0 detections) but LLM says HIGH (conf={llm_initial_confidence:.2f})"
                     )
-                    logger.warning(f"   Escalating to MEDIUM for user review")
+                    logger.warning("   Escalating to MEDIUM for user review")
                     threat_level = "medium"  # Escalate to moderate for user review
                     detection_details["llm_vt_conflict"] = {
                         "vt_verdict": "low",
@@ -552,8 +551,8 @@ async def _do_scan(url: str, scan_id: str):
                     }
                 elif vt_threat_level == "high" and llm_initial_risk == "low" and llm_initial_confidence > 0.85:
                     # VT says HIGH but LLM disagrees - trust VT for threats
-                    logger.warning(f"⚠️ VT/LLM DISAGREEMENT: VT says HIGH but LLM says LOW")
-                    logger.warning(f"   Trusting VT (primary) - keeping HIGH risk")
+                    logger.warning("⚠️ VT/LLM DISAGREEMENT: VT says HIGH but LLM says LOW")
+                    logger.warning("   Trusting VT (primary) - keeping HIGH risk")
                     threat_level = "high"
                     detection_details["llm_vt_conflict"] = {
                         "vt_verdict": "high",
@@ -567,7 +566,7 @@ async def _do_scan(url: str, scan_id: str):
 
                 # Check if ML also flags when VT says safe
                 if threat_level == "low" and ml_available and ml_threat:
-                    logger.info(f"ML flags suspicious but VT says clean - setting to MEDIUM")
+                    logger.info("ML flags suspicious but VT says clean - setting to MEDIUM")
                     threat_level = "medium"  # ML only = moderate, not high
 
             # PRIMARY: ML (when VT is unavailable)
@@ -784,8 +783,8 @@ async def _do_scan(url: str, scan_id: str):
                         pass
 
                     update_query = """
-                    UPDATE scans SET 
-                        status = %s, 
+                    UPDATE scans SET
+                        status = %s,
                         is_malicious = %s,
                         threat_level = %s,
                         malicious_count = %s,
@@ -1227,4 +1226,4 @@ async def get_scan_result(scan_id: str):
     except Exception as e:
         # If we cannot retrieve due to infra issues, still prefer a stable 404 for unknown scan ids.
         logging.getLogger("scan").error(f"Error retrieving scan {scan_id}: {str(e)}")
-        raise HTTPException(status_code=404, detail="Scan not found")
+        raise HTTPException(status_code=404, detail="Scan not found") from e

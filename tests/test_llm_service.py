@@ -12,7 +12,6 @@ if sys.platform == "win32":
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
     sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
-import asyncio
 
 import pytest
 
@@ -132,7 +131,7 @@ class TestLLMService:
             # Verify threat factors exist for malicious site
             assert len(result["threat_factors"]) > 0
 
-            print(f"✅ Explanation Generated:")
+            print("✅ Explanation Generated:")
             print(f"   Risk Summary: {result['risk_summary']}")
             print(f"   Threat Factors: {result['threat_factors']}")
             print(f"   Recommended Action: {result['recommended_action']}")
@@ -170,7 +169,7 @@ class TestLLMService:
             assert "risk_summary" in assessment
             assert "recommended_action" in assessment
 
-            print(f"✅ Complete LLM Analysis:")
+            print("✅ Complete LLM Analysis:")
             print(f"   URL Classification: {llm_analysis['url_classification']['label']}")
             print(f"   Content Classification: {llm_analysis['content_classification']['label']}")
             print(f"   Overall Malicious: {assessment['is_malicious']}")
@@ -194,7 +193,7 @@ class TestLLMService:
             assert "fallback" in content_result or "model" in content_result
             assert content_result["confidence"] >= 0
 
-            print(f"✅ Fallback mechanisms working correctly")
+            print("✅ Fallback mechanisms working correctly")
 
     @pytest.mark.asyncio
     async def test_explanation_context_building(self):
@@ -217,10 +216,10 @@ class TestLLMService:
             assert "threat_level" in context
 
             # Should be a threat due to URL classification and VT detections
-            assert context["is_threat"] == True
+            assert context["is_threat"]
             assert len(context["threat_factors"]) > 0
 
-            print(f"✅ Context Building:")
+            print("✅ Context Building:")
             print(f"   Is Threat: {context['is_threat']}")
             print(f"   Threat Level: {context['threat_level']}")
             print(f"   Threat Factors: {len(context['threat_factors'])}")
@@ -255,7 +254,7 @@ class TestLLMIntegration:
             assert "is_malicious" in result["overall_assessment"]
             assert "confidence" in result["overall_assessment"]
 
-            print(f"✅ LLM data structure is correct")
+            print("✅ LLM data structure is correct")
 
     def test_risk_summary_generation(self):
         """Test risk summary generation"""
@@ -272,7 +271,7 @@ class TestLLMIntegration:
         summary = llm._generate_risk_summary(safe_context)
         assert "safe" in summary.lower() or "appears" in summary.lower()
 
-        print(f"✅ Risk summary generation working")
+        print("✅ Risk summary generation working")
 
 
 # Run tests if executed directly

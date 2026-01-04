@@ -1,18 +1,16 @@
-import hashlib
 import logging
 import math
 import re
 import urllib.parse
-from collections import Counter
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, VotingClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import accuracy_score, classification_report, precision_recall_fscore_support
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 
@@ -411,7 +409,7 @@ class URLThreatClassifier:
         }
 
         score = 0.0
-        for char, similar_chars in homograph_chars.items():
+        for _char, similar_chars in homograph_chars.items():
             for similar in similar_chars:
                 if similar in domain:
                     score += 0.15

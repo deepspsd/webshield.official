@@ -17,7 +17,6 @@ from .models import (
     CourseWithModules,
     Enrollment,
     EnrollmentRequest,
-    LessonProgress,
     ProgressUpdate,
     UserAchievement,
     UserLearningStats,
@@ -134,9 +133,9 @@ async def get_course_stats():
         # Popular courses
         cursor.execute(
             """
-            SELECT * FROM courses 
-            WHERE is_published = TRUE 
-            ORDER BY enrollment_count DESC 
+            SELECT * FROM courses
+            WHERE is_published = TRUE
+            ORDER BY enrollment_count DESC
             LIMIT 5
         """
         )
@@ -181,8 +180,8 @@ async def get_course_detail(course_id: str):
         # Get modules
         cursor.execute(
             """
-            SELECT * FROM course_modules 
-            WHERE course_id = %s 
+            SELECT * FROM course_modules
+            WHERE course_id = %s
             ORDER BY order_index
         """,
             (course_id,),
@@ -193,8 +192,8 @@ async def get_course_detail(course_id: str):
         for module in modules:
             cursor.execute(
                 """
-                SELECT * FROM lessons 
-                WHERE module_id = %s 
+                SELECT * FROM lessons
+                WHERE module_id = %s
                 ORDER BY order_index
             """,
                 (module["module_id"],),
@@ -241,7 +240,7 @@ async def enroll_in_course(enrollment: EnrollmentRequest):
         # Check if already enrolled
         cursor.execute(
             """
-            SELECT enrollment_id FROM user_enrollments 
+            SELECT enrollment_id FROM user_enrollments
             WHERE user_email = %s AND course_id = %s
         """,
             (enrollment.user_email, enrollment.course_id),
@@ -264,8 +263,8 @@ async def enroll_in_course(enrollment: EnrollmentRequest):
         # Increment enrollment count
         cursor.execute(
             """
-            UPDATE courses 
-            SET enrollment_count = enrollment_count + 1 
+            UPDATE courses
+            SET enrollment_count = enrollment_count + 1
             WHERE course_id = %s
         """,
             (enrollment.course_id,),
@@ -349,8 +348,8 @@ async def update_lesson_progress(progress: ProgressUpdate):
         # Check if progress exists
         cursor.execute(
             """
-            SELECT progress_id, completed, time_spent_seconds 
-            FROM lesson_progress 
+            SELECT progress_id, completed, time_spent_seconds
+            FROM lesson_progress
             WHERE user_email = %s AND lesson_id = %s
         """,
             (progress.user_email, progress.lesson_id),
@@ -363,9 +362,9 @@ async def update_lesson_progress(progress: ProgressUpdate):
             new_time = existing["time_spent_seconds"] + progress.time_spent_seconds
             cursor.execute(
                 """
-                UPDATE lesson_progress 
-                SET completed = %s, 
-                    time_spent_seconds = %s, 
+                UPDATE lesson_progress
+                SET completed = %s,
+                    time_spent_seconds = %s,
                     quiz_score = COALESCE(%s, quiz_score),
                     completed_at = CASE WHEN %s THEN %s ELSE completed_at END
                 WHERE progress_id = %s
@@ -384,7 +383,7 @@ async def update_lesson_progress(progress: ProgressUpdate):
             progress_id = str(uuid4())
             cursor.execute(
                 """
-                INSERT INTO lesson_progress 
+                INSERT INTO lesson_progress
                 (progress_id, user_email, lesson_id, completed, time_spent_seconds, quiz_score, completed_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
@@ -428,9 +427,9 @@ async def update_enrollment_progress(user_email: str, lesson_id: str, cursor):
         # Get the course for this lesson
         cursor.execute(
             """
-            SELECT cm.course_id 
-            FROM lessons l 
-            JOIN course_modules cm ON l.module_id = cm.module_id 
+            SELECT cm.course_id
+            FROM lessons l
+            JOIN course_modules cm ON l.module_id = cm.module_id
             WHERE l.lesson_id = %s
         """,
             (lesson_id,),
@@ -445,13 +444,13 @@ async def update_enrollment_progress(user_email: str, lesson_id: str, cursor):
         # Calculate progress
         cursor.execute(
             """
-            SELECT 
-                (SELECT COUNT(*) FROM lessons l 
-                 JOIN course_modules cm ON l.module_id = cm.module_id 
+            SELECT
+                (SELECT COUNT(*) FROM lessons l
+                 JOIN course_modules cm ON l.module_id = cm.module_id
                  WHERE cm.course_id = %s) as total_lessons,
-                (SELECT COUNT(*) FROM lesson_progress lp 
+                (SELECT COUNT(*) FROM lesson_progress lp
                  JOIN lessons l ON lp.lesson_id = l.lesson_id
-                 JOIN course_modules cm ON l.module_id = cm.module_id 
+                 JOIN course_modules cm ON l.module_id = cm.module_id
                  WHERE cm.course_id = %s AND lp.user_email = %s AND lp.completed = TRUE) as completed_lessons
         """,
             (course_id, course_id, user_email),
@@ -465,8 +464,8 @@ async def update_enrollment_progress(user_email: str, lesson_id: str, cursor):
 
             cursor.execute(
                 """
-                UPDATE user_enrollments 
-                SET progress_percentage = %s, 
+                UPDATE user_enrollments
+                SET progress_percentage = %s,
                     last_accessed = %s,
                     completed_at = COALESCE(completed_at, %s)
                 WHERE user_email = %s AND course_id = %s
@@ -604,7 +603,7 @@ async def check_and_award_achievement(user_email: str, achievement_type: str, cu
         # Check if already earned
         cursor.execute(
             """
-            SELECT user_achievement_id FROM user_achievements 
+            SELECT user_achievement_id FROM user_achievements
             WHERE user_email = %s AND achievement_id = %s
         """,
             (user_email, achievement_id),
@@ -657,7 +656,7 @@ async def get_user_learning_stats(user_email: str):
         # Completed courses
         cursor.execute(
             """
-            SELECT COUNT(*) as total FROM user_enrollments 
+            SELECT COUNT(*) as total FROM user_enrollments
             WHERE user_email = %s AND completed_at IS NOT NULL
         """,
             (user_email,),
@@ -667,7 +666,7 @@ async def get_user_learning_stats(user_email: str):
         # Total time spent
         cursor.execute(
             """
-            SELECT COALESCE(SUM(time_spent_seconds), 0) as total_seconds 
+            SELECT COALESCE(SUM(time_spent_seconds), 0) as total_seconds
             FROM lesson_progress WHERE user_email = %s
         """,
             (user_email,),
@@ -742,8 +741,8 @@ async def get_lesson_quiz(lesson_id: str):
         cursor.execute(
             """
             SELECT question_id, question_text, question_type, points, order_index
-            FROM quiz_questions 
-            WHERE lesson_id = %s 
+            FROM quiz_questions
+            WHERE lesson_id = %s
             ORDER BY order_index
         """,
             (lesson_id,),
@@ -755,8 +754,8 @@ async def get_lesson_quiz(lesson_id: str):
             cursor.execute(
                 """
                 SELECT option_id, option_text, order_index
-                FROM quiz_options 
-                WHERE question_id = %s 
+                FROM quiz_options
+                WHERE question_id = %s
                 ORDER BY order_index
             """,
                 (question["question_id"],),

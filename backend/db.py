@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
-import base64
 import logging
 import os
-import tempfile
 import threading
 import time
 from contextlib import contextmanager
 from urllib.parse import urlparse
 
 import mysql.connector
-import psutil
 from dotenv import load_dotenv
 from fastapi import APIRouter
 from mysql.connector import Error, pooling
@@ -31,7 +28,6 @@ _pool_disabled = (_pool_disabled_env.lower() in ("1", "true", "yes")) if _pool_d
 def _build_mysql_config():
     """Build MySQL configuration strictly from environment variables (or DB_URL)."""
     import os
-    from urllib.parse import urlparse
 
     from dotenv import load_dotenv
 
@@ -273,7 +269,7 @@ def get_db_connection_with_retry_direct(max_retries=3, delay=1):
     Returns a connection directly (not a context manager).
     Use only if you cannot use 'with' statement.
     """
-    for attempt in range(max_retries):
+    for _attempt in range(max_retries):
         conn = get_mysql_connection()
         if conn and conn.is_connected():
             return conn
@@ -431,9 +427,9 @@ def create_database_and_tables():
                 # Insert default values based on typical Kaggle dataset sizes
                 cursor.execute(
                     """
-                    INSERT INTO ml_training_stats 
-                    (model_name, dataset_name, total_urls_trained, malicious_urls_count, benign_urls_count, model_version, accuracy_score) 
-                    VALUES 
+                    INSERT INTO ml_training_stats
+                    (model_name, dataset_name, total_urls_trained, malicious_urls_count, benign_urls_count, model_version, accuracy_score)
+                    VALUES
                     ('URL Threat Classifier', 'Kaggle Malicious URLs Dataset', 450000, 225000, 225000, '1.0', 0.95),
                     ('Content Phishing Detector', 'Kaggle Malicious URLs Dataset', 450000, 225000, 225000, '1.0', 0.92)
                 """
@@ -663,7 +659,7 @@ def create_database_and_tables():
             try:
                 cursor.execute(
                     """
-                    ALTER TABLE scans 
+                    ALTER TABLE scans
                     MODIFY COLUMN threat_level ENUM('low', 'medium', 'high', 'moderate', 'unknown') DEFAULT 'low'
                 """
                 )

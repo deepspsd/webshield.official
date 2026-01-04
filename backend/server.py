@@ -34,7 +34,6 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 # Suppress joblib verbose output completely (BEFORE any sklearn imports)
 logging.getLogger("joblib").setLevel(logging.ERROR)
@@ -485,7 +484,7 @@ async def get_scan_status(request: Request, scan_id: str):
         return await get_scan_status(scan_id)
     except Exception as e:
         logger.error(f"Error getting scan status: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get scan status")
+        raise HTTPException(status_code=500, detail="Failed to get scan status") from e
 
 
 if os.path.isdir("frontend"):

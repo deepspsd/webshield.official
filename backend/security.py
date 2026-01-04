@@ -4,12 +4,11 @@ API key rotation, rate limiting, security headers, and threat protection
 """
 
 import hashlib
-import json
 import logging
 import re
 import secrets
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from fastapi import Depends, HTTPException, Request
@@ -310,7 +309,7 @@ class ThreatDetector:
 # Security middleware
 async def security_middleware(request: Request, call_next):
     """Security middleware for threat detection"""
-    start_time = time.time()
+    time.time()
 
     try:
         # Detect threats

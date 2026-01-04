@@ -187,7 +187,7 @@ class GeminiTranslationService:
         # Create numbered list for easier parsing
         numbered_texts = "\n".join([f"{i+1}. {text}" for i, text in enumerate(texts)])
 
-        return f"""Translate the following {context} texts to {lang_name}. 
+        return f"""Translate the following {context} texts to {lang_name}.
 
 Important guidelines:
 - Maintain technical accuracy for cybersecurity terms
@@ -236,8 +236,8 @@ Translations:"""
         """Build context-aware translation prompt"""
         lang_name = self.supported_languages.get(target_lang, target_lang)
 
-        return f"""Translate the following {context} text to {lang_name}. 
-        
+        return f"""Translate the following {context} text to {lang_name}.
+
 Important guidelines:
 - Maintain technical accuracy for cybersecurity terms
 - Keep security warnings appropriately serious in tone

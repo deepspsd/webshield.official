@@ -6,10 +6,10 @@ Provides email-specific threat analysis endpoints with real SPF/DMARC verificati
 import logging
 import re
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field
 
 # Import our auth checker for real DNS lookups
 try:

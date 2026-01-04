@@ -3,7 +3,6 @@ Unit tests for ML models
 """
 
 import numpy as np
-import pytest
 
 from backend.ml_models.ml_integration import MLSecurityEngine, get_ml_engine
 

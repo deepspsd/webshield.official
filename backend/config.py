@@ -3,8 +3,6 @@ WebShield Configuration Management
 Centralized configuration with environment-based settings and secrets management
 """
 
-import os
-from pathlib import Path
 from typing import Optional
 
 from pydantic import Field

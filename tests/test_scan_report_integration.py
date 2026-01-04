@@ -18,8 +18,7 @@ import json
 
 import pytest
 
-from backend.models import URLScanRequest
-from backend.scan import _do_scan, scan_router
+from backend.scan import _do_scan
 
 pytestmark = pytest.mark.integration
 
@@ -54,11 +53,11 @@ class TestScanReportIntegration:
         if llm_data.get("status") != "unavailable":
             # LLM analysis was performed
             assert "llm_analysis" in llm_data or "overall_assessment" in llm_data
-            print(f"✅ LLM analysis included in scan results")
+            print("✅ LLM analysis included in scan results")
         else:
             # LLM analysis unavailable (expected if no API key)
             assert "message" in llm_data
-            print(f"ℹ️ LLM analysis unavailable (expected without API key)")
+            print("ℹ️ LLM analysis unavailable (expected without API key)")
 
     @pytest.mark.asyncio
     async def test_scan_detection_details_structure(self):
@@ -83,7 +82,7 @@ class TestScanReportIntegration:
         for component in required_components:
             assert component in detection_details, f"Missing component: {component}"
 
-        print(f"✅ All detection components present")
+        print("✅ All detection components present")
         print(f"   Components: {list(detection_details.keys())}")
 
     @pytest.mark.asyncio
@@ -120,9 +119,9 @@ class TestScanReportIntegration:
                     assert isinstance(explanation.get("safety_factors", []), list)
                     assert isinstance(explanation.get("recommended_action", ""), str)
 
-            print(f"✅ LLM data types are correct")
+            print("✅ LLM data types are correct")
         else:
-            print(f"ℹ️ Skipping type check (LLM unavailable)")
+            print("ℹ️ Skipping type check (LLM unavailable)")
 
     @pytest.mark.asyncio
     async def test_scan_result_serialization(self):
@@ -160,7 +159,7 @@ class TestScanReportIntegration:
             assert parsed["scan_id"] == scan_id
             assert parsed["url"] == url
 
-            print(f"✅ Scan results can be serialized to JSON")
+            print("✅ Scan results can be serialized to JSON")
             print(f"   JSON length: {len(json_str)} characters")
         except Exception as e:
             pytest.fail(f"JSON serialization failed: {e}")
@@ -181,7 +180,7 @@ class TestScanReportIntegration:
         # Verify is_malicious is boolean
         assert isinstance(result.results.is_malicious, bool)
 
-        print(f"✅ Threat level calculation:")
+        print("✅ Threat level calculation:")
         print(f"   URL: {url}")
         print(f"   Threat Level: {result.results.threat_level}")
         print(f"   Is Malicious: {result.results.is_malicious}")
@@ -211,7 +210,7 @@ class TestScanReportIntegration:
         assert isinstance(ml_analysis["ml_confidence"], (int, float))
         assert isinstance(ml_analysis["ml_analysis_summary"], dict)
 
-        print(f"✅ ML analysis integration:")
+        print("✅ ML analysis integration:")
         print(f"   ML Enabled: {ml_analysis['ml_enabled']}")
         print(f"   Models Used: {ml_analysis['ml_models_used']}")
         print(f"   Confidence: {ml_analysis['ml_confidence']:.2%}")
@@ -241,7 +240,7 @@ class TestScanReportChartData:
         assert 0 <= ssl_score <= 100
         assert 0 <= vt_score <= 1000  # Can exceed 100 with many detections
 
-        print(f"✅ Threat score chart data:")
+        print("✅ Threat score chart data:")
         print(f"   URL Score: {url_score}")
         print(f"   Content Score: {content_score}")
         print(f"   SSL Score: {ssl_score}")
@@ -269,7 +268,7 @@ class TestScanReportChartData:
         # Verify sum doesn't exceed total
         assert (malicious_count + suspicious_count) <= total_engines
 
-        print(f"✅ Detection chart data:")
+        print("✅ Detection chart data:")
         print(f"   Malicious: {malicious_count}")
         print(f"   Suspicious: {suspicious_count}")
         print(f"   Clean: {clean_count}")
@@ -303,7 +302,7 @@ class TestScanReportChartData:
         assert 0 <= llm_url_conf <= 100
         assert 0 <= llm_content_conf <= 100
 
-        print(f"✅ Confidence chart data:")
+        print("✅ Confidence chart data:")
         print(f"   URL ML Confidence: {url_confidence:.1f}%")
         print(f"   Content ML Confidence: {content_confidence:.1f}%")
         print(f"   LLM URL Confidence: {llm_url_conf:.1f}%")
@@ -414,10 +413,10 @@ class TestScanReportExplanations:
                 assert "explanation" in explanation or "risk_summary" in explanation
                 assert "recommended_action" in explanation
 
-                print(f"✅ Explanation generated:")
+                print("✅ Explanation generated:")
                 print(f"   {explanation.get('explanation', 'N/A')[:100]}...")
         else:
-            print(f"ℹ️ Skipping explanation test (LLM unavailable)")
+            print("ℹ️ Skipping explanation test (LLM unavailable)")
 
     @pytest.mark.asyncio
     async def test_risk_factors_format(self):
@@ -440,7 +439,7 @@ class TestScanReportExplanations:
                     assert isinstance(factor, str)
                     assert len(factor) > 0
 
-                print(f"✅ Risk factors properly formatted:")
+                print("✅ Risk factors properly formatted:")
                 for i, factor in enumerate(explanation["threat_factors"][:3], 1):
                     print(f"   {i}. {factor}")
 
@@ -452,9 +451,9 @@ class TestScanReportExplanations:
                     assert isinstance(factor, str)
                     assert len(factor) > 0
 
-                print(f"✅ Safety factors properly formatted")
+                print("✅ Safety factors properly formatted")
         else:
-            print(f"ℹ️ Skipping risk factors test (LLM unavailable)")
+            print("ℹ️ Skipping risk factors test (LLM unavailable)")
 
 
 # Run tests if executed directly

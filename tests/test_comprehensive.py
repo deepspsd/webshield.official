@@ -7,14 +7,13 @@ import asyncio
 
 # Import application components
 import sys
-from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
 sys.path.insert(0, "../backend")
 
-from backend.models import ScanResult, URLScanRequest
+from backend.models import URLScanRequest
 from backend.utils import WebShieldDetector
 
 
@@ -168,7 +167,7 @@ class TestDatabaseOperations:
             with get_db_connection_with_retry(max_retries=1, delay=0) as conn:
                 if conn:
                     assert hasattr(conn, "cursor")
-        except Exception as e:
+        except Exception:
             # Connection may fail in test environment - that's okay
             assert True
 
@@ -210,7 +209,6 @@ class TestErrorHandling:
 
     def test_malformed_data_handling(self):
         """Test handling of malformed data"""
-        from backend.models import URLScanRequest
 
         # Test with various invalid inputs
         invalid_inputs = [
@@ -222,7 +220,7 @@ class TestErrorHandling:
 
         for invalid_input in invalid_inputs:
             try:
-                request = URLScanRequest(**invalid_input)
+                URLScanRequest(**invalid_input)
                 # Pydantic should validate
             except Exception:
                 # Expected to raise validation error

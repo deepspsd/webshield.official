@@ -33,20 +33,18 @@ GOOGLE COLAB SETUP INSTRUCTIONS:
 
 import logging
 import os
-import re
 import sys
 import time
 import urllib.parse
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
 
 import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 
 warnings.filterwarnings("ignore")
@@ -98,7 +96,7 @@ except ImportError as e1:
         logger.error("   !pip install pandas numpy scikit-learn joblib beautifulsoup4")
         logger.error("\n3. Restart runtime and try again")
         logger.error("=" * 60)
-        logger.error(f"\nOriginal errors:")
+        logger.error("\nOriginal errors:")
         logger.error(f"  - Backend import: {e1}")
         logger.error(f"  - Direct import: {e2}")
         logger.error("=" * 60)
@@ -157,12 +155,12 @@ class KaggleDatasetTrainer:
             if not os.path.exists(self.dataset_path):
                 raise FileNotFoundError(
                     f"\n{'='*60}\n"
-                    f"ERROR: Dataset file not found!\n"
+                    "ERROR: Dataset file not found!\n"
                     f"Looking for: {self.dataset_path}\n\n"
-                    f"For Google Colab:\n"
-                    f"1. Upload 'malicious_phish.csv' using the file upload button\n"
-                    f"2. Or mount Google Drive and provide the correct path\n"
-                    f"3. Or download from: https://www.kaggle.com/datasets/sid321axn/malicious-urls-dataset\n"
+                    "For Google Colab:\n"
+                    "1. Upload 'malicious_phish.csv' using the file upload button\n"
+                    "2. Or mount Google Drive and provide the correct path\n"
+                    "3. Or download from: https://www.kaggle.com/datasets/sid321axn/malicious-urls-dataset\n"
                     f"{'='*60}"
                 )
 
@@ -286,12 +284,12 @@ class KaggleDatasetTrainer:
 
                 batch = self.data.iloc[start_idx:end_idx]
 
-                for idx, row in batch.iterrows():
+                for _idx, row in batch.iterrows():
                     try:
                         features = self.url_classifier.extract_features(row["url_clean"])
                         feature_data.append(features)
                         labels.append(row["is_malicious"])
-                    except Exception as e:  # nosec B112
+                    except Exception:  # nosec B112
                         continue
 
             # Convert to DataFrame
@@ -389,7 +387,7 @@ class KaggleDatasetTrainer:
 
                 batch = self.data.iloc[start_idx:end_idx]
 
-                for idx, row in batch.iterrows():
+                for _idx, row in batch.iterrows():
                     try:
                         # Create synthetic content based on URL
                         url_text = row["url_clean"].lower()
@@ -405,7 +403,7 @@ class KaggleDatasetTrainer:
                         url_texts.append(combined_text)
                         labels.append(row["is_malicious"])
 
-                    except Exception as e:  # nosec B112
+                    except Exception:  # nosec B112
                         continue
 
             # Vectorize text features with memory-efficient settings
@@ -431,7 +429,6 @@ class KaggleDatasetTrainer:
             logger.info("Training content analyzer (using simplified RandomForest)...")
 
             # Replace ensemble with single RandomForest for Colab compatibility
-            original_classifier = self.content_analyzer.classifier
             # CRITICAL FIX: Use n_jobs=1 to prevent asyncio event loop conflicts
             self.content_analyzer.classifier = RandomForestClassifier(
                 n_estimators=100,
@@ -496,7 +493,7 @@ class KaggleDatasetTrainer:
                     features = self.url_classifier.extract_features(row["url_clean"])
                     feature_data.append(features)
                     labels.append(row["is_malicious"])
-                except Exception as e:  # nosec B112
+                except Exception:  # nosec B112
                     continue
 
             feature_df = pd.DataFrame(feature_data)

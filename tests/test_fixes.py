@@ -36,7 +36,7 @@ def test_health_endpoint():
                 print(f"  ❌ Request {i+1}: HTTP {response.status_code}")
         except Exception as e:
             print(f"  ❌ Request {i+1}: Error - {e}")
-            assert False, f"Health endpoint request failed: {e}"
+            raise AssertionError(f"Health endpoint request failed: {e}")
 
     avg_time = sum(times) / len(times)
     print(f"\n  📊 Average response time: {avg_time:.3f}s")
@@ -78,11 +78,11 @@ def test_scan_endpoint():
         else:
             print(f"  ❌ FAIL: HTTP {response.status_code}")
             print(f"  Response: {response.text[:200]}")
-            assert False, f"Scan endpoint returned HTTP {response.status_code}"
+            raise AssertionError(f"Scan endpoint returned HTTP {response.status_code}")
 
     except Exception as e:
         print(f"  ❌ FAIL: {e}")
-        assert False, str(e)
+        raise AssertionError(str(e))
 
 
 def main():
@@ -93,7 +93,7 @@ def main():
 
     # Wait for server to be ready
     print("⏳ Waiting for server to start...")
-    for i in range(10):
+    for _i in range(10):
         try:
             requests.get(f"{BASE_URL}/api/health", timeout=2)
             print("✅ Server is ready!\n")

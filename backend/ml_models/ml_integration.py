@@ -11,7 +11,7 @@ import time
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 import joblib
@@ -30,13 +30,11 @@ from sklearn.exceptions import InconsistentVersionWarning
 warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
 # Suppress joblib parallel backend verbose output completely
-import os
 
 os.environ["JOBLIB_MULTIPROCESSING"] = "0"
 os.environ["LOKY_MAX_CPU_COUNT"] = "1"
 
 # Suppress joblib verbose parallel output (the "[Parallel(n_jobs=1)]" messages)
-import logging
 
 logging.getLogger("joblib").setLevel(logging.ERROR)
 logging.getLogger("sklearn").setLevel(logging.WARNING)
@@ -369,7 +367,7 @@ class MLSecurityEngine:
                     importances = self.url_classifier.feature_importances_
                     if hasattr(self.url_classifier, "feature_names_in_"):
                         features = self.url_classifier.feature_names_in_
-                        return dict(zip(features, importances))
+                        return dict(zip(features, importances, strict=False))
             elif model_type == "content" and self.content_detector:
                 if hasattr(self.content_detector, "feature_importances_"):
                     importances = self.content_detector.feature_importances_
@@ -410,7 +408,7 @@ class MLSecurityEngine:
         try:
             # Extract URLs and labels from feedback
             urls = [fb["url"] for fb in self.feedback_buffer]
-            labels = [fb["actual"] for fb in self.feedback_buffer]
+            [fb["actual"] for fb in self.feedback_buffer]
 
             # Partial fit or retrain (simplified for now)
             logger.info(f"Incremental learning with {len(urls)} samples")

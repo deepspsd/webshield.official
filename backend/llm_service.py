@@ -219,7 +219,7 @@ class LLMService:
         Returns:
             Phishing classification result
         """
-        logger.debug(f"[SEARCH] Step 2: Classifying HTML content with Groq")
+        logger.debug("[SEARCH] Step 2: Classifying HTML content with Groq")
 
         try:
             if not GROQ_API_KEY:
@@ -297,7 +297,7 @@ class LLMService:
         Returns:
             Comprehensive explanation with risk factors
         """
-        logger.debug(f"[SEARCH] Step 3: Generating explanation with LLM")
+        logger.debug("[SEARCH] Step 3: Generating explanation with LLM")
 
         try:
             # Build context for the LLM

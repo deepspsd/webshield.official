@@ -2,7 +2,6 @@
 Unit tests for API routes
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.server import app

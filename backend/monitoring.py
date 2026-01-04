@@ -246,7 +246,7 @@ async def monitoring_middleware(request, call_next):
 
         return response
 
-    except Exception as e:
+    except Exception:
         duration = time.time() - start_time
         monitor.record_request(method=request.method, endpoint=str(request.url.path), status=500, duration=duration)
         raise

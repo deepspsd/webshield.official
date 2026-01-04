@@ -13,7 +13,6 @@ if sys.platform == "win32":
     sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 
 import asyncio
-import time
 
 import httpx
 import pytest
@@ -82,7 +81,7 @@ class TestEndToEndScanFlow:
                     detection_details = results["detection_details"]
                     assert "llm_analysis" in detection_details
 
-                    print(f"✅ Scan results structure validated")
+                    print("✅ Scan results structure validated")
                     print(f"   Threat Level: {results['threat_level']}")
                     print(f"   Is Malicious: {results['is_malicious']}")
 
@@ -127,7 +126,7 @@ class TestEndToEndScanFlow:
             if errors:
                 print(f"⚠️ JavaScript errors found: {errors}")
             else:
-                print(f"✅ Scan report page loaded without errors")
+                print("✅ Scan report page loaded without errors")
 
             # Check if main elements are present
             title = await page.title()
@@ -163,18 +162,18 @@ class TestEndToEndScanFlow:
             # Check if chart canvases exist
             threat_chart = await page.query_selector("#threatScoreChart")
             detection_chart = await page.query_selector("#detectionChart")
-            confidence_chart = await page.query_selector("#confidenceChart")
+            await page.query_selector("#confidenceChart")
 
             assert threat_chart is not None, "Threat score chart canvas not found"
             assert detection_chart is not None, "Detection chart canvas not found"
 
-            print(f"✅ Chart canvases found on page")
+            print("✅ Chart canvases found on page")
 
             # Check if Chart.js is loaded
             chart_loaded = await page.evaluate('typeof Chart !== "undefined"')
             assert chart_loaded, "Chart.js not loaded"
 
-            print(f"✅ Chart.js library loaded")
+            print("✅ Chart.js library loaded")
 
             await browser.close()
 
@@ -207,18 +206,18 @@ class TestEndToEndScanFlow:
             llm_section = await page.query_selector("#llm-analysis-section")
 
             if llm_section:
-                print(f"✅ LLM analysis section found on page")
+                print("✅ LLM analysis section found on page")
 
                 # Check for key elements
                 expert_analysis = await page.query_selector("text=Expert Analysis")
                 if expert_analysis:
-                    print(f"✅ Expert analysis heading found")
+                    print("✅ Expert analysis heading found")
 
                 recommended_action = await page.query_selector("text=Recommended Action")
                 if recommended_action:
-                    print(f"✅ Recommended action section found")
+                    print("✅ Recommended action section found")
             else:
-                print(f"ℹ️ LLM analysis section not found (may be unavailable)")
+                print("ℹ️ LLM analysis section not found (may be unavailable)")
 
             await browser.close()
 
@@ -254,7 +253,7 @@ class TestScanReportDataAccuracy:
                 content_score = details.get("content_analysis", {}).get("phishing_score", 0)
                 ssl_score = details.get("ssl_analysis", {}).get("threat_score", 0)
 
-                print(f"✅ Backend threat scores:")
+                print("✅ Backend threat scores:")
                 print(f"   URL Score: {url_score}")
                 print(f"   Content Score: {content_score}")
                 print(f"   SSL Score: {ssl_score}")
@@ -293,7 +292,7 @@ class TestScanReportDataAccuracy:
                 assert total >= 0
                 assert (malicious + suspicious) <= total
 
-                print(f"✅ Detection counts validated:")
+                print("✅ Detection counts validated:")
                 print(f"   Malicious: {malicious}/{total}")
                 print(f"   Suspicious: {suspicious}/{total}")
 
@@ -331,7 +330,7 @@ class TestScanReportDataAccuracy:
                         assert 0 <= content_conf <= 1
                         print(f"✅ Content classification confidence: {content_conf:.2%}")
                 else:
-                    print(f"ℹ️ LLM analysis not available")
+                    print("ℹ️ LLM analysis not available")
 
 
 class TestScanReportExplanationQuality:
@@ -374,11 +373,11 @@ class TestScanReportExplanationQuality:
                         has_common = any(word in text.lower() for word in common_words)
                         assert has_common, "Explanation doesn't contain common words"
 
-                        print(f"✅ Explanation is readable:")
+                        print("✅ Explanation is readable:")
                         print(f"   Length: {len(text)} characters")
                         print(f"   Preview: {text[:100]}...")
                 else:
-                    print(f"ℹ️ No explanation available")
+                    print("ℹ️ No explanation available")
 
     @pytest.mark.asyncio
     async def test_recommended_action_format(self):
@@ -407,14 +406,14 @@ class TestScanReportExplanationQuality:
 
                         # Should start with emoji or status indicator
                         valid_starts = ["⛔", "⚠️", "✅", "BLOCK", "CAUTION", "SAFE"]
-                        has_valid_start = any(action.startswith(start) for start in valid_starts)
+                        any(action.startswith(start) for start in valid_starts)
 
                         assert len(action) > 10, "Recommended action too short"
 
-                        print(f"✅ Recommended action formatted:")
+                        print("✅ Recommended action formatted:")
                         print(f"   {action}")
                 else:
-                    print(f"ℹ️ No recommended action available")
+                    print("ℹ️ No recommended action available")
 
 
 # Run tests if executed directly
