@@ -61,7 +61,6 @@ try:
     # Try backend imports first (for running from project root)
     from backend.ml_models.content_analyzer import ContentPhishingDetector
     from backend.ml_models.url_classifier import URLThreatClassifier
-
     logger.info("✓ Successfully imported classifiers from backend.ml_models")
 except ImportError as e1:
     try:
@@ -85,7 +84,7 @@ except ImportError as e1:
             files = [f for f in os.listdir(".") if f.endswith(".py") or f.endswith(".csv")]
             for f in files:
                 logger.error(f"  ✓ {f}")
-        except:  # nosec B110
+        except Exception:  # nosec B110
             pass
         logger.error("\nFor Google Colab, you need to:")
         logger.error("1. Upload these files to Colab:")
@@ -121,7 +120,7 @@ class KaggleDatasetTrainer:
                     logger.info(f"Found dataset at: {self.dataset_path}")
                 else:
                     self.dataset_path = dataset_path
-            except:
+            except Exception:
                 # Colab environment - use current directory
                 self.dataset_path = dataset_path
         else:
@@ -261,7 +260,7 @@ class KaggleDatasetTrainer:
                 return None
 
             return url
-        except:
+        except Exception:
             return None
 
     def train_url_classifier(self):
@@ -347,7 +346,7 @@ class KaggleDatasetTrainer:
             try:
                 # Try to use script directory first
                 model_dir = Path(__file__).parent / "saved_models"
-            except:
+            except Exception:
                 # Fallback for Colab - use current directory
                 model_dir = Path("./saved_models")
 
@@ -452,7 +451,7 @@ class KaggleDatasetTrainer:
             # Save the trained model and vectorizer
             try:
                 model_dir = Path(__file__).parent / "saved_models"
-            except:
+            except Exception:
                 # Fallback for Colab
                 model_dir = Path("./saved_models")
 
@@ -562,7 +561,7 @@ class KaggleDatasetTrainer:
 
             try:
                 model_dir = Path(__file__).parent / "saved_models"
-            except:
+            except Exception:
                 model_dir = Path("./saved_models")
 
             model_dir.mkdir(exist_ok=True)

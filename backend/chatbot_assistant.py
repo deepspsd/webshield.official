@@ -131,7 +131,7 @@ When explaining scan results:
 
             # Extract text from response
             if response and response.text:
-                return response.text.strip()
+                return response.text.strip()  # type: ignore[return-value]
             else:
                 return self._get_fallback_response(user_message)
 

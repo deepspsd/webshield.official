@@ -184,7 +184,7 @@ class ContentPhishingDetector:
         """Extract comprehensive features from HTML content for 100% phishing detection"""
         try:
             soup = BeautifulSoup(html_content, "html.parser")
-        except:
+        except Exception:
             soup = BeautifulSoup("", "html.parser")
 
         # Get text content

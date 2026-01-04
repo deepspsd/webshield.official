@@ -106,7 +106,7 @@ async def create_export(background_tasks: BackgroundTasks, payload: Dict[str, An
         raise
     except Exception as e:
         logger.error(f"Error creating export: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create export")
+        raise HTTPException(status_code=500, detail="Failed to create export") from e
 
 
 @export_router.get("/history")
@@ -139,7 +139,7 @@ async def get_export_history(user_email: str, limit: int = 10):
         raise
     except Exception as e:
         logger.error(f"Error getting export history: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get export history")
+        raise HTTPException(status_code=500, detail="Failed to get export history") from e
 
 
 async def process_export(export_id: int, request: Dict[str, Any]):
@@ -273,7 +273,7 @@ async def export_scan_data(format_type: str = "json"):
 
     except Exception as e:
         logger.error(f"Error exporting scan data: {e}")
-        raise HTTPException(status_code=500, detail=f"Error exporting scan data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error exporting scan data: {str(e)}") from e
 
 
 async def export_report_data(format_type: str = "json"):
@@ -315,7 +315,7 @@ async def export_report_data(format_type: str = "json"):
 
     except Exception as e:
         logger.error(f"Error exporting report data: {e}")
-        raise HTTPException(status_code=500, detail=f"Error exporting report data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error exporting report data: {str(e)}") from e
 
 
 async def export_all_data(format_type: str = "json"):
@@ -334,7 +334,7 @@ async def export_all_data(format_type: str = "json"):
 
     except Exception as e:
         logger.error(f"Error exporting all data: {e}")
-        raise HTTPException(status_code=500, detail=f"Error exporting all data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error exporting all data: {str(e)}") from e
 
 
 @export_router.get("/status/{export_id}")
@@ -375,7 +375,7 @@ async def get_export_status(export_id: int):
 
     except Exception as e:
         logger.error(f"Error getting export status: {e}")
-        raise HTTPException(status_code=500, detail=f"Error getting export status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting export status: {str(e)}") from e
 
 
 @export_router.get("/files/{export_id}")
@@ -413,4 +413,4 @@ async def download_export_file(export_id: int):
 
     except Exception as e:
         logger.error(f"Error downloading export file: {e}")
-        raise HTTPException(status_code=500, detail=f"Error downloading export file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error downloading export file: {str(e)}") from e

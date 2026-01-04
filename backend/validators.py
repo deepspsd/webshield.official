@@ -4,12 +4,13 @@ Comprehensive validation for all user inputs to prevent injection attacks
 """
 
 from pydantic import BaseModel, Field, validator
+from typing import Type
 
 try:
     from pydantic import EmailStr
 except ImportError:
     # Fallback if email-validator is not installed
-    EmailStr = str
+    EmailStr: Type[str] = str 
 import logging
 import re
 from typing import Any, Dict, List, Optional
@@ -281,7 +282,7 @@ class ApiKeyRequestValidated(BaseModel):
 class BulkScanRequest(BaseModel):
     """Validated bulk scan request"""
 
-    urls: List[str] = Field(..., min_items=1, max_items=100, description="List of URLs to scan")
+    urls: List[str] = Field(..., min_length=1, max_length=100, description="List of URLs to scan")
     user_email: Optional[EmailStr] = Field(None, description="User email address")
 
     @validator("urls")

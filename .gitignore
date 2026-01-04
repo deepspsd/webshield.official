@@ -186,7 +186,7 @@ coverage.xml
 .hypothesis/
 .tox/
 test-results/
-junit.xml
+junit.xml    
 
 # ============================================
 # SECURITY SCANNING

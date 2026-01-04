@@ -16,28 +16,28 @@ except ImportError as e:
     logger = logging.getLogger(__name__)
     logger.warning(f"Failed to import ML models: {e}")
 
-    class MLSecurityEngine:
+    class MLSecurityEngine:  # type: ignore[no-redef]
         def __init__(self):
             pass
 
         def analyze_url_ml(self, url):
             return {"ml_enabled": False, "prediction": 0}
 
-    class URLThreatClassifier:
+    class URLThreatClassifier:  # type: ignore[no-redef]
         def __init__(self):
             pass
 
         def predict(self, *args, **kwargs):
             return [0]
 
-    class ContentPhishingDetector:
+    class ContentPhishingDetector:  # type: ignore[no-redef]
         def __init__(self):
             pass
 
         def analyze_content(self, content):
             return {"threat_detected": False, "confidence": 0.0}
 
-    def get_ml_engine():
+    def get_ml_engine():  # type: ignore[misc]
         return MLSecurityEngine()
 
 

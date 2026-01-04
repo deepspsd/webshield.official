@@ -103,7 +103,7 @@ def setup_logging(
         console_handler.setLevel(logging.INFO)
 
         if log_format == "json":
-            console_formatter = CustomJSONFormatter("%(timestamp)s %(level)s %(name)s %(message)s")
+            console_formatter: logging.Formatter = CustomJSONFormatter("%(timestamp)s %(level)s %(name)s %(message)s")
         else:
             console_formatter = ColoredFormatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
@@ -120,7 +120,7 @@ def setup_logging(
         file_handler.setLevel(logging.DEBUG)
 
         if log_format == "json":
-            file_formatter = CustomJSONFormatter("%(timestamp)s %(level)s %(name)s %(module)s %(funcName)s %(message)s")
+            file_formatter: logging.Formatter = CustomJSONFormatter("%(timestamp)s %(level)s %(name)s %(module)s %(funcName)s %(message)s")
         else:
             file_formatter = logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s",
@@ -138,7 +138,7 @@ def setup_logging(
     error_handler.setLevel(logging.ERROR)
 
     if log_format == "json":
-        error_formatter = CustomJSONFormatter(
+        error_formatter: logging.Formatter = CustomJSONFormatter(
             "%(timestamp)s %(level)s %(name)s %(module)s %(funcName)s %(message)s %(exc_info)s"
         )
     else:

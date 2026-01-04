@@ -43,6 +43,7 @@ def create_access_token(email: str, user_id: int) -> str:
     Returns:
         JWT token string
     """
+    assert JWT_SECRET is not None, "JWT_SECRET must be configured"
     expiration = datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
 
     payload = {"sub": email, "user_id": user_id, "exp": expiration, "iat": datetime.utcnow()}
@@ -64,8 +65,9 @@ def verify_token(token: str) -> dict:
     Raises:
         HTTPException: If token is invalid or expired
     """
+    assert JWT_SECRET is not None, "JWT_SECRET must be configured"
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload: dict = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])  # type: ignore[assignment]
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
@@ -99,6 +101,7 @@ def create_refresh_token(email: str, user_id: Optional[int] = None) -> str:
     Returns:
         Refresh token string
     """
+    assert JWT_SECRET is not None, "JWT_SECRET must be configured"
     expiration = datetime.utcnow() + timedelta(days=30)
 
     payload = {"sub": email, "type": "refresh", "exp": expiration, "iat": datetime.utcnow()}
@@ -120,6 +123,7 @@ def refresh_access_token(refresh_token: str) -> str:
     Returns:
         New access token
     """
+    assert JWT_SECRET is not None, "JWT_SECRET must be configured"
     try:
         payload = jwt.decode(refresh_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
 

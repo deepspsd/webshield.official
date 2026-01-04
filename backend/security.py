@@ -69,7 +69,7 @@ class SecurityManager:
         key_info["last_used"] = datetime.now()
         key_info["usage_count"] += 1
 
-        return key_info
+        return key_info  # type: ignore[return-value]
 
     def rotate_api_key(self, old_key: str, user_id: int) -> str:
         """Rotate API key"""

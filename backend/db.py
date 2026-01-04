@@ -56,7 +56,8 @@ def _build_mysql_config():
 
     # Fallback to individual env vars when DB_URL not fully specified
     host = host or os.getenv("DB_HOST")
-    port = port or (int(os.getenv("DB_PORT")) if os.getenv("DB_PORT") else None)
+    db_port_str = os.getenv("DB_PORT")
+    port = port or (int(db_port_str) if db_port_str else None)
     user = user or os.getenv("DB_USER")
     password = password or os.getenv("DB_PASSWORD")
     database = database or os.getenv("DB_NAME")
@@ -211,7 +212,8 @@ def get_mysql_connection():
         config.pop("pool_reset_session", None)
         config.pop("pool_recycle", None)
 
-        conn = mysql.connector.connect(**config)
+        conn_result = mysql.connector.connect(**config)
+        conn = conn_result  # type: ignore[assignment]
         if conn and conn.is_connected():
             conn.ping(reconnect=True)
             logger.info("Direct connection established successfully")

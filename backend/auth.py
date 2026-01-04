@@ -1,6 +1,7 @@
 import logging
 import os
 from uuid import uuid4
+from typing import Any, List
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from passlib.context import CryptContext
@@ -33,7 +34,7 @@ async def register_user(request: RegisterRequest):
         hashed_pw = pwd_context.hash(request.password)
     except Exception as e:
         logger.error(f"Password hashing error: {e}")
-        raise HTTPException(status_code=500, detail="Registration failed - password processing error")
+        raise HTTPException(status_code=500, detail="Registration failed - password processing error") from e
 
     # Step 3: Database operations
     try:
@@ -62,7 +63,7 @@ async def register_user(request: RegisterRequest):
         raise
     except Exception as e:
         logger.error(f"Registration error: {e}")
-        raise HTTPException(status_code=500, detail="Registration failed")
+        raise HTTPException(status_code=500, detail="Registration failed") from e
 
 
 @auth_router.post("/login")
@@ -104,7 +105,7 @@ def login_user(request: LoginRequest):
         raise
     except Exception as e:
         logger.error(f"Database error during login: {e}")
-        raise HTTPException(status_code=500, detail="Login failed - database error")
+        raise HTTPException(status_code=500, detail="Login failed - database error") from e
 
     # Step 2: Verify password OUTSIDE of database context to isolate errors
     try:
@@ -119,7 +120,7 @@ def login_user(request: LoginRequest):
         raise
     except Exception as e:
         logger.error(f"Password verification error: {e}")
-        raise HTTPException(status_code=500, detail="Login failed - authentication error")
+        raise HTTPException(status_code=500, detail="Login failed - authentication error") from e
 
     # Step 3: Update last_login (separate DB connection)
     try:
@@ -173,7 +174,7 @@ def refresh_token(refresh_token: str = Form(...)):
         raise
     except Exception as e:
         logger.error(f"Refresh token error: {e}")
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        raise HTTPException(status_code=401, detail="Invalid refresh token") from e
 
 
 @auth_router.post("/change_password")
@@ -208,7 +209,7 @@ def change_password(data: ChangePasswordRequest):
         raise
     except Exception as e:
         logger.error(f"Database error during password change: {e}")
-        raise HTTPException(status_code=500, detail="Password change failed - database error")
+        raise HTTPException(status_code=500, detail="Password change failed - database error") from e
 
     # Step 2: Verify old password OUTSIDE database context
     try:
@@ -221,14 +222,14 @@ def change_password(data: ChangePasswordRequest):
         raise
     except Exception as e:
         logger.error(f"Password verification error during change: {e}")
-        raise HTTPException(status_code=500, detail="Password change failed - verification error")
+        raise HTTPException(status_code=500, detail="Password change failed - verification error") from e
 
     # Step 3: Hash new password OUTSIDE database context
     try:
         hashed_pw = pwd_context.hash(new_password)
     except Exception as e:
         logger.error(f"Password hashing error during change: {e}")
-        raise HTTPException(status_code=500, detail="Password change failed - hashing error")
+        raise HTTPException(status_code=500, detail="Password change failed - hashing error") from e
 
     # Step 4: Update password in database
     try:
@@ -256,7 +257,7 @@ def change_password(data: ChangePasswordRequest):
         raise
     except Exception as e:
         logger.error(f"Change password error: {e}")
-        raise HTTPException(status_code=500, detail="Password change failed")
+        raise HTTPException(status_code=500, detail="Password change failed") from e
 
 
 @auth_router.get("/profile")
@@ -306,7 +307,7 @@ def get_profile(email: str):
         raise
     except Exception as e:
         logger.error(f"Get profile error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get profile")
+        raise HTTPException(status_code=500, detail="Failed to get profile") from e
 
 
 @auth_router.put("/profile")
@@ -333,8 +334,8 @@ def update_profile(data: UpdateProfileRequest):
             col_cursor.close()
 
             # Build update query dynamically
-            update_fields = []
-            params = []
+            update_fields: List[str] = []
+            params: List[Any] = []
 
             if name is not None:
                 if "full_name" in available_cols:
@@ -370,7 +371,7 @@ def update_profile(data: UpdateProfileRequest):
         raise
     except Exception as e:
         logger.error(f"Update profile error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update profile")
+        raise HTTPException(status_code=500, detail="Failed to update profile") from e
 
 
 @auth_router.post("/upload_profile_picture")
@@ -379,7 +380,7 @@ async def upload_profile_picture(email: str = Form(...), file: UploadFile = File
         raise HTTPException(status_code=400, detail="No file uploaded")
 
     # Validate file type
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
 
     # Enforce max upload size (default 5MB)
@@ -408,7 +409,7 @@ async def upload_profile_picture(email: str = Form(...), file: UploadFile = File
                 buffer.write(chunk)
     except Exception as e:
         logger.error(f"File upload error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to upload file")
+        raise HTTPException(status_code=500, detail="Failed to upload file") from e
 
     # Update database
     try:
@@ -426,4 +427,4 @@ async def upload_profile_picture(email: str = Form(...), file: UploadFile = File
         raise
     except Exception as e:
         logger.error(f"Profile picture update error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update profile picture")
+        raise HTTPException(status_code=500, detail="Failed to update profile picture") from e

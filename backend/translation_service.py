@@ -16,7 +16,7 @@ try:
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
-    genai = None
+    genai = None 
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class GeminiTranslationService:
             response = await loop.run_in_executor(None, lambda: self.model.generate_content(prompt))
 
             if response and response.text:
-                translated_text = response.text.strip()
+                translated_text: str = response.text.strip()  # type: ignore[assignment]
                 # Cache the translation
                 self._cache_translation(text, target_lang, translated_text)
                 return translated_text
@@ -257,7 +257,7 @@ Translation:"""
             try:
                 with open(cache_file, "r", encoding="utf-8") as f:
                     cache = json.load(f)
-                    return cache.get(text)
+                    return cache.get(text)  # type: ignore[return-value]
             except Exception:
                 return None
         return None

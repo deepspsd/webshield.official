@@ -37,7 +37,7 @@ except ImportError as e:
         def analyze_content(self, content):
             return {"threat_detected": False, "confidence": 0.0}
 
-    def get_ml_engine():
+    def get_ml_engine():  # type: ignore[misc]
         return MLSecurityEngine()
 
 

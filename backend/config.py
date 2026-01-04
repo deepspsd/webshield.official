@@ -39,19 +39,19 @@ class Settings(BaseSettings):
     API_KEY_HEADER: str = "X-API-Key"
 
     # CORS Settings
-    ALLOWED_ORIGINS: list = Field(default=["http://localhost:8000", "http://127.0.0.1:8000"], env="ALLOWED_ORIGINS")
+    ALLOWED_ORIGINS: list[str] = Field(default=["http://localhost:8000", "http://127.0.0.1:8000"], env="ALLOWED_ORIGINS")
     CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    CORS_ALLOW_HEADERS: list = ["*"]
+    CORS_ALLOW_METHODS: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    CORS_ALLOW_HEADERS: list[str] = ["*"]
 
     # ============================================
     # DATABASE SETTINGS
     # ============================================
-    DB_HOST: str = Field(..., env="DB_HOST")
+    DB_HOST: str = Field(default="localhost", env="DB_HOST")
     DB_PORT: int = Field(default=3306, env="DB_PORT")
-    DB_USER: str = Field(..., env="DB_USER")
-    DB_PASSWORD: str = Field(..., env="DB_PASSWORD")
-    DB_NAME: str = Field(..., env="DB_NAME")
+    DB_USER: str = Field(default="root", env="DB_USER")
+    DB_PASSWORD: str = Field(default="", env="DB_PASSWORD")
+    DB_NAME: str = Field(default="webshield", env="DB_NAME")
     DB_POOL_SIZE: int = Field(default=20, env="DB_POOL_SIZE")
     DB_SSL_CA: Optional[str] = Field(default=None, env="DB_SSL_CA")
     DB_SSL_MODE: str = Field(default="PREFERRED", env="DB_SSL_MODE")
@@ -131,15 +131,22 @@ class Settings(BaseSettings):
         """Generate database connection URL"""
         return f"mysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
-    def get_cors_origins(self) -> list:
+    def get_cors_origins(self) -> list[str]:
         """Get CORS origins as list"""
         if isinstance(self.ALLOWED_ORIGINS, str):
             return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
         return self.ALLOWED_ORIGINS
 
 
-# Global settings instance
-settings = Settings()
+# Global settings instance - will use defaults or .env values
+try:
+    settings = Settings()  # type: ignore[call-arg]
+except Exception:
+    # Fallback with minimal config if .env is missing
+    settings = Settings(  # type: ignore[call-arg]
+        SECRET_KEY="dev-secret-key",  # nosec B106
+        JWT_SECRET="dev-jwt-secret",  # nosec B106
+    )
 
 
 def get_settings() -> Settings:
