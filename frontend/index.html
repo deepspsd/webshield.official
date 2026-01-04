@@ -2478,25 +2478,154 @@
         </div>
     </section>
 
-    <!-- Extension CTA -->
+    <!-- Extensions CTA - Dual Extension Showcase -->
     <section id="extension" class="extension-cta">
         <div class="container">
-            <div class="extension-content">
-                <div class="extension-icon">🌐</div>
+            <div class="extension-content" style="max-width: 72rem;">
+                <div class="extension-icon"
+                    style="background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%); width: 5rem; height: 5rem; font-size: 2.5rem;">
+                    🛡️
+                </div>
 
-                <h2 data-translate="extension-title">Seamless Browser Protection</h2>
-                <p data-translate="extension-description">
-                    Install our extension for automatic protection while browsing.
-                    Real-time alerts and one-click threat analysis.
+                <h2 data-translate="extension-title" style="font-size: 2.75rem; margin-bottom: 0.5rem;">
+                    Complete Protection Suite
+                </h2>
+                <p style="font-size: 1.1rem; color: hsl(var(--muted-foreground)); margin-bottom: 3rem;">
+                    Two powerful extensions working together to protect you from web and email threats
                 </p>
 
-                <div class="extension-buttons">
-                    <a href="how-to-install.html" class="btn btn-hero btn-lg" data-translate="btn-add-chrome">
-                        <span class="icon">🌐</span>
-                        Add to Chrome - Free
+                <!-- Extensions Grid -->
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+
+                    <!-- Web Shield Extension -->
+                    <div
+                        style="background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 16px; padding: 2rem; text-align: left; position: relative; overflow: hidden; transition: all 0.3s ease;">
+                        <div
+                            style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));">
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div
+                                style="width: 56px; height: 56px; background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">
+                                🌐
+                            </div>
+                            <div>
+                                <h3
+                                    style="font-size: 1.5rem; font-weight: 700; color: hsl(var(--foreground)); margin: 0;">
+                                    WebShield URL Scanner</h3>
+                                <span
+                                    style="font-size: 0.8rem; color: hsl(var(--accent)); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Web
+                                    Security</span>
+                            </div>
+                        </div>
+
+                        <p
+                            style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.6;">
+                            Real-time protection against malicious websites, phishing attacks, and dangerous downloads.
+                            Scans every URL before you click.
+                        </p>
+
+                        <ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Real-time URL
+                                scanning
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Phishing & malware
+                                detection
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> SSL certificate
+                                validation
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> One-click threat
+                                reports
+                            </li>
+                        </ul>
+
+                        <a href="how-to-install.html" class="btn btn-hero"
+                            style="width: 100%; justify-content: center;">
+                            <span style="font-size: 1.1rem;">🌐</span>
+                            Add to Chrome - Free
+                        </a>
+                    </div>
+
+                    <!-- Gmail Shield Extension -->
+                    <div
+                        style="background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 16px; padding: 2rem; text-align: left; position: relative; overflow: hidden; transition: all 0.3s ease;">
+                        <div
+                            style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #ea4335, #fbbc05, #34a853);">
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div
+                                style="width: 56px; height: 56px; background: linear-gradient(135deg, #ea4335 0%, #fbbc05 50%, #34a853 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.75rem;">
+                                ✉️
+                            </div>
+                            <div>
+                                <h3
+                                    style="font-size: 1.5rem; font-weight: 700; color: hsl(var(--foreground)); margin: 0;">
+                                    WebShield Gmail Scanner</h3>
+                                <span
+                                    style="font-size: 0.8rem; color: #34a853; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Email
+                                    Security</span>
+                            </div>
+                        </div>
+
+                        <p
+                            style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.6;">
+                            Protect your inbox from phishing emails, spoofed senders, and malicious attachments. Verify
+                            every email with SPF/DKIM/DMARC checks.
+                        </p>
+
+                        <ul style="list-style: none; padding: 0; margin-bottom: 1.5rem;">
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> SPF/DKIM/DMARC
+                                verification
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Sender reputation
+                                analysis
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Phishing email
+                                detection
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Link safety
+                                scanning
+                            </li>
+                        </ul>
+
+                        <a href="how-to-install.html#gmail" class="btn"
+                            style="width: 100%; justify-content: center; background: linear-gradient(135deg, #ea4335, #34a853); color: white; box-shadow: 0 4px 14px rgba(234, 67, 53, 0.3);">
+                            <span style="font-size: 1.1rem;">✉️</span>
+                            Add Gmail Protection - Free
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Bottom CTA -->
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; align-items: center;">
+                    <a href="how-to-install.html" class="btn btn-outline btn-lg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                        Installation Guide
                     </a>
-                    <a href="how-to-install.html" class="btn btn-outline btn-lg" data-translate="btn-learn-more">
-                        Learn More
+                    <a href="features.html" class="btn btn-outline btn-lg">
+                        Learn More About Features
                     </a>
                 </div>
             </div>
@@ -2522,7 +2651,8 @@
                     <ul>
                         <li><a href="scan-url.html" data-translate="footer-url-scanner">URL Scanner</a></li>
                         <li><a href="dashboard.html" data-translate="footer-dashboard">Dashboard</a></li>
-                        <li><a href="how-to-install.html" data-translate="footer-extension">Extension</a></li>
+                        <li><a href="how-to-install.html">🌐 Web Extension</a></li>
+                        <li><a href="how-to-install.html#gmail">✉️ Gmail Extension</a></li>
                         <li><a href="api-settings.html" data-translate="footer-api-access">API Access</a></li>
                     </ul>
                 </div>

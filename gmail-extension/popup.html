@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gmail Shield</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <div class="logo">🛡️</div>
+        <div>
+          <div class="title">Gmail Shield</div>
+          <div class="subtitle">Email Protection</div>
+        </div>
+      </div>
+      <div class="status" id="gr-status">Ready</div>
+    </div>
+
+    <!-- Main Scan Section -->
+    <div class="section">
+      <button id="gr-scan-btn" class="primary">
+        <span>🔍</span> Scan Current Email
+      </button>
+      <div class="hint" id="gr-hint">Open an email in Gmail to scan it for threats</div>
+    </div>
+
+    <!-- Results Section (Initially Hidden) -->
+    <div id="gr-result-area" class="card" style="display: none;">
+      <div class="card-header">
+        <span id="gr-threat-badge" class="severity">SAFE</span>
+        <span id="gr-score" class="score">Score: 0/100</span>
+      </div>
+      <div id="gr-summary" class="summary"></div>
+
+      <!-- Threat Reasons -->
+      <div id="gr-reasons-container" class="reasons-container" style="display: none;">
+        <ul id="gr-reasons" class="reasons-list"></ul>
+      </div>
+
+      <!-- Offline Analysis Badge -->
+      <div id="gr-offline-badge" class="offline-badge" style="display: none;">
+        ⚡ Offline Analysis Mode
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Reputation</div>
+          <div class="stat-value" id="gr-rep-score">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Links Found</div>
+          <div class="stat-value" id="gr-link-count">0</div>
+        </div>
+      </div>
+
+      <div class="details" id="gr-details">
+        <div class="row">
+          <span class="k">Sender Trusted</span>
+          <span class="v" id="gr-trusted">—</span>
+        </div>
+        <div class="row">
+          <span class="k">Authentication</span>
+          <span class="v" id="gr-auth">—</span>
+        </div>
+        <div class="row">
+          <span class="k">Suspicious Links</span>
+          <span class="v" id="gr-sus-links">0</span>
+        </div>
+        <div class="row" id="gr-url-mismatch-row" style="display: none;">
+          <span class="k">⚠️ URL Mismatches</span>
+          <span class="v" id="gr-url-mismatches" style="color: var(--danger);">0</span>
+        </div>
+        <div class="row" id="gr-keywords-row" style="display: none;">
+          <span class="k">Phishing Keywords</span>
+          <span class="v" id="gr-phishing-keywords">0</span>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+        <button class="action-btn danger" id="gr-report-phishing" title="Report as phishing">🚨 Report</button>
+        <button class="action-btn warning" id="gr-mark-spam" title="Mark as spam">📧 Spam</button>
+        <button class="action-btn" id="gr-show-details" title="Show full analysis">📊 Details</button>
+      </div>
+    </div>
+
+    <!-- Safety Tips Section -->
+    <div class="section" id="gr-tips-section">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <span style="font-size: 16px;">💡</span>
+        <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">How to Spot Fake Emails</span>
+      </div>
+
+      <div class="tips-list">
+        <div class="tip-item">
+          <span class="tip-icon">⚠️</span>
+          <div class="tip-content">
+            <strong>Check the sender</strong>
+            <span>Verify the email address, not just the display name. Scammers often use similar-looking
+              addresses.</span>
+          </div>
+        </div>
+
+        <div class="tip-item">
+          <span class="tip-icon">🔗</span>
+          <div class="tip-content">
+            <strong>Hover before clicking</strong>
+            <span>Hover over links to see the actual URL. Avoid clicking shortened or suspicious links.</span>
+          </div>
+        </div>
+
+        <div class="tip-item">
+          <span class="tip-icon">🚨</span>
+          <div class="tip-content">
+            <strong>Beware of urgency</strong>
+            <span>Phishing emails create false urgency. Legitimate companies rarely demand immediate action.</span>
+          </div>
+        </div>
+
+        <div class="tip-item">
+          <span class="tip-icon">🔒</span>
+          <div class="tip-content">
+            <strong>Never share passwords</strong>
+            <span>No legitimate service will ask for your password via email. Ever.</span>
+          </div>
+        </div>
+
+        <div class="tip-item">
+          <span class="tip-icon">📝</span>
+          <div class="tip-content">
+            <strong>Check for errors</strong>
+            <span>Poor grammar, spelling mistakes, and generic greetings are red flags.</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="gr-toggle-tips" class="secondary" style="margin-top: 8px;">
+        Show More Tips
+      </button>
+    </div>
+
+    <!-- Extended Tips (Hidden by default) -->
+    <div class="section" id="gr-extended-tips" style="display: none;">
+      <div style="font-weight: 600; font-size: 13px; color: var(--text-primary); margin-bottom: 12px;">
+        🛡️ Advanced Protection Tips
+      </div>
+
+      <div class="tips-list">
+        <div class="tip-item">
+          <span class="tip-icon">🔐</span>
+          <div class="tip-content">
+            <strong>Enable 2FA</strong>
+            <span>Two-factor authentication adds an extra security layer even if your password is compromised.</span>
+          </div>
+        </div>
+
+        <div class="tip-item">
+          <span class="tip-icon">📧</span>
+          <div class="tip-content">
+            <strong>Verify separately</strong>
+            <span>If an email claims to be from your bank, log in directly through your browser—never through email
+              links.</span>
+          </div>
+        </div>
+
+        <div class="tip-item">
+          <span class="tip-icon">💳</span>
+          <div class="tip-content">
+            <strong>Protect financial info</strong>
+            <span>Never send credit card numbers, SSN, or bank details via email.</span>
+          </div>
+        </div>
+
+        <div class="tip-item">
+          <span class="tip-icon">📎</span>
+          <div class="tip-content">
+            <strong>Be cautious with attachments</strong>
+            <span>Don't open attachments from unknown senders. They may contain malware.</span>
+          </div>
+        </div>
+
+        <div class="tip-item">
+          <span class="tip-icon">🎁</span>
+          <div class="tip-content">
+            <strong>Too good to be true?</strong>
+            <span>Prize winnings, unexpected refunds, or free offers are almost always scams.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <button class="link" id="gr-report-btn" title="View full report">📊 Report</button>
+      <button class="link" id="gr-settings-btn" title="Settings">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <style>
+    .tips-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tip-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .tip-item:hover {
+      background: var(--border);
+      transform: translateX(4px);
+    }
+
+    .tip-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .tip-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .tip-content strong {
+      font-size: 12px;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .tip-content span {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+  </style>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>

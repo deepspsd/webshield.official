@@ -430,65 +430,167 @@
 
 <body>
     <div class="main-content">
-        <div class="container">
+        <div class="container" style="max-width: 800px;">
             <div class="install-card">
                 <div class="header">
                     <div class="logo-icon">🛡️</div>
-                    <h1 class="title">Install WebShield Extension</h1>
-                    <p class="subtitle">Follow these steps to add WebShield to your browser for real-time protection.
-                    </p>
+                    <h1 class="title">Install WebShield Extensions</h1>
+                    <p class="subtitle">Choose your protection: Web Security for safe browsing, or Gmail Security for
+                        email protection.</p>
                 </div>
 
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <p class="step-text">Open <strong>Google Chrome</strong> and go to <a
-                                    href="chrome://extensions/" target="_blank">chrome://extensions/</a></p>
+                <!-- Extension Tabs -->
+                <div
+                    style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid hsl(var(--border));">
+                    <button onclick="showTab('web')" id="tab-web" class="tab-btn active"
+                        style="flex: 1; padding: 1rem; background: transparent; border: none; color: hsl(var(--foreground)); font-weight: 600; cursor: pointer; border-bottom: 3px solid hsl(var(--primary)); transition: all 0.3s;">
+                        <span style="font-size: 1.5rem;">🌐</span><br>
+                        Web Extension
+                    </button>
+                    <button onclick="showTab('gmail')" id="tab-gmail" class="tab-btn"
+                        style="flex: 1; padding: 1rem; background: transparent; border: none; color: hsl(var(--muted-foreground)); font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s;">
+                        <span style="font-size: 1.5rem;">✉️</span><br>
+                        Gmail Extension
+                    </button>
+                </div>
+
+                <!-- Web Extension Tab Content -->
+                <div id="content-web" class="tab-content">
+                    <div
+                        style="text-align: center; margin-bottom: 2rem; padding: 1rem; background: hsl(var(--primary) / 0.1); border-radius: var(--radius); border: 1px solid hsl(var(--primary) / 0.2);">
+                        <h3 style="color: hsl(var(--primary)); margin-bottom: 0.5rem; font-size: 1.25rem;">🌐 WebShield
+                            URL Scanner</h3>
+                        <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem;">Protect against malicious
+                            websites, phishing & malware</p>
+                    </div>
+
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <p class="step-text">Open <strong>Google Chrome</strong> and go to <a
+                                        href="chrome://extensions/" target="_blank">chrome://extensions/</a></p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <p class="step-text">Enable <strong>Developer mode</strong> (toggle in the top right
+                                    corner)</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <p class="step-text">Click <strong>Load unpacked</strong></p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <p class="step-text">Select the folder: <code>extension</code> from the WebShield
+                                    directory</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <p class="step-text">✅ The extension icon will appear in your toolbar. Click it to scan
+                                    any URL!</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <p class="step-text">Enable <strong>Developer mode</strong> (toggle in the top right corner)
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <p class="step-text">Click <strong>Load unpacked</strong></p>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            <p class="step-text">Select the folder: <code>extension</code> from your computer</p>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-number">5</div>
-                        <div class="step-content">
-                            <p class="step-text">The extension will now appear in your browser's extension list!</p>
-                        </div>
+                    <div class="actions">
+                        <a href="https://developer.chrome.com/docs/extensions/mv3/getstarted/#load-unpacked"
+                            target="_blank" class="btn btn-primary">
+                            <span>📖</span>
+                            See Official Chrome Guide
+                        </a>
                     </div>
                 </div>
 
-                <div class="actions">
-                    <a href="https://developer.chrome.com/docs/extensions/mv3/getstarted/#load-unpacked" target="_blank"
-                        class="btn btn-primary">
-                        <span>📖</span>
-                        See Official Chrome Guide
-                    </a>
-                    <a href="/" class="btn btn-outline">
-                        <span>🏠</span>
-                        Back to Home
-                    </a>
+                <!-- Gmail Extension Tab Content -->
+                <div id="content-gmail" class="tab-content" style="display: none;">
+                    <div
+                        style="text-align: center; margin-bottom: 2rem; padding: 1rem; background: linear-gradient(135deg, rgba(234, 67, 53, 0.1), rgba(52, 168, 83, 0.1)); border-radius: var(--radius); border: 1px solid rgba(234, 67, 53, 0.2);">
+                        <h3
+                            style="background: linear-gradient(90deg, #ea4335, #34a853); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; font-size: 1.25rem;">
+                            ✉️ WebShield Gmail Scanner</h3>
+                        <p style="color: hsl(var(--muted-foreground)); font-size: 0.9rem;">Protect your inbox with
+                            SPF/DKIM/DMARC verification</p>
+                    </div>
+
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <p class="step-text">Open <strong>Google Chrome</strong> and go to <a
+                                        href="chrome://extensions/" target="_blank">chrome://extensions/</a></p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <p class="step-text">Enable <strong>Developer mode</strong> (toggle in the top right
+                                    corner)</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <p class="step-text">Click <strong>Load unpacked</strong></p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <p class="step-text">Select the folder: <code>gmail-extension</code> from the WebShield
+                                    directory</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <p class="step-text">Open <strong>Gmail</strong> in your browser. You'll see a
+                                    <strong>"🛡️ Scan Email"</strong> button in each email!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="background: hsl(var(--muted)); padding: 1.5rem; border-radius: var(--radius); margin-top: 1.5rem;">
+                        <h4 style="color: hsl(var(--foreground)); margin-bottom: 1rem; font-size: 1rem;">📋 Gmail
+                            Extension Features</h4>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Real DNS-based
+                                SPF/DKIM/DMARC verification
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Sender reputation
+                                & domain trust analysis
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Suspicious link
+                                detection in emails
+                            </li>
+                            <li
+                                style="display: flex; align-items: center; gap: 0.75rem; color: hsl(var(--foreground)); font-size: 0.9rem;">
+                                <span style="color: hsl(var(--success)); font-weight: bold;">✓</span> Visual security
+                                badge with detailed reports
+                            </li>
+                        </ul>
+                    </div>
                 </div>
+
+                <a href="/" class="btn btn-outline" style="width: 100%; margin-top: 2rem; justify-content: center;">
+                    <span>🏠</span>
+                    Back to Home
+                </a>
 
                 <div class="simple-footer">
                     <p>Need more help? Contact <a href="mailto:support@webshield.com">support@webshield.com</a></p>
@@ -496,6 +598,37 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function showTab(tab) {
+            // Hide all content
+            document.getElementById('content-web').style.display = 'none';
+            document.getElementById('content-gmail').style.display = 'none';
+
+            // Reset all tabs
+            document.getElementById('tab-web').style.borderBottomColor = 'transparent';
+            document.getElementById('tab-web').style.color = 'hsl(220, 25%, 70%)';
+            document.getElementById('tab-gmail').style.borderBottomColor = 'transparent';
+            document.getElementById('tab-gmail').style.color = 'hsl(220, 25%, 70%)';
+
+            // Show selected content
+            document.getElementById('content-' + tab).style.display = 'block';
+
+            // Highlight selected tab
+            const activeTab = document.getElementById('tab-' + tab);
+            if (tab === 'gmail') {
+                activeTab.style.borderBottomColor = '#34a853';
+            } else {
+                activeTab.style.borderBottomColor = 'hsl(210, 100%, 60%)';
+            }
+            activeTab.style.color = 'hsl(220, 25%, 98%)';
+        }
+
+        // Check for hash to show gmail tab
+        if (window.location.hash === '#gmail') {
+            showTab('gmail');
+        }
+    </script>
 
     <footer class="footer">
         <div class="container">

@@ -1,0 +1,333 @@
+/**
+ * WebShield Gmail Scanner Styles
+ * Version 2.0.0
+ * 
+ * Styles for the in-page email security badges, scan buttons,
+ * and floating report cards injected into Gmail.
+ */
+
+.webshield-email-badge {
+    margin: 16px 0;
+    padding: 16px;
+    border-radius: 8px;
+    font-family: 'Google Sans', Roboto, Arial, sans-serif;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.webshield-email-badge.safe {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-left: 4px solid #4caf50;
+}
+
+.webshield-email-badge.suspicious {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-left: 4px solid #ff9800;
+}
+
+.webshield-email-badge.dangerous {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    border-left: 4px solid #f44336;
+}
+
+.webshield-badge-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.webshield-badge-icon {
+    font-size: 24px;
+}
+
+.webshield-badge-title {
+    font-weight: 600;
+    font-size: 16px;
+    flex: 1;
+}
+
+.webshield-badge-score {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.webshield-badge-summary {
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.webshield-badge-details {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.webshield-detail-section {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #555;
+}
+
+.webshield-recommendations {
+    margin-top: 12px;
+}
+
+.webshield-recommendations ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.webshield-recommendations li {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #555;
+}
+
+.webshield-toggle-details {
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.webshield-toggle-details:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.webshield-scan-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 8px;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.webshield-scan-button:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #8b5cf6 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.webshield-scan-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Statistics Grid */
+.webshield-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.webshield-stat-card {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.webshield-stat-card:hover {
+    transform: translateY(-2px);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.webshield-stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 5px 0;
+    color: #333;
+}
+
+.webshield-stat-label {
+    color: #666;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.webshield-stat-card.reputation .webshield-stat-value {
+    color: #2196F3;
+}
+
+.webshield-stat-card.links .webshield-stat-value {
+    color: #9C27B0;
+}
+
+.webshield-stat-card.auth .webshield-stat-value {
+    color: #4CAF50;
+}
+
+.webshield-stat-card.flags .webshield-stat-value {
+    color: #FF9800;
+}
+
+/* Detail Rows */
+.webshield-detail-section h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.webshield-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 13px;
+}
+
+.webshield-detail-row:last-child {
+    border-bottom: none;
+}
+
+.webshield-detail-label {
+    color: #666;
+}
+
+.webshield-detail-value {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Status Badges */
+.webshield-status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.webshield-status-badge.pass {
+    background: rgba(76, 175, 80, 0.15);
+    color: #2e7d32;
+}
+
+.webshield-status-badge.fail {
+    background: rgba(244, 67, 54, 0.15);
+    color: #c62828;
+}
+
+.webshield-status-badge.unknown {
+    background: rgba(158, 158, 158, 0.15);
+    color: #616161;
+}
+
+/* Links List */
+.webshield-links-list {
+    max-height: 150px;
+    overflow-y: auto;
+    margin: 10px 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    padding: 5px;
+}
+
+.webshield-link-item {
+    padding: 6px;
+    margin: 3px 0;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+    font-size: 11px;
+    word-break: break-all;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.webshield-link-item.safe {
+    border-left: 3px solid #4CAF50;
+}
+
+.webshield-link-item.suspicious {
+    border-left: 3px solid #FF9800;
+}
+
+.webshield-link-item.malicious {
+    border-left: 3px solid #F44336;
+}
+
+/* Close Button */
+.webshield-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    color: #666;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.webshield-close-btn:hover {
+    background: rgba(0, 0, 0, 0.2);
+    color: #333;
+    transform: rotate(90deg);
+}
+
+/* Recommendations */
+.webshield-recommendations h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Scrollbar Styling */
+.webshield-links-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.webshield-links-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.webshield-links-list::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.webshield-links-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}

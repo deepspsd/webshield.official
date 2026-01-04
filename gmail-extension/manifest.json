@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "WebShield Gmail Scanner",
+  "version": "2.0.0",
+  "description": "World-class email security: detects phishing, spoofing, homograph attacks, and suspicious content with advanced AI-powered analysis.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background-gmail.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "WebShield Gmail Scanner",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "options_page": "settings.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*"
+      ],
+      "js": [
+        "gmail-scanner.js"
+      ],
+      "css": [
+        "gmail-scanner.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "notifications",
+    "activeTab",
+    "tabs",
+    "alarms"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*",
+    "https://pggjs0c8-8000.inc1.devtunnels.ms/*",
+    "https://*.googleapis.com/*"
+  ]
+}

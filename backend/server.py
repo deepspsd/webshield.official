@@ -325,6 +325,16 @@ try:
         logger.warning(f"Chatbot routes failed to load: {e}")
         # Continue without chatbot routes
 
+    # Email scanning routes for Gmail extension
+    try:
+        from .email_routes import email_router
+
+        app.include_router(email_router, prefix="/api")
+        logger.info("Email routes loaded successfully")
+    except Exception as e:
+        logger.warning(f"Email routes failed to load: {e}")
+        # Continue without email routes
+
     # Course routes for educational platform
     try:
         from .courses.routes import course_router
