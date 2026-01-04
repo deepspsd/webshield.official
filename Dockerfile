@@ -1,7 +1,7 @@
 # Production-Ready Dockerfile with Multi-Stage Build
 # Optimized for security, size, and performance
 
-# Stage 1: Base image with dependencies
+# Stage 1: Runtime base image
 FROM python:3.11-slim-bullseye AS base
 
 # Set environment variables
@@ -14,13 +14,10 @@ ENV PYTHONUNBUFFERED=1 \
 # Create non-root user for security
 RUN groupadd -r webshield && useradd -r -g webshield webshield
 
-# Install system dependencies
+# Install runtime system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    libpq-dev \
     curl \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
 # Stage 2: Dependencies installation
@@ -28,14 +25,22 @@ FROM base AS dependencies
 
 WORKDIR /app
 
+# Install build dependencies (only in this stage)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy requirements files
 COPY requirements-runtime.txt requirements-ml.txt requirements-production.txt ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-runtime.txt && \
-    pip install --no-cache-dir -r requirements-ml.txt && \
-    pip install --no-cache-dir -r requirements-production.txt
+    pip install --no-cache-dir --prefix=/install -r requirements-runtime.txt && \
+    pip install --no-cache-dir --prefix=/install -r requirements-ml.txt && \
+    pip install --no-cache-dir --prefix=/install -r requirements-production.txt
 
 # Stage 3: Production image
 FROM base AS production
@@ -43,8 +48,7 @@ FROM base AS production
 WORKDIR /app
 
 # Copy installed dependencies from previous stage
-COPY --from=dependencies /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=dependencies /usr/local/bin /usr/local/bin
+COPY --from=dependencies /install /usr/local
 
 # Copy application code
 COPY --chown=webshield:webshield . .
