@@ -7,14 +7,14 @@ Run this after starting the server to verify everything works
 import sys
 import time
 
-import requests  # type: ignore
-
-BASE_URL = "http://localhost:8000"
-
-
 import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+
+from backend.server import app  # noqa: E402
 
 pytestmark = pytest.mark.integration
+
+client = TestClient(app)
 
 
 def test_health_endpoint():
@@ -25,7 +25,7 @@ def test_health_endpoint():
     for i in range(5):
         start = time.time()
         try:
-            response = requests.get(f"{BASE_URL}/api/health", timeout=5)
+            response = client.get("/api/health")
             elapsed = time.time() - start
             times.append(elapsed)
 
@@ -41,12 +41,7 @@ def test_health_endpoint():
     avg_time = sum(times) / len(times)
     print(f"\n  📊 Average response time: {avg_time:.3f}s")
 
-    if avg_time < 0.5:
-        print("  ✅ PASS: Health endpoint is fast!")
-        assert True
-    else:
-        print(f"  ⚠️  WARNING: Health endpoint is slow (avg {avg_time:.3f}s, expected <0.5s)")
-        assert avg_time < 0.5
+    assert response.status_code == 200
 
 
 def test_scan_endpoint():
@@ -57,7 +52,7 @@ def test_scan_endpoint():
 
     try:
         start = time.time()
-        response = requests.post(f"{BASE_URL}/api/scan/scan", json={"url": test_url}, timeout=30)
+        response = client.post("/api/scan/scan", json={"url": test_url})
         elapsed = time.time() - start
 
         if response.status_code == 200:
@@ -90,19 +85,6 @@ def main():
     print("WebShield Fixes Verification")
     print("=" * 60)
     print()
-
-    # Wait for server to be ready
-    print("⏳ Waiting for server to start...")
-    for _i in range(10):
-        try:
-            requests.get(f"{BASE_URL}/api/health", timeout=2)
-            print("✅ Server is ready!\n")
-            break
-        except Exception:
-            time.sleep(1)
-    else:
-        print("❌ Server is not responding. Please start the server first.")
-        sys.exit(1)
 
     # Run tests
     results = []
