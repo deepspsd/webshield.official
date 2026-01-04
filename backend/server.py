@@ -486,7 +486,6 @@ async def get_scan_status(request: Request, scan_id: str):
         raise HTTPException(status_code=500, detail="Failed to get scan status") from e
 
 
-
 # Mount logos directory for collaboration logos
 if os.path.isdir("logos"):
     app.mount("/logos", StaticFiles(directory="logos"), name="logos")
