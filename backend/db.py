@@ -765,3 +765,34 @@ async def startup_event():
             pass
 
     threading.Thread(target=init_db, daemon=True).start()
+
+
+def check_database_health():
+    """Check database connectivity and health"""
+    result = {
+        "status": "unknown",
+        "pool_status": get_pool_status()
+    }
+    
+    conn = None
+    try:
+        conn = get_mysql_connection()
+        if conn and conn.is_connected():
+            result["status"] = "healthy"
+            result["message"] = "Database connection successful"
+            return result
+        else:
+            result["status"] = "unhealthy"
+            result["message"] = "Could not establish database connection"
+            return result
+    except Exception as e:
+        result["status"] = "error"
+        result["message"] = str(e)
+        return result
+    finally:
+        if conn and conn.is_connected():
+            try:
+                conn.close()
+            except Exception:
+                pass
+

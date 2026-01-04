@@ -5,7 +5,7 @@ Centralized configuration with environment-based settings and secrets management
 
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -39,9 +39,18 @@ class Settings(BaseSettings):
     API_KEY_HEADER: str = "X-API-Key"
 
     # CORS Settings
-    ALLOWED_ORIGINS: list[str] = Field(
+    ALLOWED_ORIGINS: list[str] | str = Field(
         default=["http://localhost:8000", "http://127.0.0.1:8000"], env="ALLOWED_ORIGINS"
     )
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, v):
+        if isinstance(v, str):
+            if v.strip() == "*":
+                return ["*"]
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     CORS_ALLOW_HEADERS: list[str] = ["*"]
@@ -122,6 +131,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        extra = "ignore"
 
     @property
     def is_production(self) -> bool:

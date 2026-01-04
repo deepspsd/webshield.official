@@ -38,7 +38,7 @@ class TestMLSecurityEngine:
 
         features = engine._extract_content_features(sample_content["safe"])
         assert isinstance(features, np.ndarray)
-        assert len(features) == 20
+        assert len(features) == 25
         assert features.dtype == np.float32
 
     def test_url_analysis(self, sample_urls):

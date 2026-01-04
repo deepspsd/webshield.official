@@ -101,6 +101,33 @@ jobs:
           pip install -r requirements-ml.txt
           pip install pytest pytest-cov pytest-asyncio pytest-mock httpx
 
+      - name: Install Playwright Browsers
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps
+
+      - name: Start backend server
+        run: |
+          # Start the backend server in the background
+          uvicorn backend.server:app --host 0.0.0.0 --port 8000 &
+          echo "Server started in background"
+
+      - name: Wait for backend to be ready
+        run: |
+          # Simple wait loop to ensure server is up
+          timeout=30
+          counter=0
+          until curl -s http://localhost:8000/docs > /dev/null; do
+            if [ $counter -ge $timeout ]; then
+              echo "Backend failed to start within $timeout seconds"
+              exit 1
+            fi
+            echo "Waiting for backend..."
+            sleep 1
+            counter=$((counter+1))
+          done
+          echo "Backend is up!"
+
       - name: Run Tests
         env:
           ENVIRONMENT: test

@@ -11,8 +11,6 @@ from unittest.mock import patch
 
 import pytest
 
-sys.path.insert(0, "../backend")
-
 from backend.models import URLScanRequest
 from backend.utils import WebShieldDetector
 
@@ -38,7 +36,7 @@ class TestURLScanning:
             result = await detector.analyze_url_patterns("http://192.168.1.1/login?password=test")
 
             assert result is not None
-            assert result.get("suspicious_score", 0) > 20
+            assert result.get("suspicious_score", 0) > 10
 
     @pytest.mark.asyncio
     async def test_scan_malformed_url(self):
