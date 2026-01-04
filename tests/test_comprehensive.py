@@ -6,7 +6,6 @@ Tests for all critical components with high coverage
 import asyncio
 
 # Import application components
-import sys
 from unittest.mock import patch
 
 import pytest

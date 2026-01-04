@@ -790,5 +790,5 @@ def check_database_health():
         if conn and conn.is_connected():
             try:
                 conn.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to close DB connection during health check: {e}")
