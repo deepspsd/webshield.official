@@ -769,11 +769,8 @@ async def startup_event():
 
 def check_database_health():
     """Check database connectivity and health"""
-    result = {
-        "status": "unknown",
-        "pool_status": get_pool_status()
-    }
-    
+    result = {"status": "unknown", "pool_status": get_pool_status()}
+
     conn = None
     try:
         conn = get_mysql_connection()
@@ -795,4 +792,3 @@ def check_database_health():
                 conn.close()
             except Exception:
                 pass
-

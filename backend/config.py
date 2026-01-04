@@ -51,6 +51,7 @@ class Settings(BaseSettings):
                 return ["*"]
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
+
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     CORS_ALLOW_HEADERS: list[str] = ["*"]
