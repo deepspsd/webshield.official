@@ -32,6 +32,7 @@ config.set_main_option("sqlalchemy.url", db_url)
 
 # Import models for autogenerate support
 from sqlalchemy import MetaData
+
 target_metadata = MetaData()
 
 
