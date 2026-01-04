@@ -2,18 +2,21 @@
 Alembic environment configuration for WebShield
 """
 
-from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
-from alembic import context
 import os
 import sys
+from logging.config import fileConfig
 from pathlib import Path
+
+from sqlalchemy import engine_from_config, pool
+
+from alembic import context
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Load environment variables
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Alembic Config object
@@ -29,6 +32,7 @@ config.set_main_option('sqlalchemy.url', db_url)
 
 # Import models for autogenerate support
 from backend.models import Base
+
 target_metadata = Base.metadata
 
 

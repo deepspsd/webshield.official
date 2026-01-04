@@ -140,7 +140,7 @@ async def serve_generic_html_page(page_name: str):
         raise
     except Exception as e:
         logger.error(f"Error serving page {page_name}.html: {e}")
-        raise HTTPException(status_code=500, detail=f"Error loading page: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error loading page: {str(e)}") from e
 
 
 @frontend_router.get("/config.js")
@@ -150,7 +150,7 @@ def serve_config_js():
         with open("frontend/config.js", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read(), media_type="application/javascript")
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Config file not found")
+        raise HTTPException(status_code=404, detail="Config file not found") from None
 
 
 @frontend_router.get("/static/{file_path:path}")
@@ -186,7 +186,7 @@ async def serve_static_files(file_path: str):
             with open(file_path, "r", encoding="utf-8") as f:
                 return HTMLResponse(content=f.read(), media_type=content_type)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error serving file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error serving file: {str(e)}") from e
 
 
 @frontend_router.get("/favicon.ico")

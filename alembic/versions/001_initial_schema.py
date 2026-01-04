@@ -5,9 +5,9 @@ Revises:
 Create Date: 2025-01-07 18:00:00
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import mysql
+
+from alembic import op
 
 # revision identifiers
 revision = '001'
@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('email')
     )
-    
+
     # Create scans table
     op.create_table(
         'scans',
@@ -57,12 +57,12 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('scan_id')
     )
-    
+
     # Create indexes
     op.create_index('idx_scan_id', 'scans', ['scan_id'])
     op.create_index('idx_user_email', 'scans', ['user_email'])
     op.create_index('idx_created_at', 'scans', ['created_at'])
-    
+
     # Create reports table
     op.create_table(
         'reports',
@@ -75,12 +75,12 @@ def upgrade() -> None:
         sa.Column('status', sa.Enum('pending', 'approved', 'rejected'), default='pending', nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     # Create indexes for reports
     op.create_index('idx_report_user_email', 'reports', ['user_email'])
     op.create_index('idx_report_type', 'reports', ['report_type'])
     op.create_index('idx_report_status', 'reports', ['status'])
-    
+
     # Create ML training stats table
     op.create_table(
         'ml_training_stats',
@@ -96,11 +96,11 @@ def upgrade() -> None:
         sa.Column('last_updated', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     # Create indexes for ML stats
     op.create_index('idx_model_name', 'ml_training_stats', ['model_name'])
     op.create_index('idx_training_date', 'ml_training_stats', ['training_date'])
-    
+
     # Insert default ML training statistics
     op.execute("""
         INSERT INTO ml_training_stats 

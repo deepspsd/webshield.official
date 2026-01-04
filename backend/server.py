@@ -498,16 +498,16 @@ if __name__ == "__main__":
             "backend.server:app",
             host="0.0.0.0",  # nosec B104
             port=8000,
-            reload=False,  
-            log_level="warning",  
-            access_log=False,  
-            http="h11",  
-            workers=1,  
-            loop="asyncio",  
-            limit_concurrency=100,  
-            limit_max_requests=1000,  
-            timeout_keep_alive=5,  
-            timeout_graceful_shutdown=10,  
+            reload=False,
+            log_level="warning",
+            access_log=False,
+            http="h11",
+            workers=1,
+            loop="asyncio",
+            limit_concurrency=100,
+            limit_max_requests=1000,
+            timeout_keep_alive=5,
+            timeout_graceful_shutdown=10,
         )
     except Exception as e:
         logger.error(f"Server startup failed: {e}")

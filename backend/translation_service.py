@@ -16,7 +16,7 @@ try:
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
-    genai = None 
+    genai = None
 
 logger = logging.getLogger(__name__)
 

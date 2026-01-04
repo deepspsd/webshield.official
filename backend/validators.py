@@ -3,14 +3,15 @@ Input Validation Layer for WebShield
 Comprehensive validation for all user inputs to prevent injection attacks
 """
 
-from pydantic import BaseModel, Field, validator
 from typing import Type
+
+from pydantic import BaseModel, Field, validator
 
 try:
     from pydantic import EmailStr
 except ImportError:
     # Fallback if email-validator is not installed
-    EmailStr: Type[str] = str 
+    EmailStr: Type[str] = str
 import logging
 import re
 from typing import Any, Dict, List, Optional
@@ -384,6 +385,6 @@ def validate_email(email: str) -> str:
         if len(domain) > 253:  # RFC 1035 limit for domain
             raise ValueError("Email domain too long")
     except ValueError:
-        raise ValueError("Invalid email format")
+        raise ValueError("Invalid email format") from None
 
     return email

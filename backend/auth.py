@@ -1,7 +1,7 @@
 import logging
 import os
-from uuid import uuid4
 from typing import Any, List
+from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from passlib.context import CryptContext

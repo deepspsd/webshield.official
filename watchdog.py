@@ -4,7 +4,6 @@ WebShield Performance Monitor & Auto-Restart Script
 Monitors server performance and automatically restarts if needed
 """
 
-import json
 import logging
 import os
 import subprocess
