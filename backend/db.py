@@ -622,11 +622,19 @@ def create_database_and_tables():
                 cursor.execute(
                     """
                     INSERT INTO courses (course_id, title, description, difficulty_level, duration_minutes, instructor_name, enrollment_count, rating) VALUES
-                    ('c1', 'Web Security Fundamentals', 'Learn the essential concepts of web security and how to protect yourself online. Perfect for beginners!', 'beginner', 120, 'WebShield Security Team', 5420, 4.8),
-                    ('c2', 'Phishing Detection Masterclass', 'Master the art of identifying phishing attacks. Learn to spot fake websites, emails, and social engineering tactics.', 'beginner', 90, 'Dr. Sarah Chen', 3890, 4.9),
-                    ('c3', 'SSL/HTTPS Deep Dive', 'Understand how SSL certificates work and why HTTPS is crucial for web security.', 'intermediate', 150, 'Prof. Michael Torres', 2150, 4.7),
-                    ('c4', 'Password Security Best Practices', 'Learn how to create, manage, and protect strong passwords. Includes password manager recommendations.', 'beginner', 60, 'WebShield Security Team', 4200, 4.6),
-                    ('c5', 'Advanced Threat Analysis', 'Deep dive into analyzing complex threats, malware, and attack vectors. For security professionals.', 'advanced', 240, 'Dr. James Wilson', 890, 4.8)
+                    -- Beginner Courses
+                    ('c1', 'Introduction to Cyber Security', 'Learn the fundamental concepts of cybersecurity, including threats, vulnerabilities, and basic protection techniques.', 'beginner', 120, 'WebShield Security Team', 5420, 4.8),
+                    ('c2', 'Ethical Hacking', 'Discover the world of ethical hacking. Learn penetration testing, vulnerability assessment, and security testing methodologies.', 'beginner', 90, 'WebShield Security Team', 3890, 4.9),
+                    ('c3', 'Cryptography', 'Understand encryption, decryption, hashing, and cryptographic protocols to secure data and communications.', 'beginner', 150, 'WebShield Security Team', 2150, 4.7),
+                    ('c4', 'Threats to Websites', 'Learn about common web threats including SQL injection, XSS, CSRF, and how to protect your websites from attacks.', 'beginner', 60, 'WebShield Security Team', 4200, 4.6),
+                    -- Intermediate Courses
+                    ('c5', 'Phishing Attacks', 'Master the identification and prevention of phishing attacks. Learn about email phishing, spear phishing, and social engineering tactics.', 'intermediate', 100, 'WebShield Security Team', 2850, 4.7),
+                    ('c6', 'Kali Linux Fundamentals', 'Get hands-on with Kali Linux, the leading platform for penetration testing and security auditing.', 'intermediate', 180, 'WebShield Security Team', 3200, 4.8),
+                    ('c7', 'Wire Shark for Network Monitoring', 'Learn to use Wireshark for network protocol analysis, packet capture, and traffic monitoring.', 'intermediate', 120, 'WebShield Security Team', 2650, 4.6),
+                    -- Advanced Courses
+                    ('c8', 'Introduction to System Security', 'Advanced course on operating system security, hardening techniques, and system-level protection mechanisms.', 'advanced', 200, 'WebShield Security Team', 1420, 4.9),
+                    ('c9', 'Protection from Browser Attacks', 'In-depth analysis of browser vulnerabilities, XSS, CSRF, clickjacking, and advanced browser security techniques.', 'advanced', 150, 'WebShield Security Team', 1650, 4.8),
+                    ('c10', 'Securing Android Devices', 'Comprehensive guide to Android security, app permissions, malware detection, and mobile device hardening.', 'advanced', 180, 'WebShield Security Team', 1890, 4.7)
                 """
                 )
                 logger.info("Inserted sample courses")
