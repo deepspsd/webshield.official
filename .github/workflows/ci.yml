@@ -87,6 +87,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
+      - name: Cleanup to free disk space
+        run: |
+          sudo apt-get clean
+          sudo rm -rf /usr/local/share/boost /usr/share/dotnet /opt/ghc
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
