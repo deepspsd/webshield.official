@@ -2,6 +2,7 @@
 # This MUST be at the TOP before any other imports
 import os
 import sys
+import asyncio
 
 # Force asyncio to use stable event loop policy on Windows
 if sys.platform == "win32":
