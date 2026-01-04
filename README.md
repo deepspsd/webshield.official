@@ -1,9 +1,9 @@
 # WebShield: Advanced AI-Powered Security
 
 ![WebShield Banner](https://img.shields.io/badge/WebShield-Security-blue?style=for-the-badge&logo=shield)
-[![CI/CD](https://github.com/deepugangadhar46/webshield.official/actions/workflows/ci.yml/badge.svg)](https://github.com/deepugangadhar46/webshield.official/actions)
-[![Code Quality](https://img.shields.io/badge/Quality-A%2B-green)](https://github.com/deepugangadhar46/webshield.official)
-[![Security Status](https://img.shields.io/badge/Security-High-green)](https://github.com/deepugangadhar46/webshield.official)
+[![CI/CD](https://github.com/deepspsd  /webshield.official/actions/workflows/ci.yml/badge.svg)](https://github.com/deepspsd/webshield.official/actions)
+[![Code Quality](https://img.shields.io/badge/Quality-A%2B-green)](https://github.com/deepspsd/webshield.official)
+[![Security Status](https://img.shields.io/badge/Security-High-green)](https://github.com/deepspsd/webshield.official)
 
 WebShield is a state-of-the-art URL scanning and phishing detection system powered by multi-engine analysis, including VirusTotal, Machine Learning (Random Forest/Gradient Boosting), and Large Language Models (LLMs).
 
