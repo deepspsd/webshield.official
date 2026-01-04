@@ -96,7 +96,7 @@ async def get_all_courses(
 
     except Exception as e:
         logger.error(f"Error fetching courses: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching courses")
+        raise HTTPException(status_code=500, detail="Error fetching courses") from e
     finally:
         cursor.close()
         conn.close()
@@ -150,7 +150,7 @@ async def get_course_stats():
 
     except Exception as e:
         logger.error(f"Error fetching stats: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching statistics")
+        raise HTTPException(status_code=500, detail="Error fetching statistics") from e
     finally:
         cursor.close()
         conn.close()
@@ -207,7 +207,7 @@ async def get_course_detail(course_id: str):
         raise
     except Exception as e:
         logger.error(f"Error fetching course detail: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching course details")
+        raise HTTPException(status_code=500, detail="Error fetching course details") from e
     finally:
         cursor.close()
         conn.close()
@@ -284,7 +284,7 @@ async def enroll_in_course(enrollment: EnrollmentRequest):
     except Exception as e:
         conn.rollback()
         logger.error(f"Error enrolling user: {e}")
-        raise HTTPException(status_code=500, detail="Error processing enrollment")
+        raise HTTPException(status_code=500, detail="Error processing enrollment") from e
     finally:
         cursor.close()
         conn.close()
@@ -320,7 +320,7 @@ async def get_user_enrollments(user_email: str):
 
     except Exception as e:
         logger.error(f"Error fetching enrollments: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching enrollments")
+        raise HTTPException(status_code=500, detail="Error fetching enrollments") from e
     finally:
         cursor.close()
         conn.close()
@@ -415,7 +415,7 @@ async def update_lesson_progress(progress: ProgressUpdate):
     except Exception as e:
         conn.rollback()
         logger.error(f"Error updating progress: {e}")
-        raise HTTPException(status_code=500, detail="Error updating progress")
+        raise HTTPException(status_code=500, detail="Error updating progress") from e
     finally:
         cursor.close()
         conn.close()
@@ -520,7 +520,7 @@ async def get_user_progress(user_email: str, course_id: Optional[str] = None):
 
     except Exception as e:
         logger.error(f"Error fetching progress: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching progress")
+        raise HTTPException(status_code=500, detail="Error fetching progress") from e
     finally:
         cursor.close()
         conn.close()
@@ -546,7 +546,7 @@ async def get_all_achievements():
 
     except Exception as e:
         logger.error(f"Error fetching achievements: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching achievements")
+        raise HTTPException(status_code=500, detail="Error fetching achievements") from e
     finally:
         cursor.close()
         conn.close()
@@ -578,7 +578,7 @@ async def get_user_achievements(user_email: str):
 
     except Exception as e:
         logger.error(f"Error fetching user achievements: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching achievements")
+        raise HTTPException(status_code=500, detail="Error fetching achievements") from e
     finally:
         cursor.close()
         conn.close()
@@ -716,7 +716,7 @@ async def get_user_learning_stats(user_email: str):
 
     except Exception as e:
         logger.error(f"Error fetching user stats: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching statistics")
+        raise HTTPException(status_code=500, detail="Error fetching statistics") from e
     finally:
         cursor.close()
         conn.close()
@@ -766,7 +766,7 @@ async def get_lesson_quiz(lesson_id: str):
 
     except Exception as e:
         logger.error(f"Error fetching quiz: {e}")
-        raise HTTPException(status_code=500, detail="Error fetching quiz")
+        raise HTTPException(status_code=500, detail="Error fetching quiz") from e
     finally:
         cursor.close()
         conn.close()
@@ -869,7 +869,7 @@ async def submit_quiz(lesson_id: str, user_email: str, answers: dict):
 
     except Exception as e:
         logger.error(f"Error submitting quiz: {e}")
-        raise HTTPException(status_code=500, detail="Error processing quiz submission")
+        raise HTTPException(status_code=500, detail="Error processing quiz submission") from e
     finally:
         cursor.close()
         conn.close()

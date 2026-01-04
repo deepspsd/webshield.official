@@ -7,12 +7,12 @@ Run this after starting the server to verify everything works
 import sys
 import time
 
-import requests
+import requests  # type: ignore
 
 BASE_URL = "http://localhost:8000"
 
 
-import pytest
+import pytest  # noqa: E402
 
 pytestmark = pytest.mark.integration
 
@@ -36,7 +36,7 @@ def test_health_endpoint():
                 print(f"  ❌ Request {i+1}: HTTP {response.status_code}")
         except Exception as e:
             print(f"  ❌ Request {i+1}: Error - {e}")
-            raise AssertionError(f"Health endpoint request failed: {e}")
+            raise AssertionError(f"Health endpoint request failed: {e}") from e
 
     avg_time = sum(times) / len(times)
     print(f"\n  📊 Average response time: {avg_time:.3f}s")
@@ -82,7 +82,7 @@ def test_scan_endpoint():
 
     except Exception as e:
         print(f"  ❌ FAIL: {e}")
-        raise AssertionError(str(e))
+        raise AssertionError(str(e)) from e
 
 
 def main():
@@ -98,7 +98,7 @@ def main():
             requests.get(f"{BASE_URL}/api/health", timeout=2)
             print("✅ Server is ready!\n")
             break
-        except:
+        except Exception:
             time.sleep(1)
     else:
         print("❌ Server is not responding. Please start the server first.")

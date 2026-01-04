@@ -122,7 +122,7 @@ def get_user_scans(email: str = None, limit: int = 6):
         raise
     except Exception as e:
         logger.error(f"Error fetching user scans: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve user scans")
+        raise HTTPException(status_code=500, detail="Failed to retrieve user scans") from e
 
 
 @api_router.get("/migrate-database")

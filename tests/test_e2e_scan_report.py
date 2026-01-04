@@ -24,7 +24,7 @@ try:
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
-    async_playwright = None
+    async_playwright = None  # type: ignore
     print("⚠️ Playwright not installed. Browser tests will be skipped.")
     print("   Install with: pip install playwright && playwright install")
 

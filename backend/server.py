@@ -19,21 +19,21 @@ os.environ["LOKY_MAX_CPU_COUNT"] = "1"
 os.environ["JOBLIB_VERBOSITY"] = "0"
 os.environ["JOBLIB_START_METHOD"] = "spawn"  # Safer for Windows
 
-import logging
-import threading
-import time
-import traceback
-from contextlib import asynccontextmanager
+import logging  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+import traceback  # noqa: E402
+from contextlib import asynccontextmanager  # noqa: E402
 
-import uvicorn
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
+import uvicorn  # noqa: E402
+from fastapi import FastAPI, HTTPException, Request  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.middleware.gzip import GZipMiddleware  # noqa: E402
+from fastapi.middleware.trustedhost import TrustedHostMiddleware  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+from slowapi import Limiter, _rate_limit_exceeded_handler  # noqa: E402
+from slowapi.errors import RateLimitExceeded  # noqa: E402
 
 # Suppress joblib verbose output completely (BEFORE any sklearn imports)
 logging.getLogger("joblib").setLevel(logging.ERROR)
@@ -41,7 +41,7 @@ logging.getLogger("sklearn").setLevel(logging.WARNING)
 
 # Force UTF-8 encoding for Windows console to prevent Unicode errors
 if sys.platform == "win32":
-    import codecs
+    import codecs  # noqa: E402
 
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
     sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
@@ -57,9 +57,7 @@ logger = logging.getLogger(__name__)
 # Suppress joblib and sklearn verbose logging
 logging.getLogger("joblib").setLevel(logging.ERROR)
 logging.getLogger("sklearn").setLevel(logging.WARNING)
-
-# CRITICAL FIX: Suppress asyncio event loop warnings on Windows
-import warnings
+import warnings  # noqa: E402
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*Event loop is closed.*")
 warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*coroutine.*was never awaited.*")

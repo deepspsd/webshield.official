@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore", message=".*Parallel.*")
 
 # Suppress sklearn version warnings when loading pickled models
 warnings.filterwarnings("ignore", category=UserWarning, message=".*Trying to unpickle estimator.*")
-from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.exceptions import InconsistentVersionWarning  # noqa: E402
 
 warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
@@ -47,9 +47,9 @@ try:
 except Exception:  # nosec B110
     pass
 
-from .content_analyzer import ContentPhishingDetector, generate_content_training_data
-from .url_classifier import URLThreatClassifier
-from .url_classifier import generate_training_data as generate_url_training_data
+from .content_analyzer import ContentPhishingDetector, generate_content_training_data  # noqa: E402
+from .url_classifier import URLThreatClassifier  # noqa: E402
+from .url_classifier import generate_training_data as generate_url_training_data  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

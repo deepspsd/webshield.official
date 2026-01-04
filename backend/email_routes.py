@@ -13,7 +13,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 # Import our auth checker for real DNS lookups
 try:
-    from .auth_checker import AuthCheckResult, check_email_authentication
+    from .auth_checker import check_email_authentication
 
     AUTH_CHECKER_AVAILABLE = True
 except ImportError:
@@ -786,7 +786,7 @@ async def scan_email_metadata(request: EmailScanRequest):
 
     except Exception as e:
         logger.error(f"Error scanning email metadata: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to scan email: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to scan email: {str(e)}") from e
 
 
 @email_router.get("/check-auth")
@@ -836,7 +836,7 @@ async def check_email_auth(email: str):
 
     except Exception as e:
         logger.error(f"Auth check failed for {email}: {e}")
-        raise HTTPException(status_code=500, detail=f"Authentication check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Authentication check failed: {str(e)}") from e
 
 
 @email_router.get("/health")

@@ -66,7 +66,7 @@ async def chat(request: Request, chat_message: ChatMessage):
 
     except Exception as e:
         logger.error(f"💥 Chatbot error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to process chat message: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to process chat message: {str(e)}") from e
 
 
 @chatbot_router.post("/explain-scan")
@@ -90,7 +90,7 @@ async def explain_scan(request: Request, scan_data: Dict):
 
     except Exception as e:
         logger.error(f"Scan explanation error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate explanation. Please try again.")
+        raise HTTPException(status_code=500, detail="Failed to generate explanation. Please try again.") from e
 
 
 @chatbot_router.get("/suggestions")
@@ -109,7 +109,7 @@ async def get_suggestions():
 
     except Exception as e:
         logger.error(f"Suggestions error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get suggestions.")
+        raise HTTPException(status_code=500, detail="Failed to get suggestions.") from e
 
 
 @chatbot_router.get("/health")

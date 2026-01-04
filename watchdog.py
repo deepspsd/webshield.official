@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 import psutil
-import requests
+import requests  # type: ignore
 
 # Configure logging
 logging.basicConfig(

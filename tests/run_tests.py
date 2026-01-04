@@ -49,7 +49,7 @@ def main():
 
         httpx.get("http://localhost:8000/", timeout=5.0)
         print("✅ Server is running\n")
-    except:
+    except Exception:
         print("⚠️  WARNING: Server may not be running at http://localhost:8000")
         print("   Some tests may fail. Start server with: python start_server.py\n")
 

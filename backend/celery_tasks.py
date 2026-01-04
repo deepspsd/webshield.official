@@ -5,6 +5,7 @@ Async processing for scans and maintenance
 
 import asyncio
 import logging
+import multiprocessing
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
@@ -18,7 +19,6 @@ from .scan import _do_scan
 logger = logging.getLogger(__name__)
 
 # Balanced thread pool to prevent system overload
-import multiprocessing
 
 _cpu_count = multiprocessing.cpu_count()
 SCAN_EXECUTOR = ThreadPoolExecutor(
@@ -92,9 +92,9 @@ def scan_url_task(self, url: str, scan_id: str):
             signal.alarm(0)  # Cancel timeout
             logger.info(f"✅ Celery task completed for scan {scan_id}")
             return {"scan_id": scan_id, "status": "completed", "result": result}
-        except TimeoutError:
+        except TimeoutError as e:
             signal.alarm(0)
-            raise self.retry(countdown=60, exc=TimeoutError("Scan timeout - retrying"))
+            raise self.retry(countdown=60, exc=TimeoutError("Scan timeout - retrying")) from e
 
     except Exception as e:
         logger.error(f"❌ Celery task failed for scan {scan_id}: {e}")
@@ -103,7 +103,7 @@ def scan_url_task(self, url: str, scan_id: str):
         if self.request.retries < self.max_retries:
             countdown = 2**self.request.retries  # Exponential backoff
             logger.info(f"🔄 Retrying scan {scan_id} in {countdown} seconds")
-            raise self.retry(countdown=countdown, exc=e)
+            raise self.retry(countdown=countdown, exc=e) from e
 
         # Mark as failed in database after all retries
         try:
