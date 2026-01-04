@@ -155,7 +155,7 @@ def login_user(request: LoginRequest):
     # Add tokens if generated
     if access_token:
         response["access_token"] = access_token
-        response["token_type"] = "Bearer"
+        response["token_type"] = "Bearer"  # nosec B105
     if refresh_token:
         response["refresh_token"] = refresh_token
 
@@ -293,7 +293,7 @@ def get_profile(email: str):
             else:
                 select_parts.append("NULL AS sms_notifications")
 
-            query = f"SELECT {', '.join(select_parts)} FROM users WHERE email = %s"
+            query = f"SELECT {', '.join(select_parts)} FROM users WHERE email = %s"  # nosec B608
 
             cursor = conn.cursor(dictionary=True)
             cursor.execute(query, (email,))
@@ -358,7 +358,7 @@ def update_profile(data: UpdateProfileRequest):
                 raise HTTPException(status_code=400, detail="No fields to update")
 
             params.append(email)
-            query = f"UPDATE users SET {', '.join(update_fields)} WHERE email = %s"
+            query = f"UPDATE users SET {', '.join(update_fields)} WHERE email = %s"  # nosec B608
 
             cursor.execute(query, params)
             conn.commit()

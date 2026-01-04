@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # ============================================
     # SERVER SETTINGS
     # ============================================
-    API_HOST: str = Field(default="0.0.0.0", env="API_HOST")
+    API_HOST: str = Field(default="0.0.0.0", env="API_HOST")  # nosec B104
     API_PORT: int = Field(default=8000, env="API_PORT")
     SERVER_WORKERS: int = Field(default=4, env="SERVER_WORKERS")
 

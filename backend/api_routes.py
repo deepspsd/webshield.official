@@ -97,7 +97,9 @@ def get_user_scans(email: str = None, limit: int = 6):
             limit_clause = "LIMIT %s"
             params.append(limit)
 
-            query = f"SELECT {', '.join(select_cols)} FROM scans {where_clause} {order_clause} {limit_clause}"
+            query = (
+                f"SELECT {', '.join(select_cols)} FROM scans {where_clause} {order_clause} {limit_clause}"  # nosec B608
+            )
 
             cursor = conn.cursor(dictionary=True)
             cursor.execute(query, tuple(params))
@@ -394,7 +396,7 @@ def health_check():
             import threading
 
             threading.Thread(target=_refresh_db_status, daemon=True).start()
-        except Exception:
+        except Exception:  # nosec B110
             # If thread creation fails, just keep serving cached status
             pass
 

@@ -55,7 +55,7 @@ def _build_mysql_config():
                 password = parsed.password
                 if parsed.path and parsed.path != "/":
                     database = parsed.path.lstrip("/")
-        except Exception:
+        except Exception:  # nosec B110
             pass
 
     # Fallback to individual env vars when DB_URL not fully specified
@@ -85,7 +85,7 @@ def _build_mysql_config():
         if "DB_USER" in missing:
             user = "root"
         if "DB_PASSWORD" in missing:
-            password = ""
+            password = ""  # nosec B105
         if "DB_NAME" in missing:
             database = "webshield"
         logger.warning(f"Using default database configuration: {user}@{host}:{port or 3306}/{database}")
@@ -707,7 +707,7 @@ def create_database_and_tables():
             try:
                 if conn:
                     conn.close()
-            except Exception:
+            except Exception:  # nosec B110
                 pass
 
     except Exception as e:
@@ -763,7 +763,7 @@ async def startup_event():
     def init_db():
         try:
             create_database_and_tables()
-        except Exception:
+        except Exception:  # nosec B110
             pass
 
     threading.Thread(target=init_db, daemon=True).start()

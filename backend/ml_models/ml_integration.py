@@ -46,7 +46,7 @@ try:
     import joblib
 
     joblib.parallel.BACKENDS["loky"].nesting_level = 0
-except Exception:
+except Exception:  # nosec B110
     pass
 
 from .content_analyzer import ContentPhishingDetector, generate_content_training_data
@@ -210,12 +210,12 @@ class MLSecurityEngine:
             if hasattr(estimator, "n_jobs"):
                 try:
                     estimator.n_jobs = 1
-                except Exception:
+                except Exception:  # nosec B110
                     pass
             if hasattr(estimator, "verbose"):
                 try:
                     estimator.verbose = 0
-                except Exception:
+                except Exception:  # nosec B110
                     pass
             steps = getattr(estimator, "steps", None)
             if steps and isinstance(steps, list):

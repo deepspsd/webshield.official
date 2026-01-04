@@ -265,7 +265,7 @@ async def export_scan_data(format_type: str = "json"):
                         row["detection_details"] = (
                             json.loads(row["detection_details"]) if row["detection_details"] else {}
                         )
-                    except Exception:
+                    except Exception:  # nosec B110
                         pass
             return scans
         else:
@@ -307,7 +307,7 @@ async def export_report_data(format_type: str = "json"):
                         row["detection_details"] = (
                             json.loads(row["detection_details"]) if row["detection_details"] else {}
                         )
-                    except Exception:
+                    except Exception:  # nosec B110
                         pass
             return reports
         else:

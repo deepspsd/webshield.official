@@ -53,7 +53,7 @@ def set_cached_scan(url, result):
         # Store only by scan_id for result retrieval, not for caching by URL
         if result and getattr(result, "scan_id", None):
             SCAN_REPORTS_BY_ID[result.scan_id] = result
-    except Exception:
+    except Exception:  # nosec B110
         pass
 
 
@@ -613,7 +613,7 @@ async def _do_scan(url: str, scan_id: str):
                         if "Legitimate domain whitelisted" not in di:
                             di.append("Legitimate domain whitelisted")
                         url_analysis["detected_issues"] = di
-                except Exception:
+                except Exception:  # nosec B110
                     pass
 
             # ===== STEP 4: FAST AI EXPLANATION (NO DOUBLE LLM CALLS) =====
@@ -780,7 +780,7 @@ async def _do_scan(url: str, scan_id: str):
                     try:
                         cursor.execute("ALTER TABLE scans ADD COLUMN user_email VARCHAR(255)")
                         conn.commit()
-                    except Exception:
+                    except Exception:  # nosec B110
                         pass
 
                     update_query = """

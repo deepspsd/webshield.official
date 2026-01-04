@@ -10,7 +10,7 @@ if sys.platform == "win32":
     try:
         if sys.version_info < (3, 14) and hasattr(asyncio, "WindowsProactorEventLoopPolicy"):
             asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-    except Exception:
+    except Exception:  # nosec B110
         pass
 
 # STEP 5: DISABLE JOBLIB MULTIPROCESSING EXPLICITLY

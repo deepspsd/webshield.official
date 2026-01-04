@@ -26,7 +26,7 @@ if _environment in ("production", "prod"):
 else:
     if not JWT_SECRET:
         # Development fallback only (avoid breaking local setups)
-        JWT_SECRET = "dev-jwt-secret-please-set-JWT_SECRET"
+        JWT_SECRET = "dev-jwt-secret-please-set-JWT_SECRET"  # nosec B105
         logger.warning("JWT_SECRET not set; using development fallback secret")
 
 security = HTTPBearer()

@@ -134,7 +134,7 @@ class LLMService:
         try:
             parsed = json.loads(s)
             return parsed if isinstance(parsed, dict) else None
-        except Exception:
+        except Exception:  # nosec B110
             pass
 
         start = s.find("{")

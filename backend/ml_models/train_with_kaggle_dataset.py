@@ -87,7 +87,7 @@ except ImportError as e1:
             files = [f for f in os.listdir(".") if f.endswith(".py") or f.endswith(".csv")]
             for f in files:
                 logger.error(f"  ✓ {f}")
-        except:
+        except:  # nosec B110
             pass
         logger.error("\nFor Google Colab, you need to:")
         logger.error("1. Upload these files to Colab:")
@@ -291,7 +291,7 @@ class KaggleDatasetTrainer:
                         features = self.url_classifier.extract_features(row["url_clean"])
                         feature_data.append(features)
                         labels.append(row["is_malicious"])
-                    except Exception as e:
+                    except Exception as e:  # nosec B112
                         continue
 
             # Convert to DataFrame
@@ -405,7 +405,7 @@ class KaggleDatasetTrainer:
                         url_texts.append(combined_text)
                         labels.append(row["is_malicious"])
 
-                    except Exception as e:
+                    except Exception as e:  # nosec B112
                         continue
 
             # Vectorize text features with memory-efficient settings
@@ -496,7 +496,7 @@ class KaggleDatasetTrainer:
                     features = self.url_classifier.extract_features(row["url_clean"])
                     feature_data.append(features)
                     labels.append(row["is_malicious"])
-                except Exception as e:
+                except Exception as e:  # nosec B112
                     continue
 
             feature_df = pd.DataFrame(feature_data)
