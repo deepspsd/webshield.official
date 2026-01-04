@@ -39,7 +39,9 @@ class Settings(BaseSettings):
     API_KEY_HEADER: str = "X-API-Key"
 
     # CORS Settings
-    ALLOWED_ORIGINS: list[str] = Field(default=["http://localhost:8000", "http://127.0.0.1:8000"], env="ALLOWED_ORIGINS")
+    ALLOWED_ORIGINS: list[str] = Field(
+        default=["http://localhost:8000", "http://127.0.0.1:8000"], env="ALLOWED_ORIGINS"
+    )
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     CORS_ALLOW_HEADERS: list[str] = ["*"]

@@ -120,7 +120,9 @@ def setup_logging(
         file_handler.setLevel(logging.DEBUG)
 
         if log_format == "json":
-            file_formatter: logging.Formatter = CustomJSONFormatter("%(timestamp)s %(level)s %(name)s %(module)s %(funcName)s %(message)s")
+            file_formatter: logging.Formatter = CustomJSONFormatter(
+                "%(timestamp)s %(level)s %(name)s %(module)s %(funcName)s %(message)s"
+            )
         else:
             file_formatter = logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s",

@@ -61,6 +61,7 @@ try:
     # Try backend imports first (for running from project root)
     from backend.ml_models.content_analyzer import ContentPhishingDetector
     from backend.ml_models.url_classifier import URLThreatClassifier
+
     logger.info("✓ Successfully imported classifiers from backend.ml_models")
 except ImportError as e1:
     try:
