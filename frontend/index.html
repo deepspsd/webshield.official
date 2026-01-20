@@ -378,14 +378,14 @@
             gap: 2rem;
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 1024px) {
             .nav {
                 display: flex;
             }
         }
 
         /* Mobile navigation improvements */
-        @media (max-width: 767px) {
+        @media (max-width: 1023px) {
             .nav {
                 position: fixed;
                 top: 56px;
@@ -424,6 +424,28 @@
 
             .mobile-menu-btn:hover {
                 background: hsl(var(--muted));
+            }
+        }
+
+        @media (max-width: 1280px) {
+            .header-content {
+                gap: 1rem;
+            }
+
+            .nav {
+                gap: 1.25rem;
+            }
+
+            .header-buttons {
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.65rem 1rem;
+            }
+
+            .btn-hero {
+                min-width: 0;
             }
         }
 
@@ -2215,13 +2237,6 @@
                 </button>
 
                 <div class="header-buttons header-actions" id="header-actions">
-                    <button id="theme-toggle" class="theme-toggle-btn no-translate" aria-label="Toggle theme"
-                        title="Toggle dark/light theme (Ctrl+Shift+T)" onclick="toggleThemeManual()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                        </svg>
-                    </button>
                     <a href="login.html" class="btn btn-ghost" id="signin-btn" data-translate="btn-signin">
                         <span class="icon">🔑</span>
                         Sign In

@@ -172,32 +172,6 @@
             }, 150);
         },
         
-        createThemeToggle() {
-            const headerActions = document.querySelector('.header-actions') || document.querySelector('.header-buttons');
-            console.log('🎨 Creating theme toggle, headerActions found:', !!headerActions);
-            if (!headerActions || document.getElementById('theme-toggle')) {
-                console.log('🎨 Theme toggle creation skipped - headerActions:', !!headerActions, 'existing toggle:', !!document.getElementById('theme-toggle'));
-                return;
-            }
-            
-            const themeBtn = document.createElement('button');
-            themeBtn.id = 'theme-toggle';
-            themeBtn.className = 'theme-toggle-btn btn btn-ghost';
-            themeBtn.setAttribute('aria-label', 'Toggle theme');
-            themeBtn.setAttribute('title', 'Toggle dark/light theme');
-            themeBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-            
-            // Add ripple effect
-            themeBtn.addEventListener('click', (e) => {
-                console.log('🎨 Theme toggle button clicked');
-                this.createRipple(e, themeBtn);
-                this.toggleTheme();
-            });
-            
-            headerActions.appendChild(themeBtn);
-            console.log('🎨 Theme toggle button created and added to header');
-            this.updateThemeIcon();
-        },
         
         createRipple(event, element) {
             const ripple = document.createElement('span');
