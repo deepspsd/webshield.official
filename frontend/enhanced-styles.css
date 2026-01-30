@@ -117,6 +117,10 @@ body {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    /* Prevent horizontal scroll on mobile */
+    width: 100%;
+    position: relative;
 }
 
 /* Enhanced custom scrollbar with glassmorphism */
@@ -800,6 +804,172 @@ html {
 .recent-scans {
     scroll-snap-align: start;
 }
+
+/* ============================================
+   SKELETON LOADING COMPONENTS
+   ============================================ */
+
+/* Base skeleton loader */
+.skeleton-loader {
+    background: linear-gradient(90deg,
+            hsl(var(--muted)) 25%,
+            hsl(var(--muted-foreground) / 0.1) 50%,
+            hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-md);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Skeleton text line */
+.skeleton-text {
+    background: linear-gradient(90deg,
+            hsl(var(--muted)) 25%,
+            hsl(var(--muted-foreground) / 0.15) 50%,
+            hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    height: 1rem;
+    width: 100%;
+}
+
+.skeleton-text.short {
+    width: 60%;
+}
+
+.skeleton-text.medium {
+    width: 80%;
+}
+
+.skeleton-text.long {
+    width: 95%;
+}
+
+/* Skeleton card */
+.skeleton-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.skeleton-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.skeleton-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(90deg,
+            hsl(var(--muted)) 25%,
+            hsl(var(--muted-foreground) / 0.2) 50%,
+            hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Skeleton button */
+.skeleton-button {
+    height: 44px;
+    width: 120px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(90deg,
+            hsl(var(--muted)) 25%,
+            hsl(var(--muted-foreground) / 0.15) 50%,
+            hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+/* Skeleton table row */
+.skeleton-table-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid hsl(var(--border));
+}
+
+.skeleton-table-cell {
+    height: 1rem;
+    background: linear-gradient(90deg,
+            hsl(var(--muted)) 25%,
+            hsl(var(--muted-foreground) / 0.15) 50%,
+            hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+}
+
+/* Skeleton scan result */
+.skeleton-scan-result {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: hsl(var(--card));
+    border-radius: var(--radius-lg);
+    border: 1px solid hsl(var(--border));
+}
+
+.skeleton-scan-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.skeleton-scan-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(90deg,
+            hsl(var(--muted)) 25%,
+            hsl(var(--muted-foreground) / 0.2) 50%,
+            hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-scan-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+/* Responsive skeleton */
+@media (max-width: 768px) {
+    .skeleton-table-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .skeleton-table-cell:nth-child(n+3) {
+        display: none;
+    }
+}
+
+/* Loading state wrapper */
+.loading-state {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
 
 .extension-cta {
     scroll-snap-align: start;
