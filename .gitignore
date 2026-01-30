@@ -200,6 +200,7 @@ safety-report.json
 # ============================================
 # RAG - CHROMA
 # ============================================
+.chroma_webshield/
 chromadb/
 chroma_dir/
 chroma_collection/
