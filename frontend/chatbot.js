@@ -121,9 +121,36 @@ class ChatbotAssistant {
             contentDiv.appendChild(label);
         }
         
-        const textP = document.createElement('p');
-        textP.innerHTML = this.formatMessage(text);
-        contentDiv.appendChild(textP);
+        if (sender === 'bot' && !isError) {
+            const parts = this.splitSources(text);
+            const bodyP = document.createElement('p');
+            bodyP.innerHTML = this.formatMessage(parts.body);
+            contentDiv.appendChild(bodyP);
+
+            if (parts.sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'message-sources';
+
+                const sourcesTitle = document.createElement('div');
+                sourcesTitle.className = 'sources-title';
+                sourcesTitle.textContent = 'Sources';
+                sourcesDiv.appendChild(sourcesTitle);
+
+                const sourcesList = document.createElement('ul');
+                sourcesList.className = 'sources-list';
+                parts.sources.forEach((s) => {
+                    const li = document.createElement('li');
+                    li.textContent = s;
+                    sourcesList.appendChild(li);
+                });
+                sourcesDiv.appendChild(sourcesList);
+                contentDiv.appendChild(sourcesDiv);
+            }
+        } else {
+            const textP = document.createElement('p');
+            textP.innerHTML = this.formatMessage(text);
+            contentDiv.appendChild(textP);
+        }
         
         if (isError) {
             contentDiv.classList.add('error-message');
@@ -137,25 +164,38 @@ class ChatbotAssistant {
     }
 
     formatMessage(text) {
-        // Convert markdown-style formatting to HTML
-        let formatted = text;
-        
-        // Bold text
-        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Italic text
-        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
-        // Code blocks
-        formatted = formatted.replace(/`(.*?)`/g, '<code>$1</code>');
-        
-        // Line breaks
+        let formatted = this.escapeHtml(String(text ?? ''));
+
+        formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/(^|[^\*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)/g, '$1<em>$2</em>');
+        formatted = formatted.replace(/`([^`]+?)`/g, '<code>$1</code>');
         formatted = formatted.replace(/\n/g, '<br>');
-        
-        // Bullet points
-        formatted = formatted.replace(/^• /gm, '<br>• ');
-        
+        formatted = formatted.replace(/(^|<br>)\s*[-*]\s+/g, '$1• ');
         return formatted;
+    }
+
+    escapeHtml(s) {
+        return s
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    splitSources(text) {
+        const raw = String(text ?? '');
+        const match = raw.match(/\n?Sources:\s*([\s\S]*)$/i);
+        if (!match) {
+            return { body: raw, sources: [] };
+        }
+        const body = raw.slice(0, match.index).trim();
+        const tail = (match[1] || '').trim();
+        const sources = tail
+            .split(/\r?\n/)
+            .map((l) => l.replace(/^[-•\s]+/, '').trim())
+            .filter(Boolean);
+        return { body, sources };
     }
 
     showTypingIndicator() {

@@ -62,8 +62,8 @@ class ChatbotWidget {
                         <button class="quick-action-btn" data-message="What is phishing?">
                             🎣 What is phishing?
                         </button>
-                        <button class="quick-action-btn" data-message="How to check URLs?">
-                            🔍 Check URLs
+                        <button class="quick-action-btn" data-message="How do I scan a URL for threats?">
+                            🔍 Scan URLs
                         </button>
                     </div>
 
@@ -308,6 +308,34 @@ class ChatbotWidget {
                     color: #e2e8f0;
                 }
 
+                .message-sources {
+                    margin-top: 0.75rem;
+                    padding: 0.65rem 0.75rem;
+                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.06);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                }
+
+                .sources-title {
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    color: rgba(255, 255, 255, 0.65);
+                    margin-bottom: 0.35rem;
+                }
+
+                .sources-list {
+                    margin: 0;
+                    padding-left: 1rem;
+                }
+
+                .sources-list li {
+                    margin: 0.2rem 0;
+                    color: rgba(255, 255, 255, 0.65);
+                    word-break: break-word;
+                }
+
                 .chatbot-quick-actions {
                     padding: 0.75rem 1rem;
                     display: flex;
@@ -517,12 +545,70 @@ class ChatbotWidget {
         
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.innerHTML = `<p>${text}</p>`;
+
+        const parts = sender === 'bot' ? this.splitSources(text) : { body: String(text ?? ''), sources: [] };
+        const p = document.createElement('p');
+        p.innerHTML = this.formatMessage(parts.body);
+        contentDiv.appendChild(p);
+
+        if (sender === 'bot' && parts.sources.length > 0) {
+            const sourcesDiv = document.createElement('div');
+            sourcesDiv.className = 'message-sources';
+
+            const title = document.createElement('div');
+            title.className = 'sources-title';
+            title.textContent = 'Sources';
+            sourcesDiv.appendChild(title);
+
+            const ul = document.createElement('ul');
+            ul.className = 'sources-list';
+            parts.sources.forEach((s) => {
+                const li = document.createElement('li');
+                li.textContent = s;
+                ul.appendChild(li);
+            });
+            sourcesDiv.appendChild(ul);
+            contentDiv.appendChild(sourcesDiv);
+        }
         
         messageDiv.appendChild(contentDiv);
         messagesDiv.appendChild(messageDiv);
         
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    formatMessage(text) {
+        let formatted = this.escapeHtml(String(text ?? ''));
+        formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/(^|[^\*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)/g, '$1<em>$2</em>');
+        formatted = formatted.replace(/`([^`]+?)`/g, '<code>$1</code>');
+        formatted = formatted.replace(/\n/g, '<br>');
+        formatted = formatted.replace(/(^|<br>)\s*[-*]\s+/g, '$1• ');
+        return formatted;
+    }
+
+    escapeHtml(s) {
+        return s
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    splitSources(text) {
+        const raw = String(text ?? '');
+        const match = raw.match(/\n?Sources:\s*([\s\S]*)$/i);
+        if (!match) {
+            return { body: raw, sources: [] };
+        }
+        const body = raw.slice(0, match.index).trim();
+        const tail = (match[1] || '').trim();
+        const sources = tail
+            .split(/\r?\n/)
+            .map((l) => l.replace(/^[-•\s]+/, '').trim())
+            .filter(Boolean);
+        return { body, sources };
     }
 
     showTyping() {

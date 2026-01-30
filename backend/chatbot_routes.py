@@ -123,11 +123,18 @@ async def chatbot_health():
     try:
         chatbot = get_chatbot()
 
-        return {
+        status = {
             "status": "healthy",
             "ai_enabled": chatbot.use_ai,
             "mode": "AI-powered" if chatbot.use_ai else "Rule-based",
         }
+
+        try:
+            status["rag"] = chatbot.get_kb_status()
+        except Exception as e:
+            status["rag"] = {"error": str(e)}
+
+        return status
 
     except Exception as e:
         logger.error(f"Health check error: {e}")

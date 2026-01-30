@@ -49,7 +49,7 @@ async def test_llm_service_basic():
         async with LLMService() as llm:
             has_api_key = llm.api_key is not None and len(llm.api_key) > 0
             print_test("LLM Service Created", True)
-            print_test("API Key Configured", has_api_key, "Set HUGGINGFACE_API_KEY in .env" if not has_api_key else "")
+            print_test("API Key Configured", has_api_key, "Set GROQ_API_KEY in .env" if not has_api_key else "")
             return True
     except Exception as e:
         print_test("LLM Service Creation", False, str(e))
@@ -385,7 +385,7 @@ async def main():
         print("3. View the scan report with charts and LLM analysis")
     else:
         print("[WARNING] Some tests failed. Common issues:")
-        print("1. HUGGINGFACE_API_KEY not set in .env (LLM will use fallback)")
+        print("1. GROQ_API_KEY not set in .env (LLM will use fallback)")
         print("2. Server not running (start with: python start_server.py)")
         print("3. Dependencies not installed (run: pip install -r requirements.txt)")
 

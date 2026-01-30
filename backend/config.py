@@ -72,8 +72,6 @@ class Settings(BaseSettings):
     # EXTERNAL API KEYS (Optional with fallbacks)
     # ============================================
     VT_API_KEY: Optional[str] = Field(default=None, env="VT_API_KEY")
-    GEMINI_API_KEY: Optional[str] = Field(default=None, env="GEMINI_API_KEY")
-    HUGGINGFACE_API_KEY: Optional[str] = Field(default=None, env="HUGGINGFACE_API_KEY")
     GROQ_API_KEY: Optional[str] = Field(default=None, env="GROQ_API_KEY")
     GROQ_EXPLANATION_MODEL: str = Field(default="llama-3.1-8b-instant", env="GROQ_EXPLANATION_MODEL")
 

@@ -196,3 +196,11 @@ junit.xml
 trivy-results.json
 bandit-report.json
 safety-report.json
+
+# ============================================
+# RAG - CHROMA
+# ============================================
+chromadb/
+chroma_dir/
+chroma_collection/
+chroma_collection.json

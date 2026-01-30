@@ -10,37 +10,13 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-try:
-    import google.generativeai as genai
-
-    GENAI_AVAILABLE = True
-except ImportError:
-    GENAI_AVAILABLE = False
-    genai = None
-
 logger = logging.getLogger(__name__)
 
 
 class GeminiTranslationService:
     def __init__(self):
-        self.api_key = os.getenv("GEMINI_API_KEY")
         self.cache_dir = Path("translations")
         self.cache_dir.mkdir(exist_ok=True)
-        self.model = None
-
-        # Initialize Gemini client if available and API key is set
-        if GENAI_AVAILABLE and self.api_key:
-            try:
-                genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel("gemini-1.5-flash")
-                logger.info("Gemini API client initialized successfully")
-            except Exception as e:
-                logger.warning(f"Failed to initialize Gemini client: {e}")
-                self.model = None
-        elif not GENAI_AVAILABLE:
-            logger.info("google-generativeai package not installed, using fallback translations")
-        elif not self.api_key:
-            logger.info("GEMINI_API_KEY not configured, using fallback translations")
 
         # Supported languages for WebShield
         self.supported_languages = {
@@ -55,10 +31,7 @@ class GeminiTranslationService:
         }
 
     async def translate_text(self, text: str, target_lang: str, context: str = "cybersecurity") -> str:
-        """Translate text using Gemini API with cybersecurity context"""
-        if not self.model:
-            return self._get_fallback_translation(text, target_lang)
-
+        """Translate text using offline cached fallback translations"""
         if target_lang == "en":
             return text
 
@@ -67,25 +40,10 @@ class GeminiTranslationService:
         if cached:
             return cached
 
-        try:
-            prompt = self._build_translation_prompt(text, target_lang, context)
-
-            # Use the official Gemini client
-            loop = asyncio.get_running_loop()
-            response = await loop.run_in_executor(None, lambda: self.model.generate_content(prompt))
-
-            if response and response.text:
-                translated_text: str = response.text.strip()  # type: ignore[assignment]
-                # Cache the translation
-                self._cache_translation(text, target_lang, translated_text)
-                return translated_text
-            else:
-                logger.warning(f"Empty response from Gemini API for text: {text[:50]}...")
-                return self._get_fallback_translation(text, target_lang)
-
-        except Exception as e:
-            logger.error(f"Translation failed for '{text[:50]}...': {e}")
-            return self._get_fallback_translation(text, target_lang)
+        translated = self._get_fallback_translation(text, target_lang)
+        if translated and translated != text:
+            self._cache_translation(text, target_lang, translated)
+        return translated
 
     async def translate_batch(
         self, texts: List[str], target_lang: str, context: str = "cybersecurity"
@@ -113,124 +71,9 @@ class GeminiTranslationService:
             else:
                 uncached_texts.append(text)
 
-        # If no model available, use fallback translations for missing ones
-        if not self.model:
-            for text in uncached_texts:
-                results[text] = self._get_fallback_translation(text, target_lang)
-            return results
-
-        # Intelligent batching: group texts by length and context
-        short_texts = [t for t in uncached_texts if len(t) < 100]
-        medium_texts = [t for t in uncached_texts if 100 <= len(t) < 500]
-        long_texts = [t for t in uncached_texts if len(t) >= 500]
-
-        # Process in batches with different strategies
-        for batch in [short_texts, medium_texts, long_texts]:
-            if not batch:
-                continue
-
-            # For short texts, try batch translation
-            if len(batch) > 1 and batch == short_texts:
-                try:
-                    batch_results = await self._translate_batch_optimized(batch, target_lang, context)
-                    results.update(batch_results)
-                    continue
-                except Exception as e:
-                    logger.warning(f"Batch translation failed, falling back to individual: {e}")
-
-            # Fallback to individual translation
-            for text in batch:
-                try:
-                    translated = await self.translate_text(text, target_lang, context)
-                    results[text] = translated
-                except Exception as e:
-                    logger.error(f"Failed to translate text in batch: {e}")
-                    # Progressive fallback: try fallback translation, then original
-                    fallback = self._get_fallback_translation(text, target_lang)
-                    results[text] = fallback if fallback != text else text
-
+        for text in uncached_texts:
+            results[text] = self._get_fallback_translation(text, target_lang)
         return results
-
-    async def _translate_batch_optimized(self, texts: List[str], target_lang: str, context: str) -> Dict[str, str]:
-        """Optimized batch translation for short texts using a single API call."""
-        if not texts:
-            return {}
-
-        # Create a batch prompt
-        batch_prompt = self._build_batch_translation_prompt(texts, target_lang, context)
-
-        try:
-            loop = asyncio.get_running_loop()
-            response = await loop.run_in_executor(None, lambda: self.model.generate_content(batch_prompt))
-
-            if response and response.text:
-                # Parse the batch response
-                translations = self._parse_batch_response(response.text, texts)
-
-                # Cache individual translations
-                for original, translated in translations.items():
-                    if translated and translated != original:
-                        self._cache_translation(original, target_lang, translated)
-
-                return translations
-            else:
-                raise Exception("Empty response from API")
-
-        except Exception as e:
-            logger.error(f"Batch translation failed: {e}")
-            raise
-
-    def _build_batch_translation_prompt(self, texts: List[str], target_lang: str, context: str) -> str:
-        """Build a batch translation prompt for multiple texts."""
-        lang_name = self.supported_languages.get(target_lang, target_lang)
-
-        # Create numbered list for easier parsing
-        numbered_texts = "\n".join([f"{i+1}. {text}" for i, text in enumerate(texts)])
-
-        return f"""Translate the following {context} texts to {lang_name}.
-
-Important guidelines:
-- Maintain technical accuracy for cybersecurity terms
-- Keep security warnings appropriately serious in tone
-- Preserve any technical terminology that should remain in English
-- For UI elements, use standard conventions for the target language
-- Do not translate brand names like "WebShield"
-- Return translations in the same numbered format
-
-Texts to translate:
-{numbered_texts}
-
-Translations:"""
-
-    def _parse_batch_response(self, response_text: str, original_texts: List[str]) -> Dict[str, str]:
-        """Parse batch translation response back to individual translations."""
-        translations = {}
-
-        try:
-            lines = response_text.strip().split("\n")
-            for line in lines:
-                # Look for numbered format: "1. translation"
-                if ". " in line:
-                    try:
-                        num_part, translation = line.split(". ", 1)
-                        index = int(num_part) - 1
-                        if 0 <= index < len(original_texts):
-                            original = original_texts[index]
-                            translations[original] = translation.strip()
-                    except (ValueError, IndexError):
-                        continue
-
-            # Fill in any missing translations with originals
-            for original in original_texts:
-                if original not in translations:
-                    translations[original] = original
-
-        except Exception as e:
-            logger.error(f"Failed to parse batch response: {e}")
-            # Fallback: return original texts
-            return {text: text for text in original_texts}
-
-        return translations
 
     def _build_translation_prompt(self, text: str, target_lang: str, context: str) -> str:
         """Build context-aware translation prompt"""

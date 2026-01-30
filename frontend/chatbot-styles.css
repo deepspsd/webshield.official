@@ -218,6 +218,35 @@
     margin: 0.5rem 0;
 }
 
+/* Sources block (RAG) */
+.message-sources {
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-lg);
+    background: hsl(var(--muted) / 0.35);
+    border: 1px solid hsl(var(--border));
+}
+
+.sources-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 0.5rem;
+}
+
+.sources-list {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.sources-list li {
+    margin: 0.25rem 0;
+    color: hsl(var(--muted-foreground));
+    word-break: break-word;
+}
+
 /* Typing Indicator */
 .typing-indicator {
     display: flex;

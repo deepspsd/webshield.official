@@ -3,27 +3,58 @@ WebShield Chatbot Assistant
 AI-powered help system for users to understand security features and scan results
 """
 
+import hashlib
 import json
 import os
-from typing import Dict, List, Optional
+import re
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
-import google.generativeai as genai
+import numpy as np
+import requests
+
+try:
+    from sklearn.feature_extraction.text import HashingVectorizer
+except Exception:  # pragma: no cover
+    HashingVectorizer = None
+
+try:
+    import chromadb
+except Exception:  # pragma: no cover
+    chromadb = None
+
+try:
+    from pypdf import PdfReader
+except Exception:  # pragma: no cover
+    PdfReader = None
 
 
 class WebShieldChatbot:
     """AI-powered chatbot assistant for WebShield"""
 
     def __init__(self, api_key: Optional[str] = None):
-        """Initialize chatbot with Gemini API"""
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        """Initialize chatbot with Groq + local RAG (Chroma)"""
+        self.groq_api_key = api_key or os.getenv("GROQ_API_KEY")
+        self.groq_api_base = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
+        # Highest-throughput free-tier default (can override via env)
+        self.groq_model = os.getenv("GROQ_CHATBOT_MODEL", "llama-3.1-8b-instant")
+        self.groq_timeout_seconds = float(os.getenv("GROQ_REQUEST_TIMEOUT_SECONDS", "6"))
 
-        if self.api_key:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel("gemini-pro")
-            self.use_ai = True
-        else:
-            self.use_ai = False
-            print("Warning: No Gemini API key found. Using fallback responses.")
+        self.use_ai = bool(self.groq_api_key)
+        if not self.use_ai:
+            print("Warning: No Groq API key found. Using fallback responses.")
+
+        self.project_root = Path(__file__).resolve().parents[1]
+        self.legal_docs_dir = Path(os.getenv("CHATBOT_KB_DIR", str(self.project_root / "legal_docs"))).resolve()
+        self.chroma_dir = Path(os.getenv("CHATBOT_CHROMA_DIR", str(self.project_root / ".chroma_webshield"))).resolve()
+        self.collection_name = os.getenv("CHATBOT_CHROMA_COLLECTION", "webshield_legal_docs")
+        self.embedding_dim = int(os.getenv("CHATBOT_EMBED_DIM", "1024"))
+
+        self._vectorizer = None
+        self._chroma_client = None
+        self._chroma_collection = None
+        self._kb_ready = False
+        self._kb_error = None
 
         # System context for the AI
         self.system_context = """
@@ -70,8 +101,22 @@ When explaining scan results:
 - Mention which detection engines flagged the URL
 """
 
+        self.rag_system_rules = (
+            "You answer questions using ONLY the provided Knowledge Base excerpts when they are available. "
+            "If the answer is not present in the excerpts, say you don't have enough information in the knowledge base and "
+            "suggest contacting support@webshield.com. "
+            "Be professional, concise (2-6 sentences), and actionable. "
+            "When you use knowledge base information, include a short 'Sources:' section listing the filenames you relied on."
+        )
+
         # Fallback responses for common questions
         self.fallback_responses = {
+            "hi": "Hello! I'm WebShield AI Assistant. How can I help you today—do you want to understand a scan result, learn about threats (phishing/malware), or review our policies and security terms?",
+            "hello": "Hello! I'm WebShield AI Assistant. What can I help you with today—scan results, web security questions, or WebShield policies?",
+            "hey": "Hi! How can I help you with WebShield today?",
+            "different types of cyber threats": "WebShield can help you understand different types of cyber threats, including phishing, malware, typosquatting, brand impersonation, SSL issues, and suspicious patterns. How can I help you today?",
+            "how to check URL's": "To check a URL, paste it into the scanner ongate to  our homepage and click 'Scan URL'. WebShield will analyze it using multiple detection engines and return a risk level (safe/suspicious/dangerous) with a detailed report.You can also use our browser extension for instant protection while browsing.",
+            "how to check url": "To check a URL, paste it into the scanner on our homepage and click 'Scan URL'. WebShield will analyze it using multiple detection engines and return a risk level (safe/suspicious/dangerous) with a detailed report.You can also use our browser extension for instant protection while browsing.",
             "issue": "I understand you're experiencing an issue. Our support team is here to help! Please contact us at **support@webshield.com** with details about the problem, and we'll assist you promptly. For urgent matters, please include 'URGENT' in your subject line.",
             "problem": "I'm sorry to hear you're having a problem. For personalized assistance, please reach out to our technical support team at **support@webshield.com**. Include any error messages or screenshots to help us resolve this quickly.",
             "bug": "Thank you for reporting this bug! Please send detailed information to our development team at **support@webshield.com**. Include steps to reproduce the issue, your browser/system details, and any error messages. We appreciate your help in improving WebShield!",
@@ -99,6 +144,267 @@ When explaining scan results:
             "default": "I'm WebShield AI Assistant, here to help you understand web security and our platform's capabilities. I can explain:\n\n• How our multi-engine detection system works\n• Threat types (phishing, malware, SSL issues)\n• How to interpret scan results and threat scores\n• Security best practices and recommendations\n• WebShield features and integrations\n\nWhat would you like to know about web security?",
         }
 
+        self._ensure_kb_ready()
+
+    def _is_greeting(self, text: str) -> bool:
+        s = (text or "").strip().lower()
+        if not s:
+            return True
+        if s in {"hi", "hello", "hey", "hola", "namaste", "hii", "hiii"}:
+            return True
+        if re.fullmatch(r"(hi+|hey+|hello+)[!. ]*", s):
+            return True
+        return False
+
+    def _ensure_kb_ready(self) -> None:
+        """Initialize Chroma + embeddings and index legal_docs PDFs if needed."""
+        if self._kb_ready:
+            return
+
+        if chromadb is None or HashingVectorizer is None or PdfReader is None:
+            self._kb_error = (
+                "RAG dependencies are not available. Ensure 'chromadb', 'scikit-learn', and 'pypdf' are installed."
+            )
+            return
+
+        try:
+            self.chroma_dir.mkdir(parents=True, exist_ok=True)
+            self._chroma_client = chromadb.PersistentClient(path=str(self.chroma_dir))
+            self._chroma_collection = self._chroma_client.get_or_create_collection(
+                name=self.collection_name,
+                metadata={"hnsw:space": "cosine"},
+            )
+            self._vectorizer = HashingVectorizer(
+                n_features=self.embedding_dim,
+                alternate_sign=False,
+                norm=None,
+                lowercase=True,
+                ngram_range=(1, 2),
+            )
+
+            force_reindex = os.getenv("CHATBOT_RAG_FORCE_REINDEX", "0").strip() in {"1", "true", "True"}
+
+            # Determine if we need to build/update the index.
+            kb_fingerprint = self._compute_kb_fingerprint()
+            stored_fp = None
+            try:
+                meta = self._chroma_collection.get(include=["metadatas"], limit=1)
+                if meta and meta.get("metadatas"):
+                    md0 = meta["metadatas"][0]
+                    if isinstance(md0, dict):
+                        stored_fp = md0.get("kb_fingerprint")
+            except Exception:
+                stored_fp = None
+
+            if force_reindex or (stored_fp != kb_fingerprint):
+                try:
+                    # Best-effort clear.
+                    self._chroma_collection.delete(where={})
+                except Exception:
+                    pass
+                try:
+                    self._index_legal_pdfs(kb_fingerprint=kb_fingerprint)
+                except Exception as e:
+                    # Keep the service alive even if KB indexing fails.
+                    self._kb_error = f"Knowledge base indexing failed: {e}"
+
+            self._kb_ready = True
+        except Exception as e:
+            self._kb_error = f"Failed to initialize knowledge base: {e}"
+
+    def _compute_kb_fingerprint(self) -> str:
+        """Fingerprint of the KB based on PDF paths + mtimes + sizes."""
+        h = hashlib.sha256()
+        if not self.legal_docs_dir.exists():
+            h.update(b"missing")
+            return h.hexdigest()
+
+        pdfs = sorted([p for p in self.legal_docs_dir.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf"] )
+        for p in pdfs:
+            try:
+                st = p.stat()
+                h.update(str(p.relative_to(self.project_root)).encode("utf-8", errors="ignore"))
+                h.update(str(int(st.st_mtime)).encode("utf-8"))
+                h.update(str(st.st_size).encode("utf-8"))
+            except Exception:
+                continue
+        return h.hexdigest()
+
+    def _read_pdf_text(self, pdf_path: Path) -> List[Tuple[int, str]]:
+        reader = PdfReader(str(pdf_path))
+        pages: List[Tuple[int, str]] = []
+        for i, page in enumerate(reader.pages):
+            try:
+                text = page.extract_text() or ""
+            except Exception:
+                text = ""
+            cleaned = re.sub(r"\s+", " ", text).strip()
+            if cleaned:
+                pages.append((i + 1, cleaned))
+        return pages
+
+    def _chunk_text(self, text: str, chunk_size: int = 1200, overlap: int = 200) -> List[str]:
+        """Simple character-based chunker with overlap."""
+        s = re.sub(r"\s+", " ", text).strip()
+        if not s:
+            return []
+
+        chunks: List[str] = []
+        start = 0
+        n = len(s)
+        while start < n:
+            end = min(n, start + chunk_size)
+            chunk = s[start:end].strip()
+            if chunk:
+                chunks.append(chunk)
+            if end >= n:
+                break
+            start = max(0, end - overlap)
+        return chunks
+
+    def _index_legal_pdfs(self, kb_fingerprint: str) -> None:
+        if not self.legal_docs_dir.exists():
+            raise RuntimeError(f"Knowledge base directory not found: {self.legal_docs_dir}")
+        assert self._chroma_collection is not None
+        assert self._vectorizer is not None
+
+        pdf_paths = sorted([p for p in self.legal_docs_dir.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf"])
+        if not pdf_paths:
+            # Nothing to index.
+            return
+
+        ids: List[str] = []
+        docs: List[str] = []
+        metas: List[Dict] = []
+        embeddings: List[List[float]] = []
+
+        for pdf_path in pdf_paths:
+            pages = self._read_pdf_text(pdf_path)
+            for page_num, page_text in pages:
+                for chunk_idx, chunk in enumerate(self._chunk_text(page_text)):
+                    rel = str(pdf_path.relative_to(self.project_root))
+                    doc_id = f"{rel}::p{page_num}::c{chunk_idx}"
+                    ids.append(doc_id)
+                    docs.append(chunk)
+                    metas.append(
+                        {
+                            "source": rel,
+                            "page": page_num,
+                            "chunk": chunk_idx,
+                            "kb_fingerprint": kb_fingerprint,
+                        }
+                    )
+
+        batch_size = int(os.getenv("CHATBOT_EMBED_BATCH", "128"))
+        for i in range(0, len(docs), batch_size):
+            batch_docs = docs[i : i + batch_size]
+            embeddings.extend(self._embed_texts(batch_docs))
+
+        self._chroma_collection.add(ids=ids, documents=docs, metadatas=metas, embeddings=embeddings)
+
+    def _friendly_source_name(self, source_path: str) -> str:
+        name = os.path.basename(source_path or "").lower()
+        if name == "privacy_policy_qa.pdf":
+            return "privacy policy docs"
+        if name == "security_policy_qa.pdf":
+            return "Security docs"
+        if name == "terms_of_service_qa.pdf":
+            return "Terms of service docs"
+        # Fallback to filename without extension
+        base = os.path.splitext(os.path.basename(source_path or "unknown"))[0]
+        return base.replace("_", " ").strip() or "unknown docs"
+
+    def _embed_texts(self, texts: List[str]) -> List[List[float]]:
+        if not texts:
+            return []
+        assert self._vectorizer is not None
+
+        X = self._vectorizer.transform(texts)
+        arr = X.toarray().astype(np.float32, copy=False)
+        norms = np.linalg.norm(arr, axis=1, keepdims=True)
+        norms = np.where(norms == 0, 1.0, norms)
+        arr = arr / norms
+        return arr.tolist()
+
+    def _retrieve(self, query: str, k: int = 5) -> List[Dict[str, str]]:
+        """Return retrieved chunks with minimal metadata for prompt building."""
+        if not self._kb_ready or not self._chroma_collection or not self._vectorizer:
+            return []
+
+        q_emb = self._embed_texts([query])[0]
+        res = self._chroma_collection.query(
+            query_embeddings=[q_emb],
+            n_results=max(1, k),
+            include=["documents", "metadatas", "distances"],
+        )
+        docs = (res.get("documents") or [[]])[0]
+        metas = (res.get("metadatas") or [[]])[0]
+
+        retrieved: List[Dict[str, str]] = []
+        for doc, md in zip(docs, metas):
+            if not isinstance(doc, str) or not doc.strip():
+                continue
+            source = "unknown"
+            if isinstance(md, dict):
+                source = str(md.get("source", "unknown"))
+            label = self._friendly_source_name(source)
+            retrieved.append({"source": label, "text": doc.strip()})
+        return retrieved
+
+    def _query_groq(self, messages: List[Dict[str, str]], temperature: float = 0.2, max_tokens: int = 512) -> Optional[str]:
+        if not self.groq_api_key:
+            return None
+
+        url = f"{self.groq_api_base.rstrip('/')}/chat/completions"
+        headers = {"Authorization": f"Bearer {self.groq_api_key}", "Content-Type": "application/json"}
+        payload = {
+            "model": self.groq_model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=self.groq_timeout_seconds)
+            if r.status_code != 200:
+                return None
+            data = r.json()
+            choices = data.get("choices") if isinstance(data, dict) else None
+            if not isinstance(choices, list) or not choices:
+                return None
+            msg = choices[0].get("message") if isinstance(choices[0], dict) else None
+            content = msg.get("content") if isinstance(msg, dict) else None
+            return content.strip() if isinstance(content, str) and content.strip() else None
+        except Exception:
+            return None
+
+    def get_kb_status(self) -> Dict[str, object]:
+        pdf_count = 0
+        try:
+            if self.legal_docs_dir.exists():
+                pdf_count = len([p for p in self.legal_docs_dir.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf"])
+        except Exception:
+            pdf_count = 0
+
+        doc_count = None
+        try:
+            if self._chroma_collection is not None:
+                doc_count = self._chroma_collection.count()
+        except Exception:
+            doc_count = None
+
+        return {
+            "ai_enabled": bool(self.use_ai),
+            "groq_model": self.groq_model,
+            "kb_ready": bool(self._kb_ready),
+            "kb_error": self._kb_error,
+            "kb_dir": str(self.legal_docs_dir),
+            "kb_pdf_count": pdf_count,
+            "chroma_dir": str(self.chroma_dir),
+            "chroma_collection": self.collection_name,
+            "chroma_doc_count": doc_count,
+        }
+
     def get_response(self, user_message: str, context: Optional[Dict] = None) -> str:
         """
         Generate chatbot response
@@ -110,30 +416,63 @@ When explaining scan results:
         Returns:
             Chatbot response string
         """
+        if self._is_greeting(user_message):
+            return self._get_fallback_response("hello")
+
         if self.use_ai:
             return self._get_ai_response(user_message, context)
-        else:
-            return self._get_fallback_response(user_message)
+
+        return self._get_fallback_response(user_message)
 
     def _get_ai_response(self, user_message: str, context: Optional[Dict] = None) -> str:
-        """Get AI-powered response using Gemini"""
+        """Get AI-powered response using Groq + RAG over legal_docs PDFs"""
         try:
-            # Build prompt with context
-            prompt = f"{self.system_context}\n\n"
-
-            if context:
-                prompt += f"Context: {json.dumps(context, indent=2)}\n\n"
-
-            prompt += f"User Question: {user_message}\n\nAssistant:"
-
-            # Generate response
-            response = self.model.generate_content(prompt)
-
-            # Extract text from response
-            if response and response.text:
-                return response.text.strip()  # type: ignore[return-value]
-            else:
+            self._ensure_kb_ready()
+            if self._kb_error and not context:
                 return self._get_fallback_response(user_message)
+
+            retrieved = self._retrieve(user_message, k=int(os.getenv("CHATBOT_RETRIEVAL_K", "5")))
+
+            # If legal-doc KB doesn't cover it, answer common product-usage FAQs from built-in responses.
+            if not retrieved and not context:
+                fallback = self._get_fallback_response(user_message)
+                if fallback != self.fallback_responses["default"]:
+                    return fallback
+                return (
+                    "I don't have enough information in my knowledge base to answer that accurately. "
+                    "Please contact support@webshield.com for assistance."
+                )
+
+            kb_block = ""
+            if retrieved:
+                for i, item in enumerate(retrieved, start=1):
+                    src = item.get("source", "unknown")
+                    txt = item.get("text", "")
+                    kb_block += f"\n\n[KB-{i}] Source: {src}\n{txt}"
+
+            user_context = ""
+            if context:
+                user_context = json.dumps(context, indent=2)
+
+            system_msg = f"{self.system_context}\n\n{self.rag_system_rules}"
+
+            user_msg = (
+                "Answer the user question.\n\n"
+                + (f"User Context (JSON):\n{user_context}\n\n" if user_context else "")
+                + (f"Knowledge Base Excerpts:{kb_block}\n\n" if kb_block else "Knowledge Base Excerpts: (none found)\n\n")
+                + f"User Question: {user_message}"
+            )
+
+            text = self._query_groq(
+                messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": user_msg}],
+                temperature=0.2,
+                max_tokens=int(os.getenv("CHATBOT_MAX_TOKENS", "520")),
+            )
+
+            if text:
+                return text
+
+            return self._get_fallback_response(user_message)
 
         except Exception as e:
             print(f"AI response error: {e}")
@@ -142,10 +481,19 @@ When explaining scan results:
     def _get_fallback_response(self, user_message: str) -> str:
         """Get rule-based fallback response"""
         message_lower = user_message.lower()
+        message_norm = re.sub(r"[^a-z0-9\s]", " ", message_lower)
+        message_norm = re.sub(r"\s+", " ", message_norm).strip()
+
+        if ("check url" in message_norm) or ("check urls" in message_norm) or ("scan url" in message_norm) or ("scan urls" in message_norm):
+            for k in ("how to check urls", "how to check url"):
+                if k in self.fallback_responses:
+                    return self.fallback_responses[k]
 
         # Check for keyword matches
         for key, response in self.fallback_responses.items():
-            if key in message_lower:
+            key_norm = re.sub(r"[^a-z0-9\s]", " ", str(key).lower())
+            key_norm = re.sub(r"\s+", " ", key_norm).strip()
+            if key_norm and key_norm in message_norm:
                 return response
 
         # Default response
@@ -185,6 +533,8 @@ When explaining scan results:
             "What is phishing and how do you detect it?",
             "How do I scan a URL for threats?",
             "What do threat scores mean?",
+            "How to check URL's",
+            "How to check URL",
             "How accurate is your AI detection?",
             "What is SSL certificate validation?",
             "Tell me about the browser extension",
@@ -192,6 +542,7 @@ When explaining scan results:
             "How does typosquatting detection work?",
             "What is VirusTotal integration?",
             "Explain your machine learning models",
+            "What are the different types of cyber threats?",
             "What should I do if a site is flagged dangerous?",
         ]
 
