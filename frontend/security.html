@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Policy - WebShield</title>
+    <meta name="description"
+        content="WebShield Security Policy - Learn about our security practices, infrastructure, and commitment to protecting your data.">
+    <script src="config.js"></script>
+    <script src="accessibility-enhancements.js"></script>
+    <script src="webshield-core.js"></script>
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="premium-effects.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="cyber-effects.js" defer></script>
+    <style>
+        :root {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --border: 217.2 32.6% 17.5%;
+            --radius: 0.5rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            min-height: 100vh;
+            scroll-behavior: smooth;
+            line-height: 1.7;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 25% 35%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 75% 65%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Header */
+        .header {
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+            background-color: hsl(var(--card) / 0.5);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 1px solid transparent;
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--muted) / 0.5);
+            border-color: hsl(var(--border));
+        }
+
+        /* Main Content */
+        .main {
+            padding: 3rem 0;
+        }
+
+        .legal-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        .legal-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .legal-subtitle {
+            color: hsl(var(--muted-foreground));
+            font-size: 1.125rem;
+        }
+
+        .last-updated {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+
+        .legal-content {
+            background: hsl(var(--card) / 0.5);
+            border: 1px solid hsl(var(--border));
+            border-radius: 1.5rem;
+            padding: 3rem;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .security-badges {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .badge-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge-title {
+            font-weight: 600;
+            color: #22c55e;
+            margin-bottom: 0.25rem;
+        }
+
+        .badge-text {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .toc {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .toc h3 {
+            color: #22c55e;
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+
+        .toc a {
+            color: hsl(var(--foreground));
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: #22c55e;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: hsl(var(--foreground));
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .section h3 {
+            font-size: 1.375rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #22c55e;
+        }
+
+        .section p {
+            margin-bottom: 1rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .section ul,
+        .section ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-box {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid #22c55e;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .feature-card {
+            background: rgba(34, 197, 94, 0.05);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .feature-card h4 {
+            color: #22c55e;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+        }
+
+        .feature-card p {
+            font-size: 0.875rem;
+            margin-bottom: 0;
+        }
+
+        .contact-section {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.05));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .contact-section h3 {
+            color: #22c55e;
+            margin-bottom: 1rem;
+        }
+
+        .contact-section a {
+            color: #22c55e;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-section a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .legal-title {
+                font-size: 2rem;
+            }
+
+            .legal-content {
+                padding: 1.5rem;
+            }
+
+            .section h2 {
+                font-size: 1.5rem;
+            }
+
+            .security-badges {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <span class="logo-text">WebShield</span>
+                </a>
+                <a href="index.html" class="btn btn-ghost">← Back to Home</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="legal-header">
+                <h1 class="legal-title">Security Policy</h1>
+                <p class="legal-subtitle">Our commitment to protecting your data and maintaining the highest security
+                    standards</p>
+                <span class="last-updated">Last Updated: January 30, 2026</span>
+            </div>
+
+            <div class="legal-content">
+                <div class="security-badges">
+                    <div class="badge">
+                        <div class="badge-icon">🔒</div>
+                        <div class="badge-title">AES-256 Encryption</div>
+                        <div class="badge-text">Military-grade encryption at rest</div>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon">🛡️</div>
+                        <div class="badge-title">TLS 1.3</div>
+                        <div class="badge-text">Secure data transmission</div>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon">⚡</div>
+                        <div class="badge-title">24/7 Monitoring</div>
+                        <div class="badge-text">Continuous security surveillance</div>
+                    </div>
+                    <div class="badge">
+                        <div class="badge-icon">✅</div>
+                        <div class="badge-title">Regular Audits</div>
+                        <div class="badge-text">Quarterly security assessments</div>
+                    </div>
+                </div>
+
+                <div class="toc">
+                    <h3>Table of Contents</h3>
+                    <ul>
+                        <li><a href="#overview">1. Security Overview</a></li>
+                        <li><a href="#infrastructure">2. Infrastructure Security</a></li>
+                        <li><a href="#data-protection">3. Data Protection</a></li>
+                        <li><a href="#access-control">4. Access Control</a></li>
+                        <li><a href="#application-security">5. Application Security</a></li>
+                        <li><a href="#incident-response">6. Incident Response</a></li>
+                        <li><a href="#vulnerability">7. Vulnerability Disclosure</a></li>
+                        <li><a href="#compliance">8. Compliance & Certifications</a></li>
+                        <li><a href="#best-practices">9. User Security Best Practices</a></li>
+                        <li><a href="#updates">10. Security Updates</a></li>
+                        <li><a href="#contact-security">11. Contact Security Team</a></li>
+                    </ul>
+                </div>
+
+                <section id="overview" class="section">
+                    <h2>1. Security Overview</h2>
+                    <p>
+                        At WebShield, security is not just a feature—it's the foundation of everything we do. As a
+                        cybersecurity platform, we understand the critical importance of protecting our users' data and
+                        maintaining the highest security standards.
+                    </p>
+                    <p>
+                        This Security Policy outlines our comprehensive approach to security, including our
+                        infrastructure, data protection measures, incident response procedures, and commitment to
+                        continuous improvement.
+                    </p>
+                    <div class="highlight-box">
+                        <strong>Our Security Commitment:</strong> We employ defense-in-depth strategies, implementing
+                        multiple layers of security controls to protect against evolving threats and ensure the
+                        confidentiality, integrity, and availability of your data.
+                    </div>
+                </section>
+
+                <section id="infrastructure" class="section">
+                    <h2>2. Infrastructure Security</h2>
+
+                    <h3>2.1 Cloud Infrastructure</h3>
+                    <p>Our services are hosted on enterprise-grade cloud infrastructure with:</p>
+                    <ul>
+                        <li><strong>Redundancy:</strong> Multi-region deployment for high availability and disaster
+                            recovery</li>
+                        <li><strong>Isolation:</strong> Network segmentation and virtual private clouds (VPCs)</li>
+                        <li><strong>DDoS Protection:</strong> Advanced distributed denial-of-service mitigation</li>
+                        <li><strong>Load Balancing:</strong> Automated traffic distribution for optimal performance</li>
+                        <li><strong>Auto-Scaling:</strong> Dynamic resource allocation to handle traffic spikes</li>
+                    </ul>
+
+                    <h3>2.2 Network Security</h3>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <h4>Firewall Protection</h4>
+                            <p>Next-generation firewalls with intrusion detection and prevention systems (IDS/IPS)</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>Network Segmentation</h4>
+                            <p>Isolated network zones for different service components</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>VPN Access</h4>
+                            <p>Secure encrypted tunnels for administrative access</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>Traffic Monitoring</h4>
+                            <p>Real-time analysis of network traffic patterns</p>
+                        </div>
+                    </div>
+
+                    <h3>2.3 Server Security</h3>
+                    <ul>
+                        <li>Hardened server configurations following CIS benchmarks</li>
+                        <li>Automated security patching and updates</li>
+                        <li>Minimal attack surface with only essential services running</li>
+                        <li>Host-based intrusion detection systems (HIDS)</li>
+                        <li>Regular vulnerability scanning and penetration testing</li>
+                    </ul>
+                </section>
+
+                <section id="data-protection" class="section">
+                    <h2>3. Data Protection</h2>
+
+                    <h3>3.1 Encryption</h3>
+                    <p>We implement comprehensive encryption to protect your data:</p>
+                    <ul>
+                        <li><strong>In Transit:</strong> TLS 1.3 encryption for all data transmission with perfect
+                            forward secrecy</li>
+                        <li><strong>At Rest:</strong> AES-256 encryption for all stored data, including databases and
+                            backups</li>
+                        <li><strong>End-to-End:</strong> Encrypted communication channels for sensitive operations</li>
+                        <li><strong>Key Management:</strong> Secure key storage using hardware security modules (HSMs)
+                        </li>
+                    </ul>
+
+                    <h3>3.2 Password Security</h3>
+                    <ul>
+                        <li>Passwords hashed using bcrypt with unique salts (cost factor: 12)</li>
+                        <li>Minimum password complexity requirements enforced</li>
+                        <li>Password breach detection using Have I Been Pwned API</li>
+                        <li>Account lockout after failed login attempts</li>
+                        <li>Secure password reset mechanisms with time-limited tokens</li>
+                    </ul>
+
+                    <h3>3.3 Data Backup and Recovery</h3>
+                    <ul>
+                        <li>Automated daily backups with encryption</li>
+                        <li>Geographically distributed backup storage</li>
+                        <li>Regular backup restoration testing</li>
+                        <li>Point-in-time recovery capabilities</li>
+                        <li>90-day backup retention period</li>
+                    </ul>
+
+                    <div class="info-box">
+                        <strong>Data Minimization:</strong> We only collect and retain data necessary for service
+                        delivery, following the principle of data minimization to reduce security risks.
+                    </div>
+                </section>
+
+                <section id="access-control" class="section">
+                    <h2>4. Access Control</h2>
+
+                    <h3>4.1 Authentication</h3>
+                    <ul>
+                        <li><strong>Multi-Factor Authentication (MFA):</strong> Optional 2FA using TOTP (Time-based
+                            One-Time Password)</li>
+                        <li><strong>Session Management:</strong> Secure session tokens with automatic expiration</li>
+                        <li><strong>OAuth 2.0:</strong> Industry-standard authentication for third-party integrations
+                        </li>
+                        <li><strong>API Keys:</strong> Secure API authentication with rate limiting</li>
+                    </ul>
+
+                    <h3>4.2 Authorization</h3>
+                    <ul>
+                        <li><strong>Role-Based Access Control (RBAC):</strong> Granular permissions based on user roles
+                        </li>
+                        <li><strong>Principle of Least Privilege:</strong> Users granted minimum necessary permissions
+                        </li>
+                        <li><strong>Separation of Duties:</strong> Critical operations require multiple approvals</li>
+                        <li><strong>Access Reviews:</strong> Quarterly review of user permissions and access rights</li>
+                    </ul>
+
+                    <h3>4.3 Administrative Access</h3>
+                    <ul>
+                        <li>Mandatory MFA for all administrative accounts</li>
+                        <li>VPN-only access to production systems</li>
+                        <li>Comprehensive audit logging of all administrative actions</li>
+                        <li>Just-in-time (JIT) access provisioning</li>
+                        <li>Background checks for personnel with privileged access</li>
+                    </ul>
+                </section>
+
+                <section id="application-security" class="section">
+                    <h2>5. Application Security</h2>
+
+                    <h3>5.1 Secure Development Lifecycle</h3>
+                    <p>We follow secure coding practices throughout our development process:</p>
+                    <ul>
+                        <li><strong>Security Training:</strong> Regular security awareness training for all developers
+                        </li>
+                        <li><strong>Code Reviews:</strong> Mandatory peer review for all code changes</li>
+                        <li><strong>Static Analysis:</strong> Automated code scanning for security vulnerabilities</li>
+                        <li><strong>Dependency Scanning:</strong> Continuous monitoring of third-party libraries</li>
+                        <li><strong>Security Testing:</strong> Integration of security tests in CI/CD pipeline</li>
+                    </ul>
+
+                    <h3>5.2 OWASP Top 10 Protection</h3>
+                    <p>We implement comprehensive protections against OWASP Top 10 vulnerabilities:</p>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <h4>Injection Prevention</h4>
+                            <p>Parameterized queries and input validation</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>XSS Protection</h4>
+                            <p>Content Security Policy and output encoding</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>CSRF Protection</h4>
+                            <p>Anti-CSRF tokens for state-changing operations</p>
+                        </div>
+                        <div class="feature-card">
+                            <h4>Authentication Security</h4>
+                            <p>Secure session management and MFA</p>
+                        </div>
+                    </div>
+
+                    <h3>5.3 API Security</h3>
+                    <ul>
+                        <li>Rate limiting to prevent abuse and DDoS attacks</li>
+                        <li>API key rotation and expiration policies</li>
+                        <li>Input validation and sanitization</li>
+                        <li>Comprehensive API logging and monitoring</li>
+                        <li>OAuth 2.0 for third-party integrations</li>
+                    </ul>
+
+                    <h3>5.4 Browser Extension Security</h3>
+                    <ul>
+                        <li>Minimal permissions requested (only what's necessary)</li>
+                        <li>Content Security Policy enforcement</li>
+                        <li>Secure communication with backend services</li>
+                        <li>Regular security audits and updates</li>
+                        <li>Code signing for authenticity verification</li>
+                    </ul>
+                </section>
+
+                <section id="incident-response" class="section">
+                    <h2>6. Incident Response</h2>
+
+                    <h3>6.1 Incident Response Plan</h3>
+                    <p>We maintain a comprehensive incident response plan with the following phases:</p>
+                    <ol>
+                        <li><strong>Detection:</strong> 24/7 monitoring and alerting systems</li>
+                        <li><strong>Analysis:</strong> Rapid assessment of incident severity and impact</li>
+                        <li><strong>Containment:</strong> Immediate actions to limit damage</li>
+                        <li><strong>Eradication:</strong> Removal of threat and closure of vulnerabilities</li>
+                        <li><strong>Recovery:</strong> Restoration of normal operations</li>
+                        <li><strong>Post-Incident:</strong> Review and lessons learned</li>
+                    </ol>
+
+                    <h3>6.2 Security Monitoring</h3>
+                    <ul>
+                        <li><strong>SIEM (Security Information and Event Management):</strong> Centralized log
+                            collection and analysis</li>
+                        <li><strong>Intrusion Detection:</strong> Real-time threat detection and alerting</li>
+                        <li><strong>Anomaly Detection:</strong> Machine learning-based behavioral analysis</li>
+                        <li><strong>Threat Intelligence:</strong> Integration with global threat feeds</li>
+                    </ul>
+
+                    <h3>6.3 Incident Notification</h3>
+                    <p>In the event of a security incident affecting user data, we will:</p>
+                    <ul>
+                        <li>Notify affected users within 72 hours of discovery</li>
+                        <li>Provide clear information about the incident and impact</li>
+                        <li>Offer guidance on protective measures users should take</li>
+                        <li>Comply with all applicable breach notification laws</li>
+                    </ul>
+                </section>
+
+                <section id="vulnerability" class="section">
+                    <h2>7. Vulnerability Disclosure Program</h2>
+
+                    <h3>7.1 Responsible Disclosure</h3>
+                    <p>
+                        We welcome security researchers to report vulnerabilities responsibly. We are committed to
+                        working with the security community to protect our users.
+                    </p>
+
+                    <h3>7.2 Reporting a Vulnerability</h3>
+                    <p>If you discover a security vulnerability, please:</p>
+                    <ol>
+                        <li>Email us at <a href="mailto:support@webshield.com"
+                                style="color: #22c55e; font-weight: 600;">support@webshield.com</a> with subject
+                            "Security Vulnerability"</li>
+                        <li>Provide detailed information about the vulnerability</li>
+                        <li>Include steps to reproduce the issue</li>
+                        <li>Allow us reasonable time to address the issue before public disclosure</li>
+                    </ol>
+
+                    <h3>7.3 Our Commitment</h3>
+                    <ul>
+                        <li>Acknowledge receipt of your report within 48 hours</li>
+                        <li>Provide regular updates on our progress</li>
+                        <li>Credit researchers who responsibly disclose vulnerabilities (if desired)</li>
+                        <li>Not pursue legal action against researchers who follow responsible disclosure</li>
+                    </ul>
+
+                    <div class="highlight-box">
+                        <strong>Bug Bounty:</strong> We recognize and appreciate the efforts of security researchers.
+                        While we don't currently have a formal bug bounty program, we acknowledge responsible
+                        disclosures and may offer rewards for critical findings.
+                    </div>
+                </section>
+
+                <section id="compliance" class="section">
+                    <h2>8. Compliance & Certifications</h2>
+
+                    <h3>8.1 Regulatory Compliance</h3>
+                    <p>We maintain compliance with applicable data protection and security regulations:</p>
+                    <ul>
+                        <li><strong>GDPR:</strong> General Data Protection Regulation (EU)</li>
+                        <li><strong>CCPA:</strong> California Consumer Privacy Act</li>
+                        <li><strong>IT Act 2000:</strong> Information Technology Act (India)</li>
+                        <li><strong>CERT-In Guidelines:</strong> Indian Computer Emergency Response Team directives</li>
+                    </ul>
+
+                    <h3>8.2 Security Standards</h3>
+                    <p>Our security practices align with industry-recognized standards:</p>
+                    <ul>
+                        <li><strong>OWASP:</strong> Open Web Application Security Project guidelines</li>
+                        <li><strong>CIS Controls:</strong> Center for Internet Security benchmarks</li>
+                        <li><strong>NIST Framework:</strong> National Institute of Standards and Technology
+                            Cybersecurity Framework</li>
+                        <li><strong>ISO 27001:</strong> Information Security Management System (in progress)</li>
+                    </ul>
+
+                    <h3>8.3 Third-Party Audits</h3>
+                    <ul>
+                        <li>Quarterly vulnerability assessments by independent security firms</li>
+                        <li>Annual penetration testing</li>
+                        <li>Regular code security audits</li>
+                        <li>Infrastructure security reviews</li>
+                    </ul>
+                </section>
+
+                <section id="best-practices" class="section">
+                    <h2>9. User Security Best Practices</h2>
+                    <p>While we implement robust security measures, your security also depends on your practices:</p>
+
+                    <h3>9.1 Account Security</h3>
+                    <ul>
+                        <li>✅ Use a strong, unique password (minimum 12 characters with mixed case, numbers, and
+                            symbols)</li>
+                        <li>✅ Enable two-factor authentication (2FA) for additional protection</li>
+                        <li>✅ Never share your password or API keys</li>
+                        <li>✅ Log out from shared or public computers</li>
+                        <li>✅ Regularly review your account activity</li>
+                    </ul>
+
+                    <h3>9.2 Phishing Awareness</h3>
+                    <ul>
+                        <li>⚠️ Be cautious of unsolicited emails claiming to be from WebShield</li>
+                        <li>⚠️ Verify the sender's email address (we only send from @webshield.com)</li>
+                        <li>⚠️ Never click suspicious links or download unexpected attachments</li>
+                        <li>⚠️ We will never ask for your password via email</li>
+                    </ul>
+
+                    <h3>9.3 Browser Extension Safety</h3>
+                    <ul>
+                        <li>Only install our extension from official browser stores</li>
+                        <li>Keep the extension updated to the latest version</li>
+                        <li>Review extension permissions before installation</li>
+                        <li>Report any suspicious behavior immediately</li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <strong>Suspicious Activity?</strong> If you notice any unusual account activity or suspect your
+                        account has been compromised, immediately change your password and contact our support team at
+                        <a href="mailto:support@webshield.com"
+                            style="color: #ef4444; font-weight: 600;">support@webshield.com</a>.
+                    </div>
+                </section>
+
+                <section id="updates" class="section">
+                    <h2>10. Security Updates and Maintenance</h2>
+
+                    <h3>10.1 Regular Updates</h3>
+                    <ul>
+                        <li><strong>Security Patches:</strong> Critical vulnerabilities addressed within 24 hours</li>
+                        <li><strong>Dependency Updates:</strong> Weekly scanning and updating of third-party libraries
+                        </li>
+                        <li><strong>Infrastructure Updates:</strong> Monthly security patches for servers and systems
+                        </li>
+                        <li><strong>Feature Updates:</strong> Regular releases with security enhancements</li>
+                    </ul>
+
+                    <h3>10.2 Maintenance Windows</h3>
+                    <p>
+                        Scheduled maintenance is performed during low-traffic periods (typically 02:00-04:00 IST). We
+                        provide advance notice for planned maintenance that may affect service availability.
+                    </p>
+
+                    <h3>10.3 Emergency Maintenance</h3>
+                    <p>
+                        In case of critical security issues, we may perform emergency maintenance with minimal notice to
+                        protect our users.
+                    </p>
+                </section>
+
+                <section id="contact-security" class="section">
+                    <h2>11. Contact Our Security Team</h2>
+                    <p>
+                        We take security seriously and welcome your questions, concerns, and feedback.
+                    </p>
+                </section>
+
+                <div class="contact-section">
+                    <h3>Security Contact</h3>
+                    <p><strong>Email:</strong> <a href="mailto:support@webshield.com">support@webshield.com</a></p>
+                    <p><strong>Subject Line:</strong> Use "Security Inquiry" or "Security Vulnerability" for faster
+                        routing</p>
+                    <p><strong>Response Time:</strong> Security-related inquiries are prioritized and typically
+                        responded to within 24 hours</p>
+                    <p style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(34, 197, 94, 0.2);">
+                        <strong>Company:</strong> WebShield<br>
+                        <strong>Location:</strong> Bengaluru, India
+                    </p>
+                    <p style="margin-top: 1rem; color: hsl(var(--muted-foreground)); font-size: 0.875rem;">
+                        For general support inquiries, please visit our <a href="index.html"
+                            style="color: #22c55e;">main website</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer
+        style="border-top: 1px solid hsl(var(--border) / 0.5); background-color: hsl(var(--card) / 0.3); margin-top: 3rem;">
+        <div class="container">
+            <div
+                style="padding: 2rem 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="color: hsl(var(--muted-foreground)); font-size: 0.875rem;">
+                    &copy; 2026 WebShield. All rights reserved.
+                </div>
+                <div style="display: flex; gap: 1.5rem; font-size: 0.875rem;">
+                    <a href="index.html"
+                        style="color: hsl(var(--muted-foreground)); text-decoration: none; transition: color 0.2s;">Home</a>
+                    <a href="privacy.html"
+                        style="color: hsl(var(--muted-foreground)); text-decoration: none; transition: color 0.2s;">Privacy</a>
+                    <a href="terms.html"
+                        style="color: hsl(var(--muted-foreground)); text-decoration: none; transition: color 0.2s;">Terms</a>
+                    <a href="security.html"
+                        style="color: #22c55e; text-decoration: none; font-weight: 600;">Security</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="enhanced-animations.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.WebShieldTheme) {
+                window.WebShieldTheme.init();
+            }
+        });
+    </script>
+</body>
+
+</html>
