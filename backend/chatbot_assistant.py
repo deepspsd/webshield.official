@@ -416,32 +416,26 @@ When explaining scan results:
         Returns:
             Chatbot response string
         """
-        if self._is_greeting(user_message):
-            return self._get_fallback_response("hello")
-
         if self.use_ai:
             return self._get_ai_response(user_message, context)
 
+        # Fallback only when AI is completely unavailable
         return self._get_fallback_response(user_message)
 
     def _get_ai_response(self, user_message: str, context: Optional[Dict] = None) -> str:
         """Get AI-powered response using Groq + RAG over legal_docs PDFs"""
         try:
             self._ensure_kb_ready()
-            if self._kb_error and not context:
-                return self._get_fallback_response(user_message)
-
+            
+            # Try to retrieve relevant documents from knowledge base
             retrieved = self._retrieve(user_message, k=int(os.getenv("CHATBOT_RETRIEVAL_K", "5")))
-
-            # If legal-doc KB doesn't cover it, answer common product-usage FAQs from built-in responses.
-            if not retrieved and not context:
-                fallback = self._get_fallback_response(user_message)
-                if fallback != self.fallback_responses["default"]:
-                    return fallback
-                return (
-                    "I don't have enough information in my knowledge base to answer that accurately. "
-                    "Please contact support@webshield.com for assistance."
-                )
+            
+            # Check if this is a simple greeting
+            is_greeting = self._is_greeting(user_message)
+            
+            # For greetings without RAG context, use friendly fallback
+            if is_greeting and not retrieved and not context:
+                return self._get_fallback_response("hello")
 
             kb_block = ""
             if retrieved:
