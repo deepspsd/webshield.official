@@ -343,6 +343,16 @@ try:
         logger.warning(f"Course routes failed to load: {e}")
         # Continue without course routes
 
+    # Reports and folders management routes
+    try:
+        from .reports_routes import reports_router
+
+        app.include_router(reports_router)
+        logger.info("Reports routes loaded successfully")
+    except Exception as e:
+        logger.warning(f"Reports routes failed to load: {e}")
+        # Continue without reports routes
+
     logger.info("All routes loaded successfully")
 except Exception as e:
     logger.error(f"Failed to load routes: {e}")

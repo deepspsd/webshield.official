@@ -226,6 +226,154 @@
             margin-bottom: 2rem;
         }
 
+        .vault-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .folders-panel {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 12px;
+            padding: 1rem;
+            position: sticky;
+            top: 92px;
+            height: calc(100vh - 120px);
+            overflow: auto;
+        }
+
+        .folders-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .folders-title {
+            font-weight: 700;
+            color: hsl(var(--foreground));
+        }
+
+        .folder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .folder-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.65rem 0.75rem;
+            border-radius: 10px;
+            border: 1px solid hsl(var(--border) / 0.6);
+            background: hsl(var(--surface));
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .folder-item:hover {
+            border-color: hsl(var(--primary) / 0.4);
+            box-shadow: var(--border-glow);
+        }
+
+        .folder-item.active {
+            border-color: hsl(var(--primary));
+            background: hsl(var(--muted) / 0.6);
+        }
+
+        .folder-item.drag-over {
+            outline: 2px dashed hsl(var(--primary));
+            outline-offset: 2px;
+        }
+
+        .folder-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+            min-width: 0;
+        }
+
+        .folder-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .folder-count {
+            font-size: 0.75rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .folder-actions {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--foreground));
+            border-radius: 8px;
+            padding: 0.35rem 0.5rem;
+            cursor: pointer;
+        }
+
+        .icon-btn:hover {
+            border-color: hsl(var(--primary));
+            color: hsl(var(--primary));
+        }
+
+        .toast-container {
+            position: fixed;
+            right: 1rem;
+            bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            min-width: 240px;
+            max-width: 360px;
+            border: 1px solid hsl(var(--border));
+            background: hsl(var(--card) / 0.95);
+            backdrop-filter: blur(14px);
+            border-radius: 12px;
+            padding: 0.75rem 0.9rem;
+            box-shadow: var(--shadow-elegant);
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-start;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            margin-bottom: 0.15rem;
+        }
+
+        .toast-text {
+            font-size: 0.9rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .toast-success .toast-title { color: hsl(var(--success)); }
+        .toast-error .toast-title { color: hsl(var(--destructive)); }
+        .toast-info .toast-title { color: hsl(var(--primary)); }
+
+        .reports-panel {
+            min-width: 0;
+        }
+
         .filters-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -503,6 +651,15 @@
             .filters-grid {
                 grid-template-columns: 1fr;
             }
+
+            .vault-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .folders-panel {
+                position: static;
+                height: auto;
+            }
         }
 
         .footer {
@@ -609,6 +766,7 @@
                     <a href="index.html">Home</a>
                     <a href="features.html">Features</a>
                     <a href="dashboard.html">Dashboard</a>
+                    <a href="reports.html" class="active">Reports</a>
                     <a href="how-to-install.html">Extension</a>
                     <a href="about.html">About</a>
                 </nav>
@@ -642,46 +800,60 @@
                 <p class="page-subtitle">View detailed reports of all your URL scans and security analysis results</p>
             </div>
 
-            <!-- Filters -->
-            <div class="filters">
-                <div class="filters-grid">
-                    <div class="filter-group">
-                        <label class="filter-label">Search URLs</label>
-                        <input type="text" class="filter-input" id="search-input" placeholder="Enter URL to search...">
+            <div class="vault-layout">
+                <aside class="folders-panel">
+                    <div class="folders-header">
+                        <div class="folders-title">Folders</div>
+                        <button class="icon-btn" id="create-folder-btn" type="button">+ New</button>
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label">Status</label>
-                        <select class="filter-input" id="status-filter">
-                            <option value="">All Status</option>
-                            <option value="safe">Safe</option>
-                            <option value="danger">Danger</option>
-                            <option value="warning">Warning</option>
-                        </select>
+                    <div class="folder-list" id="folders-container">
+                        <!-- folders loaded here -->
                     </div>
-                    <div class="filter-group">
-                        <label class="filter-label">Date Range</label>
-                        <input type="date" class="filter-input" id="date-filter">
-                    </div>
-                    <div class="filter-group">
-                        <label class="filter-label">Threat Level</label>
-                        <select class="filter-input" id="threat-filter">
-                            <option value="">All Levels</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+                </aside>
 
-            <!-- Reports Grid -->
-            <div class="reports-grid" id="reports-container">
-                <!-- Reports will be loaded here dynamically -->
-            </div>
+                <section class="reports-panel">
+                    <!-- Filters -->
+                    <div class="filters">
+                        <div class="filters-grid">
+                            <div class="filter-group">
+                                <label class="filter-label">Search URLs</label>
+                                <input type="text" class="filter-input" id="search-input" placeholder="Search by URL or report name...">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Status</label>
+                                <select class="filter-input" id="status-filter">
+                                    <option value="">All Status</option>
+                                    <option value="safe">Safe</option>
+                                    <option value="danger">Danger</option>
+                                    <option value="warning">Warning</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Date Range</label>
+                                <input type="date" class="filter-input" id="date-filter">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">Threat Level</label>
+                                <select class="filter-input" id="threat-filter">
+                                    <option value="">All Levels</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- Pagination -->
-            <div class="pagination" id="pagination">
-                <!-- Pagination will be generated dynamically -->
+                    <!-- Reports Grid -->
+                    <div class="reports-grid" id="reports-container">
+                        <!-- Reports will be loaded here dynamically -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination" id="pagination" style="display:none;">
+                        <!-- Pagination will be generated dynamically -->
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -703,6 +875,8 @@
         </section>
     </main>
 
+    <div class="toast-container" id="toast-container"></div>
+
     <script>
         const DEBUG = (new URLSearchParams(window.location.search)).get('debug') === '1';
         const log = (...args) => { if (DEBUG) console.log(...args); };
@@ -717,6 +891,309 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+        }
+
+        function showToast(type, title, text) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type || 'info'}`;
+            toast.innerHTML = `
+                <div>
+                    <div class="toast-title">${escapeHtml(title || 'Info')}</div>
+                    ${text ? `<div class="toast-text">${escapeHtml(text)}</div>` : ''}
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                try {
+                    toast.remove();
+                } catch (e) {
+                    // ignore
+                }
+            }, 2800);
+        }
+
+        function getApiBase() {
+            const apiUrl = (window.getApiRoot && window.getApiRoot()) || `${window.location.protocol}//${window.location.hostname}:8000/api`;
+            return apiUrl;
+        }
+
+        let currentFolderId = 0; // 0 = Default (legacy scans)
+        let foldersCache = [];
+        let defaultScansCache = [];
+        let activeFolderScansCache = [];
+        let searchDebounceTimer = null;
+
+        async function loadFolders() {
+            const userEmail = localStorage.getItem('userEmail');
+            const container = document.getElementById('folders-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!userEmail) {
+                container.innerHTML = '<div style="color: hsl(var(--muted-foreground)); padding: 0.5rem;">Sign in to see folders</div>';
+                return;
+            }
+
+            const apiBase = getApiBase();
+
+            let defaultCount = 0;
+            try {
+                const res = await fetch(`${apiBase}/admin/user_scans?email=${encodeURIComponent(userEmail)}&limit=200`);
+                if (res.ok) {
+                    const scans = await res.json();
+                    defaultScansCache = Array.isArray(scans) ? scans : [];
+                    defaultCount = defaultScansCache.length;
+                }
+            } catch (e) {
+                defaultScansCache = [];
+            }
+
+            let folders = [];
+            try {
+                const res = await fetch(`${apiBase}/reports/folders?user_email=${encodeURIComponent(userEmail)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    folders = (data && data.folders) ? data.folders : [];
+                }
+            } catch (e) {
+                folders = [];
+            }
+
+            foldersCache = folders;
+            renderFolderList(defaultCount);
+        }
+
+        function renderFolderList(defaultCount) {
+            const container = document.getElementById('folders-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const defaultFolder = {
+                id: 0,
+                folder_name: 'Default',
+                report_count: defaultCount
+            };
+
+            const allFolders = [defaultFolder, ...(foldersCache || [])];
+
+            allFolders.forEach(f => {
+                const el = document.createElement('div');
+                el.className = 'folder-item' + (String(currentFolderId) === String(f.id) ? ' active' : '');
+                el.dataset.folderId = String(f.id);
+                el.innerHTML = `
+                    <div class="folder-meta">
+                        <div class="folder-name">${escapeHtml(f.folder_name || 'Folder')}</div>
+                        <div class="folder-count">${Number(f.report_count || 0)} report(s)</div>
+                    </div>
+                    <div class="folder-actions">
+                        ${String(f.id) !== '0' ? `<button class="icon-btn" data-action="rename" title="Rename">✎</button>` : ''}
+                        ${String(f.id) !== '0' ? `<button class="icon-btn" data-action="delete" title="Delete">🗑</button>` : ''}
+                    </div>
+                `;
+
+                el.addEventListener('click', (e) => {
+                    const btn = e.target && e.target.closest ? e.target.closest('button') : null;
+                    if (btn && btn.dataset && btn.dataset.action) {
+                        e.stopPropagation();
+                        if (btn.dataset.action === 'rename') return promptRenameFolder(Number(f.id), f.folder_name);
+                        if (btn.dataset.action === 'delete') return confirmDeleteFolder(Number(f.id), f.folder_name);
+                    }
+                    selectFolder(Number(f.id));
+                });
+
+                el.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    el.classList.add('drag-over');
+                });
+                el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+                el.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    el.classList.remove('drag-over');
+                    const payloadRaw = e.dataTransfer.getData('application/webshield-report');
+                    if (!payloadRaw) return;
+                    try {
+                        const payload = JSON.parse(payloadRaw);
+                        await handleDropToFolder(payload, Number(f.id));
+                    } catch (err) {
+                        console.warn('Drop parse failed', err);
+                    }
+                });
+
+                container.appendChild(el);
+            });
+        }
+
+        async function promptRenameFolder(folderId, currentName) {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return;
+            const next = prompt('Rename folder', currentName || '');
+            if (!next) return;
+            const apiBase = getApiBase();
+            const res = await fetch(`${apiBase}/reports/folders/${folderId}?user_email=${encodeURIComponent(userEmail)}&new_name=${encodeURIComponent(next)}`, { method: 'PUT' });
+            if (!res.ok) {
+                showToast('error', 'Rename failed', 'Could not rename folder');
+                return;
+            }
+            showToast('success', 'Folder renamed', next);
+            await loadFolders();
+        }
+
+        async function confirmDeleteFolder(folderId, name) {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return;
+            const ok = confirm(`Delete folder "${name}"? This will delete all reports inside it.`);
+            if (!ok) return;
+            const apiBase = getApiBase();
+            const res = await fetch(`${apiBase}/reports/folders/${folderId}?user_email=${encodeURIComponent(userEmail)}`, { method: 'DELETE' });
+            if (!res.ok) {
+                showToast('error', 'Delete failed', 'Could not delete folder');
+                return;
+            }
+            showToast('success', 'Folder deleted', name);
+            currentFolderId = 0;
+            await loadFolders();
+            await selectFolder(0);
+        }
+
+        async function createFolderFlow() {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) {
+                alert('Please sign in first');
+                return;
+            }
+            const name = prompt('New folder name');
+            if (!name) return;
+            const apiBase = getApiBase();
+            const res = await fetch(`${apiBase}/reports/folders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_email: userEmail, folder_name: name })
+            });
+            if (!res.ok) {
+                showToast('error', 'Create failed', 'Could not create folder');
+                return;
+            }
+            showToast('success', 'Folder created', name);
+            await loadFolders();
+        }
+
+        async function selectFolder(folderId) {
+            currentFolderId = folderId;
+            document.querySelectorAll('.folder-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.folderId === String(folderId));
+            });
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.value = '';
+            if (folderId === 0) {
+                activeFolderScansCache = [];
+                displayReports(defaultScansCache || []);
+                return;
+            }
+            await loadSavedReports(folderId);
+        }
+
+        async function loadSavedReports(folderId) {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return;
+            const apiBase = getApiBase();
+            const res = await fetch(`${apiBase}/reports?user_email=${encodeURIComponent(userEmail)}&folder_id=${encodeURIComponent(folderId)}`);
+            if (!res.ok) {
+                showEmptyState('Error loading saved reports.');
+                return;
+            }
+            const data = await res.json();
+            const reports = (data && data.reports) ? data.reports : [];
+
+            const scans = reports.map(r => {
+                const created = r.scanned_at || r.created_at || new Date().toISOString();
+                return {
+                    scan_id: r.scan_id,
+                    url: r.url,
+                    threat_level: r.risk_level || 'unknown',
+                    is_malicious: (r.risk_level === 'high'),
+                    ssl_valid: true,
+                    malicious_count: 0,
+                    suspicious_count: 0,
+                    total_engines: 0,
+                    created_at: created,
+                    __report_id: r.id,
+                    __folder_id: r.folder_id,
+                    __report_name: r.report_name
+                };
+            });
+            activeFolderScansCache = scans;
+            displayReports(scans);
+        }
+
+        async function searchSavedReports(folderId, q) {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return;
+            const apiBase = getApiBase();
+            const res = await fetch(`${apiBase}/reports/search?user_email=${encodeURIComponent(userEmail)}&folder_id=${encodeURIComponent(folderId)}&q=${encodeURIComponent(q)}&limit=80&offset=0`);
+            if (!res.ok) {
+                showToast('error', 'Search failed', 'Could not search reports');
+                return;
+            }
+            const data = await res.json();
+            const reports = (data && data.reports) ? data.reports : [];
+            const scans = reports.map(r => {
+                const created = r.scanned_at || r.created_at || new Date().toISOString();
+                return {
+                    scan_id: r.scan_id,
+                    url: r.url,
+                    threat_level: r.risk_level || 'unknown',
+                    is_malicious: (r.risk_level === 'high'),
+                    ssl_valid: true,
+                    malicious_count: 0,
+                    suspicious_count: 0,
+                    total_engines: 0,
+                    created_at: created,
+                    __report_id: r.id,
+                    __folder_id: r.folder_id,
+                    __report_name: r.report_name
+                };
+            });
+            displayReports(scans);
+        }
+
+        async function handleDropToFolder(payload, folderId) {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return;
+            if (folderId === 0) return;
+            const apiBase = getApiBase();
+
+            if (payload.report_id) {
+                const res = await fetch(`${apiBase}/reports/${payload.report_id}/move?user_email=${encodeURIComponent(userEmail)}&target_folder_id=${encodeURIComponent(folderId)}`, { method: 'POST' });
+                if (!res.ok) {
+                    showToast('error', 'Move failed', 'Could not move report');
+                    return;
+                }
+                showToast('success', 'Report moved', '');
+            } else if (payload.scan_id) {
+                const reportName = payload.report_name || `Scan: ${payload.url}`;
+                const res = await fetch(`${apiBase}/reports/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_email: userEmail,
+                        scan_id: payload.scan_id,
+                        report_name: reportName,
+                        folder_id: folderId
+                    })
+                });
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.warn(text);
+                    showToast('error', 'Save failed', 'Could not save into folder');
+                    return;
+                }
+                showToast('success', 'Report saved', reportName);
+            }
+
+            await loadFolders();
+            await selectFolder(currentFolderId);
         }
         // Check login status and update header accordingly
         function checkLoginStatus() {
@@ -753,40 +1230,10 @@
             }
         }
 
-        // Load reports from API
+        // Load legacy scans into Default folder (kept for compatibility)
         async function loadReports() {
-            const userEmail = localStorage.getItem('userEmail');
-            if (!userEmail) {
-                showEmptyState('Please sign in to view your scan reports');
-                return;
-            }
-
-            try {
-                log('🔍 Loading reports for user:', userEmail);
-                const apiUrl = (window.getApiRoot && window.getApiRoot()) || `${window.location.protocol}//${window.location.hostname}:8000/api`;
-                log('🌐 API URL:', `${apiUrl}/admin/user_scans?email=${encodeURIComponent(userEmail)}&limit=50`);
-
-                const response = await fetch(`${apiUrl}/admin/user_scans?email=${encodeURIComponent(userEmail)}&limit=50`);
-                log('📥 Response status:', response.status);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    log('📊 Reports data:', data);
-
-                    // Backend returns scans directly as array, not wrapped in data.scans
-                    if (data && Array.isArray(data) && data.length > 0) {
-                        displayReports(data);
-                    } else {
-                        showEmptyState('No scan reports found. Start by scanning a URL!');
-                    }
-                } else {
-                    err('❌ API response not ok:', response.status, response.statusText);
-                    showEmptyState('Error loading reports. Please try again.');
-                }
-            } catch (error) {
-                err('❌ Error loading reports:', error);
-                showEmptyState('Error loading reports. Please try again.');
-            }
+            await loadFolders();
+            await selectFolder(0);
         }
 
         // Display reports in the grid
@@ -804,6 +1251,23 @@
         function createReportCard(scan) {
             const card = document.createElement('div');
             card.className = 'report-card';
+
+            // drag payload
+            try {
+                card.draggable = true;
+                card.addEventListener('dragstart', (e) => {
+                    const payload = {
+                        scan_id: scan.scan_id,
+                        url: scan.url,
+                        report_id: scan.__report_id || null,
+                        report_name: scan.__report_name || null
+                    };
+                    e.dataTransfer.setData('application/webshield-report', JSON.stringify(payload));
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+            } catch (e) {
+                // ignore
+            }
 
             // Enhanced threat level display - consider SSL status
             let statusClass, statusText;
@@ -836,6 +1300,7 @@
                     <div class="report-url">${safeUrl}</div>
                     <div class="report-status ${statusClass}">${statusText}</div>
                 </div>
+                ${scan.__report_name ? `<div class="detail-label" style="margin-top:0.5rem; color:hsl(var(--muted-foreground));">${escapeHtml(scan.__report_name)}</div>` : ``}
                 <div class="report-details">
                     <div class="detail-item">
                         <div class="detail-label">Scan Date</div>
@@ -857,8 +1322,55 @@
                 <div class="report-actions">
                     <a href="scan_report.html?scan_id=${safeScanId}" class="btn btn-outline btn-sm">View Details</a>
                     <a href="scan_report.html?scan_id=${safeScanId}" class="btn btn-outline btn-sm">Download</a>
+                    ${scan.__report_id ? `<button class="btn btn-outline btn-sm" data-rename="${scan.__report_id}" data-current-name="${escapeHtml(scan.__report_name || '')}">Rename</button>` : ``}
+                    ${scan.__report_id ? `<button class="btn btn-outline btn-sm" data-delete="${scan.__report_id}">Delete</button>` : ``}
                 </div>
             `;
+
+            // rename saved report
+            const renameBtn = card.querySelector('button[data-rename]');
+            if (renameBtn) {
+                renameBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const id = Number(renameBtn.getAttribute('data-rename'));
+                    const current = renameBtn.getAttribute('data-current-name') || '';
+                    const next = prompt('Rename report', current);
+                    if (!next) return;
+                    const userEmail = localStorage.getItem('userEmail');
+                    if (!userEmail) return;
+                    const apiBase = getApiBase();
+                    const res = await fetch(`${apiBase}/reports/${id}/rename?user_email=${encodeURIComponent(userEmail)}&new_name=${encodeURIComponent(next)}`, { method: 'PUT' });
+                    if (!res.ok) {
+                        showToast('error', 'Rename failed', 'Name already exists or invalid');
+                        return;
+                    }
+                    showToast('success', 'Report renamed', next);
+                    await loadFolders();
+                    await selectFolder(currentFolderId);
+                });
+            }
+
+            // delete saved report
+            const delBtn = card.querySelector('button[data-delete]');
+            if (delBtn) {
+                delBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const id = Number(delBtn.getAttribute('data-delete'));
+                    const userEmail = localStorage.getItem('userEmail');
+                    if (!userEmail) return;
+                    const ok = confirm('Delete this saved report?');
+                    if (!ok) return;
+                    const apiBase = getApiBase();
+                    const res = await fetch(`${apiBase}/reports/${id}?user_email=${encodeURIComponent(userEmail)}`, { method: 'DELETE' });
+                    if (!res.ok) {
+                        showToast('error', 'Delete failed', 'Could not delete report');
+                        return;
+                    }
+                    showToast('success', 'Report deleted', '');
+                    await loadFolders();
+                    await selectFolder(currentFolderId);
+                });
+            }
 
             return card;
         }
@@ -894,13 +1406,28 @@
             const statusFilter = document.getElementById('status-filter').value;
             const threatFilter = document.getElementById('threat-filter').value;
 
+            // Scalable server-side search for saved reports
+            if (currentFolderId !== 0) {
+                const raw = (document.getElementById('search-input').value || '').trim();
+                if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(async () => {
+                    if (!raw) {
+                        displayReports(activeFolderScansCache || []);
+                        return;
+                    }
+                    await searchSavedReports(currentFolderId, raw);
+                }, 260);
+                return;
+            }
+
             const cards = document.querySelectorAll('.report-card');
             cards.forEach(card => {
                 const url = card.querySelector('.report-url').textContent.toLowerCase();
+                const maybeName = (card.querySelector('.detail-label')?.textContent || '').toLowerCase();
                 const status = card.querySelector('.report-status').textContent.toLowerCase();
                 const threatLevel = card.querySelector('.detail-value').textContent.toLowerCase();
 
-                const matchesSearch = url.includes(searchTerm);
+                const matchesSearch = url.includes(searchTerm) || maybeName.includes(searchTerm);
                 const matchesStatus = !statusFilter || status === statusFilter;
                 const matchesThreat = !threatFilter || threatLevel === threatFilter;
 
@@ -936,9 +1463,11 @@
         }
 
         // Initialize page
-        document.addEventListener('DOMContentLoaded', function () {
-            log('🚀 Reports page initializing...');
-            log('🌐 API_BASE_URL:', window.API_BASE_URL);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Reports page loaded');
+            checkLoginStatus();
+            const createFolderBtn = document.getElementById('create-folder-btn');
+            if (createFolderBtn) createFolderBtn.addEventListener('click', createFolderFlow);
 
             // Check if API_BASE_URL is available
             if (!window.API_BASE_URL) {
@@ -955,7 +1484,7 @@
             if (userEmail) {
                 log('✅ User logged in, loading data...');
                 loadReports();
-                loadRecentScans(); // Load recent scans
+                loadRecentScans(); // unchanged
             } else {
                 warn('⚠️ User not logged in, showing empty state');
                 showEmptyState('Please sign in to view your scan reports');
@@ -1108,5 +1637,4 @@
         });
     </script>
 </body>
-
 </html>

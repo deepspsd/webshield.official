@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -196,3 +196,123 @@ class ExportType(str, Enum):
 class ExportFormat(str, Enum):
     JSON = "json"
     CSV = "csv"
+
+
+# ========================================
+# Scan Report Organization Models
+# ========================================
+
+# Folder Models
+class ReportFolder(BaseModel):
+    id: Optional[int] = Field(None, description="Folder ID")
+    folder_name: str = Field(..., min_length=1, max_length=255, description="Folder name")
+    user_email: str = Field(..., description="Owner email")
+    created_at: Optional[datetime] = Field(None, description="Creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last updated timestamp")
+    report_count: int = Field(default=0, description="Number of reports in folder")
+    color: Optional[str] = Field(None, max_length=20, description="Folder color for UI")
+    icon: Optional[str] = Field(None, max_length=50, description="Folder icon for UI")
+
+
+class CreateFolderRequest(BaseModel):
+    folder_name: str = Field(..., min_length=1, max_length=255, description="Folder name")
+    user_email: str = Field(..., description="User email")
+    color: Optional[str] = Field(None, max_length=20, description="Folder color (hex or name)")
+    icon: Optional[str] = Field(None, max_length=50, description="Folder icon (emoji or icon name)")
+
+
+class RenameFolderRequest(BaseModel):
+    new_name: str = Field(..., min_length=1, max_length=255, description="New folder name")
+    user_email: str = Field(..., description="User email for authorization")
+
+
+class UpdateFolderRequest(BaseModel):
+    folder_name: Optional[str] = Field(None, min_length=1, max_length=255, description="New folder name")
+    color: Optional[str] = Field(None, max_length=20, description="Folder color")
+    icon: Optional[str] = Field(None, max_length=50, description="Folder icon")
+    user_email: str = Field(..., description="User email for authorization")
+
+
+# Report Models
+class ScanReportDetail(BaseModel):
+    id: Optional[int] = Field(None, description="Report ID")
+    report_name: str = Field(..., min_length=1, max_length=255, description="Report name")
+    folder_id: int = Field(..., description="Parent folder ID")
+    user_email: str = Field(..., description="Owner email")
+    scan_id: str = Field(..., description="Original scan ID")
+    url: str = Field(..., description="Scanned URL")
+    risk_level: str = Field(..., description="Risk level: low, medium, high, unknown")
+    threat_category: Optional[str] = Field(None, description="Threat category")
+    summary: Optional[str] = Field(None, description="Brief summary of scan results")
+    full_report_data: Dict[str, Any] = Field(..., description="Complete scan report JSON")
+    scanned_at: datetime = Field(..., description="When scan was performed")
+    created_at: Optional[datetime] = Field(None, description="When report was saved")
+    updated_at: Optional[datetime] = Field(None, description="Last updated timestamp")
+    is_favorite: bool = Field(default=False, description="Favorite flag")
+    tags: Optional[List[str]] = Field(None, description="User-defined tags")
+    notes: Optional[str] = Field(None, description="User notes")
+
+
+class SaveReportRequest(BaseModel):
+    report_name: str = Field(..., min_length=1, max_length=255, description="Report name")
+    folder_id: Optional[int] = Field(None, description="Existing folder ID")
+    folder_name: Optional[str] = Field(None, min_length=1, max_length=255, description="New folder name to create")
+    scan_id: str = Field(..., description="Scan ID to save")
+    user_email: str = Field(..., description="User email")
+    is_favorite: bool = Field(default=False, description="Mark as favorite")
+    tags: Optional[List[str]] = Field(None, description="Tags for organization")
+    notes: Optional[str] = Field(None, description="User notes")
+
+
+class RenameReportRequest(BaseModel):
+    new_name: str = Field(..., min_length=1, max_length=255, description="New report name")
+    user_email: str = Field(..., description="User email for authorization")
+
+
+class MoveReportRequest(BaseModel):
+    target_folder_id: int = Field(..., description="Destination folder ID")
+    user_email: str = Field(..., description="User email for authorization")
+
+
+class UpdateReportRequest(BaseModel):
+    report_name: Optional[str] = Field(None, min_length=1, max_length=255, description="New report name")
+    is_favorite: Optional[bool] = Field(None, description="Favorite flag")
+    tags: Optional[List[str]] = Field(None, description="Tags")
+    notes: Optional[str] = Field(None, description="Notes")
+    user_email: str = Field(..., description="User email for authorization")
+
+
+class SearchReportsRequest(BaseModel):
+    user_email: str = Field(..., description="User email")
+    query: Optional[str] = Field(None, description="Search query (URL or report name)")
+    folder_id: Optional[int] = Field(None, description="Filter by folder")
+    risk_level: Optional[str] = Field(None, description="Filter by risk level")
+    is_favorite: Optional[bool] = Field(None, description="Filter favorites only")
+    tags: Optional[List[str]] = Field(None, description="Filter by tags")
+    sort_by: str = Field(default="scanned_at", description="Sort field: scanned_at, report_name, risk_level")
+    sort_order: str = Field(default="desc", description="Sort order: asc, desc")
+    limit: int = Field(default=100, ge=1, le=1000, description="Maximum results")
+    offset: int = Field(default=0, ge=0, description="Pagination offset")
+
+
+# Response Models
+class FolderListResponse(BaseModel):
+    success: bool = Field(..., description="Request success status")
+    folders: List[ReportFolder] = Field(..., description="List of folders")
+    total_count: int = Field(..., description="Total number of folders")
+
+
+class ReportListResponse(BaseModel):
+    success: bool = Field(..., description="Request success status")
+    reports: List[ScanReportDetail] = Field(..., description="List of reports")
+    total_count: int = Field(..., description="Total number of reports")
+    has_more: bool = Field(default=False, description="More results available")
+
+
+class ReportStatsResponse(BaseModel):
+    success: bool = Field(..., description="Request success status")
+    total_reports: int = Field(..., description="Total reports across all folders")
+    total_folders: int = Field(..., description="Total folders")
+    risk_distribution: Dict[str, int] = Field(..., description="Count by risk level")
+    recent_scans: int = Field(..., description="Scans in last 7 days")
+    favorites_count: int = Field(..., description="Number of favorites")

@@ -2205,6 +2205,79 @@
             border-radius: 4px;
             font-family: monospace;
         }
+
+        .report-save-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 11000;
+            padding: 1rem;
+        }
+
+        .report-save-dialog {
+            width: 100%;
+            max-width: 520px;
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 14px;
+            box-shadow: var(--shadow-xl);
+            padding: 1.25rem;
+        }
+
+        .report-save-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .report-save-subtitle {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-save-url {
+            font-family: monospace;
+            background: hsl(var(--surface));
+            border: 1px solid hsl(var(--border));
+            border-radius: 10px;
+            padding: 0.75rem;
+            word-break: break-all;
+            margin-bottom: 1rem;
+        }
+
+        .report-save-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .report-save-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .report-save-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .report-save-hint {
+            display: none;
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 10px;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            background: rgba(245, 158, 11, 0.12);
+            color: rgba(245, 158, 11, 0.95);
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 
@@ -2224,6 +2297,7 @@
                     <a href="scan-url.html" data-translate="nav-scanner">URL Scanner</a>
                     <a href="learn.html" data-translate="nav-learn">Learn</a>
                     <a href="dashboard.html" data-translate="nav-dashboard">Dashboard</a>
+                    <a href="reports.html">Reports</a>
                     <a href="how-to-install.html" data-translate="nav-extension">Extension</a>
                     <a href="about.html" data-translate="nav-about">About</a>
                 </nav>
@@ -2383,6 +2457,43 @@
             </div>
         </div>
     </section>
+
+    <div class="report-save-modal" id="report-save-modal" role="dialog" aria-modal="true" aria-labelledby="report-save-title">
+        <div class="report-save-dialog">
+            <div class="report-save-title" id="report-save-title">Save scan report</div>
+            <div class="report-save-subtitle">Choose where this report should be stored before scanning.</div>
+            <div class="report-save-url" id="report-save-url"></div>
+
+            <div class="report-save-grid">
+                <div class="report-save-row">
+                    <label class="form-label" for="report-save-folder">Folder</label>
+                    <select class="scanner-input" id="report-save-folder"></select>
+                </div>
+
+                <div class="report-save-row" style="flex-direction: row; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="report-save-create-toggle" />
+                    <label class="form-label" for="report-save-create-toggle" style="margin:0;">Create new folder</label>
+                </div>
+
+                <div class="report-save-row" id="report-save-new-folder-wrap" style="display:none;">
+                    <label class="form-label" for="report-save-new-folder">New folder name</label>
+                    <input type="text" class="scanner-input" id="report-save-new-folder" placeholder="e.g., Banking, Shopping, Work" />
+                </div>
+
+                <div class="report-save-row">
+                    <label class="form-label" for="report-save-name">Report name</label>
+                    <input type="text" class="scanner-input" id="report-save-name" placeholder="e.g., Paypal login page" />
+                </div>
+
+                <div class="report-save-hint" id="report-save-duplicate">Warning: You already saved a report for this URL. Saving again will create another entry.</div>
+            </div>
+
+            <div class="report-save-actions">
+                <button class="btn btn-outline" id="report-save-cancel" type="button">Cancel</button>
+                <button class="btn btn-hero" id="report-save-confirm" type="button">Confirm & Scan</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Features Section -->
     <section id="features" class="features">
@@ -2748,6 +2859,157 @@
             }, 3000);
         }
 
+        function escapeHtml(value) {
+            const s = String(value ?? '');
+            return s
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function openReportSaveModal(url) {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) {
+                showNotification('Please sign in to save scan reports', 'error');
+                return;
+            }
+
+            let u = (url || '').trim();
+            if (!u) {
+                showNotification('Please enter a URL to scan', 'error');
+                return;
+            }
+
+            if (!u.match(/^https?:\/\//)) {
+                u = 'https://' + u;
+            }
+
+            if (!isValidUrl(u)) {
+                showNotification('Please enter a valid URL (e.g., https://example.com)', 'error');
+                return;
+            }
+
+            if (currentScanId) {
+                showNotification('Another scan is already in progress. Please wait for it to complete.', 'warning');
+                return;
+            }
+
+            const modal = document.getElementById('report-save-modal');
+            const folderSelect = document.getElementById('report-save-folder');
+            const createToggle = document.getElementById('report-save-create-toggle');
+            const newFolderWrap = document.getElementById('report-save-new-folder-wrap');
+            const newFolderInput = document.getElementById('report-save-new-folder');
+            const reportNameInput = document.getElementById('report-save-name');
+            const urlPreview = document.getElementById('report-save-url');
+            const duplicateNote = document.getElementById('report-save-duplicate');
+
+            if (!modal || !folderSelect || !createToggle || !newFolderWrap || !newFolderInput || !reportNameInput || !urlPreview || !duplicateNote) {
+                return;
+            }
+
+            urlPreview.textContent = u;
+            reportNameInput.value = `Scan: ${u}`;
+            duplicateNote.style.display = 'none';
+
+            folderSelect.innerHTML = `<option value="">Loading folders...</option>`;
+            const apiUrl = (window.getApiRoot && window.getApiRoot()) || `${window.location.protocol}//${window.location.hostname}:8000/api`;
+
+            fetch(`${apiUrl}/reports/folders?user_email=${encodeURIComponent(userEmail)}`)
+                .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to load folders')))
+                .then(data => {
+                    const folders = (data && data.folders) ? data.folders : [];
+                    folderSelect.innerHTML = '';
+
+                    if (folders.length === 0) {
+                        folderSelect.innerHTML = `<option value="">No folders yet</option>`;
+                        createToggle.checked = true;
+                        newFolderWrap.style.display = 'block';
+                    } else {
+                        folderSelect.insertAdjacentHTML('beforeend', `<option value="">Select folder...</option>`);
+                        folders.forEach(f => {
+                            folderSelect.insertAdjacentHTML('beforeend', `<option value="${String(f.id)}">${escapeHtml(f.folder_name)} (${Number(f.report_count || 0)})</option>`);
+                        });
+
+                        const lastId = localStorage.getItem('lastUsedReportFolderId');
+                        if (lastId && folders.some(f => String(f.id) === String(lastId))) {
+                            folderSelect.value = String(lastId);
+                        }
+
+                        createToggle.checked = false;
+                        newFolderWrap.style.display = 'none';
+                    }
+                })
+                .catch(() => {
+                    folderSelect.innerHTML = `<option value="">Failed to load folders</option>`;
+                });
+
+            fetch(`${apiUrl}/reports/check-duplicate?user_email=${encodeURIComponent(userEmail)}&url=${encodeURIComponent(u)}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data && data.exists) {
+                        duplicateNote.style.display = 'block';
+                    }
+                })
+                .catch(() => { });
+
+            createToggle.onchange = () => {
+                newFolderWrap.style.display = createToggle.checked ? 'block' : 'none';
+            };
+
+            const cancelBtn = document.getElementById('report-save-cancel');
+            const confirmBtn = document.getElementById('report-save-confirm');
+
+            cancelBtn.onclick = () => {
+                modal.style.display = 'none';
+            };
+
+            confirmBtn.onclick = () => {
+                const wantCreate = !!createToggle.checked;
+                const folderId = folderSelect.value ? Number(folderSelect.value) : null;
+                const folderName = (newFolderInput.value || '').trim();
+                const reportName = (reportNameInput.value || '').trim();
+
+                if (!reportName) {
+                    showNotification('Report name cannot be empty', 'error');
+                    return;
+                }
+
+                if (wantCreate) {
+                    if (!folderName) {
+                        showNotification('Folder name cannot be empty', 'error');
+                        return;
+                    }
+                } else {
+                    if (!folderId) {
+                        showNotification('Please select a folder', 'error');
+                        return;
+                    }
+                }
+
+                const pending = {
+                    url: u,
+                    user_email: userEmail,
+                    report_name: reportName,
+                    folder_id: wantCreate ? null : folderId,
+                    folder_name: wantCreate ? folderName : null,
+                    scan_id: null,
+                    created_at: Date.now()
+                };
+                localStorage.setItem('pendingReportSave', JSON.stringify(pending));
+
+                if (!wantCreate && folderId) {
+                    localStorage.setItem('lastUsedReportFolderId', String(folderId));
+                }
+
+                modal.style.display = 'none';
+                scanURL(u);
+            };
+
+            modal.style.display = 'flex';
+        }
+
         // Validate URL format
         function isValidUrl(string) {
             try {
@@ -2903,6 +3165,19 @@
                     console.log('🎯 Scan ID received:', currentScanId);
                     console.log('📊 Initial status:', data.status);
                     console.log('🔍 Current Scan ID after setting:', currentScanId);
+
+                    // Attach scan_id to the pending save payload so scan_report.html can persist it
+                    try {
+                        const pendingRaw = localStorage.getItem('pendingReportSave');
+                        const pending = pendingRaw ? JSON.parse(pendingRaw) : null;
+                        if (pending && pending.url && pending.url === url) {
+                            pending.scan_id = currentScanId;
+                            pending.created_at = Date.now();
+                            localStorage.setItem('pendingReportSave', JSON.stringify(pending));
+                        }
+                    } catch (e) {
+                        console.warn('Failed to attach scan_id to pendingReportSave:', e);
+                    }
 
                     // Update button text to show progress
                     scanButton.innerHTML = '<span class="icon">🔍</span> Analyzing...';
@@ -3995,7 +4270,7 @@
                     console.log('🖱️ Scan button clicked!');
                     console.log('📝 Input value:', url);
                     console.log('🌐 Current hostname:', window.location.hostname);
-                    scanURL(url);
+                    openReportSaveModal(url);
                 });
             }
 
@@ -4006,7 +4281,7 @@
                         const url = scannerInput.value.trim();
                         console.log('↵ Enter pressed!');
                         console.log('📝 Input value:', url);
-                        scanURL(url);
+                        openReportSaveModal(url);
                     }
                 });
             }

@@ -655,6 +655,51 @@ async def _do_scan(url: str, scan_id: str):
                         llm_analysis_payload["content_classification"] = llm_content
                         llm_analysis_payload["models_used"]["content_classifier"] = llm_content.get("model")
 
+                        try:
+                            is_phishing_llm = bool(llm_content.get("is_phishing", False))
+                            phishing_conf = float(llm_content.get("confidence", 0.0) or 0.0)
+                            phishing_conf = max(0.0, min(1.0, phishing_conf))
+
+                            # If the LLM flags phishing, don't allow a LOW final verdict.
+                            # Keep whitelisted domains safe (handled earlier), otherwise escalate for user safety.
+                            if is_phishing_llm and phishing_conf >= 0.70:
+                                prev_level = threat_level
+                                if phishing_conf >= 0.90:
+                                    threat_level = "high" if threat_level != "high" else threat_level
+                                    # Treat as malicious when the LLM is very confident about phishing.
+                                    is_malicious = True
+                                else:
+                                    if threat_level == "low":
+                                        threat_level = "medium"
+                                    # Medium is suspicious but not confirmed malicious.
+                                    is_malicious = is_malicious if threat_level == "high" else False
+
+                                # Keep UI score consistent with the escalated verdict.
+                                try:
+                                    score_total = int(detection_details.get("score_breakdown", {}).get("total_score", score_total))
+                                except Exception:
+                                    score_total = score_total
+                                if threat_level == "medium":
+                                    score_total = max(score_total, 60)
+                                elif threat_level == "high":
+                                    score_total = max(score_total, 75)
+
+                                try:
+                                    if "score_breakdown" in detection_details and isinstance(detection_details["score_breakdown"], dict):
+                                        detection_details["score_breakdown"]["total_score"] = score_total
+                                except Exception:
+                                    pass
+
+                                detection_details["llm_content_override"] = {
+                                    "previous_threat_level": prev_level,
+                                    "new_threat_level": threat_level,
+                                    "is_phishing": True,
+                                    "llm_confidence": phishing_conf,
+                                    "resolution": "escalated_due_to_llm_phishing",
+                                }
+                        except Exception:
+                            pass
+
                     # Explanation: keep it fast; if the HF model doesn't respond quickly, fall back to template.
                     try:
                         exp = await asyncio.wait_for(

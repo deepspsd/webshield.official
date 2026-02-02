@@ -764,6 +764,7 @@
                         if (loadingScreen) loadingScreen.style.display = 'none';
                         container.style.display = 'grid';
                         displayResults(data.results);
+                        tryAutoSaveReport(scanId, data.results);
                         return;
                     }
                     if (data.status === 'processing' || data.status === 'pending') {
@@ -784,6 +785,73 @@
                         <div class="error-message">❌ ${escapeHtml(error.message)}</div>
                         <div style="text-align:center; margin-top:2rem;"><a href="index.html" class="back-button">← Back to Home Page</a></div>`;
                 });
+        }
+
+        async function tryAutoSaveReport(scanId, result) {
+            try {
+                const pendingRaw = localStorage.getItem('pendingReportSave');
+                if (!pendingRaw) return;
+
+                const pending = JSON.parse(pendingRaw);
+                if (!pending || !pending.user_email || !pending.report_name) return;
+
+                // Safety: only save if the scan_id matches the page scan id.
+                if (pending.scan_id && String(pending.scan_id) !== String(scanId)) {
+                    return;
+                }
+
+                const userEmail = localStorage.getItem('userEmail');
+                if (!userEmail || String(userEmail).toLowerCase() !== String(pending.user_email).toLowerCase()) {
+                    return;
+                }
+
+                // Avoid repeated saves on refresh.
+                const savedKey = `savedReportForScan:${scanId}`;
+                if (localStorage.getItem(savedKey) === 'true') {
+                    return;
+                }
+
+                if (!window.API_BASE_URL) {
+                    window.API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:8000`;
+                }
+                const base = String(window.API_BASE_URL || '').replace(/\/+$/, '');
+                const apiBase = base.endsWith('/api') ? base : `${base}/api`;
+
+                const payload = {
+                    user_email: pending.user_email,
+                    scan_id: scanId,
+                    report_name: pending.report_name,
+                    folder_id: pending.folder_id || null,
+                    folder_name: pending.folder_name || null
+                };
+
+                const res = await fetch(`${apiBase}/reports/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    warn('Auto-save failed:', text);
+                    return;
+                }
+
+                const saved = await res.json();
+                try {
+                    if (saved && saved.folder_id) {
+                        localStorage.setItem('lastUsedReportFolderId', String(saved.folder_id));
+                    }
+                } catch (e) {
+                    // ignore
+                }
+
+                localStorage.setItem(savedKey, 'true');
+                localStorage.removeItem('pendingReportSave');
+                showNotification('Report saved to your vault!', 'success');
+            } catch (e) {
+                warn('Auto-save error:', e);
+            }
         }
 
         function displayResults(result) {
