@@ -100,10 +100,6 @@ window.displayResultsWithLLM = function (result) {
         
         <div class="left-panel">
             <div class="status-url-container">
-                <div class="status-badge ${statusClass}">
-                    ${safe ? '✅ Low Risk 🟢' : result.threat_level === 'medium' ? '⚠️ Medium Risk 🟡' : '❌ High Risk 🔴'}
-                </div>
-                
                 <div class="url-display">
                     <div class="url-label">URL:</div>
                     <div class="url-value">${result.url || 'Unknown URL'}</div>

@@ -710,7 +710,7 @@
         /* Content Grid */
         .content-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1.6fr 1fr;
             gap: 1.5rem;
         }
 
@@ -718,14 +718,22 @@
             background: hsl(var(--card) / 0.6);
             border: 1px solid hsl(var(--border) / 0.3);
             border-radius: 1.25rem;
-            padding: 2rem;
+            padding: 1.75rem;
             backdrop-filter: blur(20px);
             box-shadow: 0 4px 20px hsl(var(--background) / 0.1);
             transition: all 0.3s ease;
         }
 
+        .sidebar .card {
+            padding: 1.25rem;
+        }
+
         .card-header {
             margin-bottom: 1.5rem;
+        }
+
+        .sidebar .card-header {
+            margin-bottom: 1rem;
         }
 
         .card-title {
@@ -737,17 +745,28 @@
             gap: 0.5rem;
         }
 
+        .sidebar .card-title {
+            font-size: 1.1rem;
+        }
+
         .card-subtitle {
             color: hsl(var(--muted-foreground));
             font-size: 0.875rem;
         }
 
         /* Recent Scans */
-        .scan-item {
+        .recent-scans-list {
             display: flex;
             flex-direction: column;
-            align-items: stretch;
-            padding: 1.25rem;
+        }
+
+        .scan-item {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
             background: hsl(var(--background) / 0.3);
             border: 1px solid hsl(var(--border) / 0.2);
             border-radius: 0.875rem;
@@ -764,7 +783,7 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            margin-bottom: 0.75rem;
+            min-width: 0;
         }
 
         .scan-icon {
@@ -778,16 +797,28 @@
             color: hsl(var(--primary));
         }
 
+        .scan-details {
+            min-width: 0;
+            flex: 1;
+        }
+
         .scan-details h4 {
             font-weight: 500;
             margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .scan-meta {
             font-size: 0.75rem;
             color: hsl(var(--muted-foreground));
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
         .scan-actions {
@@ -795,6 +826,11 @@
             align-items: center;
             justify-content: space-between;
             gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .scan-actions .btn {
+            padding: 0.5rem;
         }
 
         .badge {
@@ -826,11 +862,11 @@
         /* Security Score */
         .score-display {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .score-value {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: bold;
             color: hsl(var(--primary));
             margin-bottom: 0.5rem;
@@ -843,11 +879,11 @@
 
         .progress-bar {
             width: 100%;
-            height: 12px;
+            height: 10px;
             background: hsl(var(--muted));
             border-radius: 6px;
             overflow: hidden;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .progress-fill {
@@ -883,16 +919,23 @@
             gap: 1.5rem;
         }
 
-        .quick-actions {
+        .sidebar .quick-actions {
             display: flex;
-            gap: 0.5rem;
-            align-items: center;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: stretch;
         }
 
         .quick-action {
             width: 100%;
             justify-content: flex-start;
             text-align: left;
+        }
+
+        .sidebar .btn {
+            padding: 0.6rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.85rem;
         }
 
         /* Threat Trends */
@@ -1062,12 +1105,17 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .quick-actions {
             display: flex;
             gap: 0.5rem;
             align-items: center;
+        }
+
+        .dashboard-actions .quick-actions {
+            flex-wrap: wrap;
         }
 
         .quick-action-btn {
@@ -1429,36 +1477,37 @@
                             scans</div>
                     </div>
 
-                    <div class="scan-item">
-                        <div class="scan-info">
-                            <div class="scan-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <circle cx="12" cy="10" r="3" />
-                                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-                                </svg>
-                            </div>
-                            <div class="scan-details">
-                                <h4>https://example-secure.com</h4>
-                                <div class="scan-meta">
-                                    <span data-translate="time-2-min-ago">2 minutes ago</span>
-                                    <span>0.8s</span>
-                                    <span data-translate="threats-count-0">0 threats</span>
+                    <div class="recent-scans-list">
+                        <div class="scan-item">
+                            <div class="scan-info">
+                                <div class="scan-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <circle cx="12" cy="10" r="3" />
+                                        <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                                    </svg>
+                                </div>
+                                <div class="scan-details">
+                                    <h4>https://example-secure.com</h4>
+                                    <div class="scan-meta">
+                                        <span data-translate="time-2-min-ago">2 minutes ago</span>
+                                        <span>0.8s</span>
+                                        <span data-translate="threats-count-0">0 threats</span>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="scan-actions">
+                                <span class="badge badge-safe" data-translate="badge-safe">Safe</span>
+                                <button class="btn btn-ghost">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="scan-actions">
-                            <span class="badge badge-safe" data-translate="badge-safe">Safe</span>
-                            <button class="btn btn-ghost">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
 
                     <div class="scan-item">
                         <div class="scan-info">
@@ -1522,9 +1571,11 @@
                         </div>
                     </div>
 
+                    </div>
+
                     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border) / 0.5);">
-                        <button class="btn btn-outline" style="width: 100%;" data-translate="btn-view-all-scans">View
-                            All Scans</button>
+                        <a href="reports.html" class="btn btn-outline" style="width: 100%;" data-translate="btn-view-all-scans">View
+                            All Scans</a>
                     </div>
                 </div>
 
@@ -1776,20 +1827,20 @@
         // Update recent scans section
         function updateRecentScans(scans) {
             const recentScansContainer = document.querySelector('.card:first-of-type');
-            const scanItems = recentScansContainer.querySelectorAll('.scan-item');
+            if (!recentScansContainer) return;
+            const list = recentScansContainer.querySelector('.recent-scans-list');
+            if (!list) return;
 
-            // Clear existing scan items (except the first 3 demo ones)
-            scanItems.forEach((item, index) => {
-                if (index >= 3) {
-                    item.remove();
-                }
-            });
+            // If no scans returned, keep the demo items as-is
+            if (!Array.isArray(scans) || scans.length === 0) {
+                return;
+            }
 
-            // Add user's recent scans
+            // Replace list contents with latest scans
+            list.innerHTML = '';
             scans.forEach(scan => {
                 const scanItem = createScanItem(scan);
-                const container = recentScansContainer.querySelector('.card-header').nextElementSibling;
-                container.appendChild(scanItem);
+                list.appendChild(scanItem);
             });
         }
 

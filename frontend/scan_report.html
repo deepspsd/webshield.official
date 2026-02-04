@@ -947,10 +947,6 @@
                 const html = `
                 <div class="header"><div class="logo-icon">🛡️</div><div class="logo-text">WebShield</div><h1 class="title" style="margin-left:auto;">📝 Scan Report</h1></div>
                 <div class="left-panel">
-                    <div class="status-url-container">
-                        <div class="status-badge ${statusClass}">${safe ? '✅ Low Risk 🟢' : result.threat_level === 'medium' ? '⚠️ Medium Risk 🟡' : '❌ High Risk 🔴'}</div>
-                        <div class="url-display"><div class="url-label">URL:</div><div class="url-value">${escapeHtml(result.url || 'Unknown URL')}</div></div>
-                    </div>
                     ${llmBanner}
                     <div class="stats-grid">
                         <div class="stat-card"><div class="stat-value">${result.malicious_count || 0}</div><div class="stat-label">Malicious</div></div>
