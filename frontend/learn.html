@@ -1457,56 +1457,7 @@
             color: hsl(var(--muted-foreground));
         }
 
-        .collaborators-section {
-            background: hsl(var(--card));
-            border: 1px solid hsl(var(--border));
-            border-radius: 1.5rem;
-            padding: 2.5rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
 
-        .collaborators-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--primary)));
-        }
-
-        .collaborators-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: hsl(var(--foreground));
-            margin-bottom: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-        }
-
-        .collaborators-subtitle {
-            color: hsl(var(--muted-foreground));
-            margin-top: -1.25rem;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-        }
-
-        .collaborators-image {
-            max-width: 100%;
-            width: 800px;
-            height: auto;
-            border-radius: 1.25rem;
-            border: 1px solid hsl(var(--border));
-            box-shadow: var(--shadow-xl);
-            transition: all 0.3s ease;
-        }
-
-        .collaborators-image:hover {
-            transform: scale(1.02);
-            box-shadow: 0 20px 60px hsl(var(--primary) / 0.2);
-        }
 
         /* Animations - Enhanced */
         @keyframes fadeInUp {
@@ -1619,10 +1570,6 @@
             .collab-x {
                 font-size: 1.5rem;
             }
-
-            .collaborators-image {
-                width: 100%;
-            }
         }
     </style>
 </head>
@@ -1700,13 +1647,7 @@
                 </div>
             </div>
 
-            <div class="collaborators-section">
-                <h3 class="collaborators-title">Course Collaborators</h3>
-                <div class="collaborators-subtitle">Powered by partners who bring real-world perspective to every
-                    module.</div>
-                <img src="/logos/WhatsApp Image 2026-01-04 at 9.27.33 PM.jpeg" alt="Course Collaborators"
-                    class="collaborators-image">
-            </div>
+
         </section>
 
         <!-- User Progress (shown when logged in) -->
