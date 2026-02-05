@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>WebShield Mobile</title>
+  <link rel="stylesheet" href="../frontend/enhanced-styles.css" />
+  <link rel="stylesheet" href="../frontend/premium-effects.css" />
+  <link rel="stylesheet" href="app.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <meta name="theme-color" content="#0a0e27" />
+</head>
+
+ <body>
+  <div class="mobile-app" id="app">
+    <header class="app-header">
+      <div class="header-left">
+        <div class="app-mark">
+          <div class="logo-icon">🛡️</div>
+          <div class="logo-text">WebShield</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="icon-pill" id="themeToggle" aria-label="Toggle theme" type="button">
+          <span class="icon">☀️</span>
+        </button>
+        <button class="icon-pill" id="profileBtn" aria-label="Open profile" type="button">
+          <span class="icon">👤</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-main" id="main">
+      <section class="screen is-active" data-screen="home" aria-label="Home">
+        <div class="webview">
+          <iframe class="webview-frame" title="Dashboard" data-src="../frontend/dashboard.html" loading="lazy"></iframe>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="scan" aria-label="Scan">
+        <div class="webview">
+          <iframe class="webview-frame" title="Scan URL" data-src="../frontend/scan-url.html" loading="lazy"></iframe>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="reports" aria-label="Reports">
+        <div class="webview">
+          <iframe class="webview-frame" title="Reports" data-src="../frontend/reports.html" loading="lazy"></iframe>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="alerts" aria-label="Alerts">
+        <div class="webview">
+          <iframe class="webview-frame" title="Alerts" data-src="../frontend/alerts.html" loading="lazy"></iframe>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="settings" aria-label="Settings">
+        <div class="webview">
+          <iframe class="webview-frame" title="API Settings" data-src="../frontend/api-settings.html" loading="lazy"></iframe>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="profile" aria-label="Profile">
+        <div class="webview">
+          <iframe class="webview-frame" title="Profile" data-src="../frontend/profile.html" loading="lazy"></iframe>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="Primary">
+      <button class="tab is-active" type="button" data-nav="home" aria-label="Home">
+        <span class="tab-ic">🏠</span>
+        <span class="tab-tx">Home</span>
+      </button>
+      <button class="tab" type="button" data-nav="scan" aria-label="Scan">
+        <span class="tab-ic">🔍</span>
+        <span class="tab-tx">Scan</span>
+      </button>
+      <button class="tab" type="button" data-nav="reports" aria-label="Reports">
+        <span class="tab-ic">📄</span>
+        <span class="tab-tx">Reports</span>
+      </button>
+      <button class="tab" type="button" data-nav="alerts" aria-label="Alerts">
+        <span class="tab-ic">🚨</span>
+        <span class="tab-tx">Alerts</span>
+      </button>
+      <button class="tab" type="button" data-nav="settings" aria-label="Settings">
+        <span class="tab-ic">⚙️</span>
+        <span class="tab-tx">Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

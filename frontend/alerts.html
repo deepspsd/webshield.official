@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts - WebShield</title>
+    <script src="accessibility-enhancements.js"></script>
+    <script src="webshield-core.js"></script>
+    <script src="webshield-translation.js"></script>
+    <link rel="stylesheet" href="enhanced-styles.css">
+    <link rel="stylesheet" href="premium-effects.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --background: 240 35% 8%;
+            --surface: 240 30% 10%;
+            --card: 240 30% 10%;
+            --muted: 240 20% 12%;
+            --border: 240 20% 18%;
+            --foreground: 220 15% 96%;
+            --muted-foreground: 220 10% 65%;
+        }
+
+        [data-theme="light"] {
+            --background: 0 0% 98%;
+            --surface: 0 0% 96%;
+            --card: 0 0% 100%;
+            --muted: 210 40% 95%;
+            --border: 214 32% 91%;
+            --foreground: 222 84% 5%;
+            --muted-foreground: 215 16% 47%;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .header {
+            border-bottom: 1px solid hsl(var(--border) / 0.6);
+            background-color: hsl(var(--card) / 0.6);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-content {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-cyber);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 900;
+            background: var(--gradient-cyber);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav a {
+            color: hsl(var(--muted-foreground));
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav a:hover {
+            color: hsl(var(--primary));
+        }
+
+        .nav a.active {
+            color: hsl(var(--primary));
+        }
+
+        .main {
+            padding: 2rem 0;
+        }
+
+        .page-head {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .page-title {
+            font-size: 2.25rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.25rem;
+        }
+
+        .page-sub {
+            color: hsl(var(--muted-foreground));
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px solid hsl(var(--border) / 0.8);
+            background: hsl(var(--card));
+            color: hsl(var(--foreground));
+            font-size: 0.9rem;
+        }
+
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .alert-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 16px;
+            background: hsl(var(--card) / 0.6);
+            border: 1px solid hsl(var(--border) / 0.4);
+            backdrop-filter: blur(18px);
+        }
+
+        .alert-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 0;
+        }
+
+        .alert-ic {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid hsl(var(--border) / 0.6);
+            background: hsl(var(--muted) / 0.4);
+            flex-shrink: 0;
+        }
+
+        .alert-ic.danger {
+            border-color: hsl(var(--destructive) / 0.35);
+            background: hsl(var(--destructive) / 0.12);
+        }
+
+        .alert-ic.warning {
+            border-color: hsl(var(--warning) / 0.35);
+            background: hsl(var(--warning) / 0.12);
+        }
+
+        .alert-ic.info {
+            border-color: hsl(var(--info) / 0.35);
+            background: hsl(var(--info) / 0.12);
+        }
+
+        .alert-meta {
+            min-width: 0;
+        }
+
+        .alert-title {
+            font-weight: 900;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .alert-sub {
+            margin-top: 2px;
+            font-size: 0.85rem;
+            color: hsl(var(--muted-foreground));
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .settings-card {
+            margin-top: 1.25rem;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-top: 1px solid hsl(var(--border) / 0.25);
+        }
+
+        .toggle-row:first-child {
+            border-top: none;
+        }
+
+        .toggle-title {
+            font-weight: 800;
+        }
+
+        .toggle-sub {
+            color: hsl(var(--muted-foreground));
+            font-size: 0.85rem;
+            margin-top: 2px;
+        }
+
+        .toggle {
+            width: 54px;
+            height: 32px;
+            border-radius: 999px;
+            border: 1px solid hsl(var(--border) / 0.7);
+            background: hsl(var(--muted) / 0.55);
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .toggle-thumb {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            position: absolute;
+            top: 50%;
+            left: 3px;
+            transform: translateY(-50%);
+            background: hsl(var(--foreground));
+            transition: left 0.2s ease;
+        }
+
+        .toggle.is-on {
+            background: var(--gradient-primary);
+            border-color: transparent;
+        }
+
+        .toggle.is-on .toggle-thumb {
+            left: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                display: none;
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <div class="logo-text">WebShield</div>
+                </a>
+
+                <nav class="nav">
+                    <a href="index.html">Home</a>
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="scan-url.html">Scan</a>
+                    <a href="reports.html">Reports</a>
+                    <a href="alerts.html" class="active">Alerts</a>
+                    <a href="api-settings.html">Settings</a>
+                </nav>
+
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <a href="profile.html" class="btn btn-outline">Profile</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="page-head">
+                <div>
+                    <div class="page-title">Alerts</div>
+                    <div class="page-sub">Suspicious activity, scan warnings, and protection notifications.</div>
+                </div>
+                <div style="display:flex; gap:0.75rem; align-items:center;">
+                    <button class="btn btn-outline" type="button" id="markAllReadBtn">Mark all as read</button>
+                    <button class="btn btn-primary" type="button" id="refreshBtn">Refresh</button>
+                </div>
+            </div>
+
+            <div class="filters">
+                <select class="select" id="severityFilter">
+                    <option value="">All severities</option>
+                    <option value="danger">Critical</option>
+                    <option value="warning">Warning</option>
+                    <option value="info">Info</option>
+                </select>
+                <select class="select" id="sourceFilter">
+                    <option value="">All sources</option>
+                    <option value="scan">Scans</option>
+                    <option value="browser">Browsing</option>
+                    <option value="system">System</option>
+                </select>
+            </div>
+
+            <div class="alerts-list" id="alertsList">
+                <div class="alert-row" data-severity="danger" data-source="scan">
+                    <div class="alert-left">
+                        <div class="alert-ic danger">⚠️</div>
+                        <div class="alert-meta">
+                            <div class="alert-title">Phishing suspected</div>
+                            <div class="alert-sub">login-secure-pay.com • 1 hour ago</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" type="button">Details</button>
+                </div>
+
+                <div class="alert-row" data-severity="warning" data-source="browser">
+                    <div class="alert-left">
+                        <div class="alert-ic warning">🔎</div>
+                        <div class="alert-meta">
+                            <div class="alert-title">Suspicious redirect detected</div>
+                            <div class="alert-sub">secure-login-update.net • 38 minutes ago</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" type="button">Details</button>
+                </div>
+
+                <div class="alert-row" data-severity="info" data-source="system">
+                    <div class="alert-left">
+                        <div class="alert-ic info">🛰️</div>
+                        <div class="alert-meta">
+                            <div class="alert-title">Scan completed</div>
+                            <div class="alert-sub">example.com • 2 minutes ago</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" type="button">Open</button>
+                </div>
+            </div>
+
+            <div class="card card-glass settings-card">
+                <div class="card-head-row" style="margin-bottom: 0.5rem;">
+                    <div>
+                        <div class="card-title">Notification Settings</div>
+                        <div class="card-subtitle">Control what you want to be alerted about.</div>
+                    </div>
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-title">Critical threats</div>
+                        <div class="toggle-sub">High risk links and phishing attempts</div>
+                    </div>
+                    <button class="toggle is-on" type="button" aria-label="Toggle critical threats">
+                        <span class="toggle-thumb"></span>
+                    </button>
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-title">Scan results</div>
+                        <div class="toggle-sub">Notify when scans finish</div>
+                    </div>
+                    <button class="toggle is-on" type="button" aria-label="Toggle scan results">
+                        <span class="toggle-thumb"></span>
+                    </button>
+                </div>
+
+                <div class="toggle-row">
+                    <div>
+                        <div class="toggle-title">Tips & learning</div>
+                        <div class="toggle-sub">Security tips and reminders</div>
+                    </div>
+                    <button class="toggle" type="button" aria-label="Toggle tips">
+                        <span class="toggle-thumb"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const severityFilter = document.getElementById('severityFilter');
+        const sourceFilter = document.getElementById('sourceFilter');
+        const alertsList = document.getElementById('alertsList');
+
+        function applyFilters() {
+            const sev = severityFilter.value;
+            const src = sourceFilter.value;
+            const rows = alertsList.querySelectorAll('.alert-row');
+            rows.forEach((row) => {
+                const okSev = !sev || row.dataset.severity === sev;
+                const okSrc = !src || row.dataset.source === src;
+                row.style.display = (okSev && okSrc) ? '' : 'none';
+            });
+        }
+
+        if (severityFilter) severityFilter.addEventListener('change', applyFilters);
+        if (sourceFilter) sourceFilter.addEventListener('change', applyFilters);
+
+        document.querySelectorAll('.toggle').forEach((t) => {
+            t.addEventListener('click', () => t.classList.toggle('is-on'));
+        });
+
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', () => {
+                const rows = alertsList.querySelectorAll('.alert-row');
+                rows.forEach((r) => r.style.opacity = '0.75');
+            });
+        }
+
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+
+</html>
