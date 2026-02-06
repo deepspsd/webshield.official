@@ -20,6 +20,10 @@ WebShield is a state-of-the-art URL scanning and phishing detection system power
    ```bash
    python -m uvicorn app:app --host 0.0.0.0 --port 8000
    ```
+   or
+   ```bash
+   uvicorn app:app --host 127.0.0.1 --port 8000
+   ```
 
 3. **Open the Web UI (served from `frontend/`)**
    - `http://localhost:8000/`
@@ -33,8 +37,7 @@ WebShield is a state-of-the-art URL scanning and phishing detection system power
   - (fallback) `http://localhost:8000/health`
 
 
-- **Database is optional for demo**
-  - Scan features work without MySQL.
+- **Database**
   - History/Reports (folders, saved reports) require MySQL credentials in `.env`.
 
 - **External APIs**
@@ -79,24 +82,15 @@ WebShield is a state-of-the-art URL scanning and phishing detection system power
    cd webshield.official
    ```
 
-2. **Set up environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your credentials
-   ```
-
-3. **Run with Docker (Recommended)**
-   ```bash
-   docker-compose up --build
-   ```
-
-4. **Run Locally**
+2. **Run Locally**
    ```bash
    # Install dependencies
    pip install -r requirements.txt
    
    # Start server
-   python start_server.py
+   python start_server.py or 
+   uvicorn app:app --host 127.0.0.1 --port 8000 or
+   python -m uvicorn app:app --host 0.0.0.0 --port 8000
    ```
 
 ## 📖 Documentation
