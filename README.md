@@ -7,6 +7,49 @@
 
 WebShield is a state-of-the-art URL scanning and phishing detection system powered by multi-engine analysis, including VirusTotal, Machine Learning (Random Forest/Gradient Boosting), and Large Language Models (LLMs).
 
+## Quick Start
+
+### Run locally 
+
+1. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Start the server**
+   ```bash
+   python -m uvicorn app:app --host 0.0.0.0 --port 8000
+   ```
+
+3. **Open the Web UI (served from `frontend/`)**
+   - `http://localhost:8000/`
+   - `http://localhost:8000/index.html`
+   - Dashboard: `http://localhost:8000/dashboard.html`
+
+### Verify the backend is running
+
+- Health:
+  - `http://localhost:8000/api/health`
+  - (fallback) `http://localhost:8000/health`
+
+
+- **Database is optional for demo**
+  - Scan features work without MySQL.
+  - History/Reports (folders, saved reports) require MySQL credentials in `.env`.
+
+- **External APIs**
+  - If `GROQ_API_KEY` is not set, the system uses fast rule-based fallbacks for LLM steps.
+  - If VirusTotal is not configured/available, scans still run with local engines + fallbacks.
+
+### Browser Extension
+
+1. Open Chrome → `chrome://extensions`
+2. Enable **Developer mode**
+3. Click **Load unpacked** → select the `extension/` folder
+4. Visit any URL and observe:
+   - Real-time scan + status icon
+   - Alerts/overlays for risky pages
+
 ## 🚀 Key Features
 
 - **Multi-Engine Detection**: Combines VirusTotal API, Google Gemini, and custom ML models.
@@ -21,8 +64,6 @@ WebShield is a state-of-the-art URL scanning and phishing detection system power
 - **ML/AI**: Scikit-learn, TensorFlow, Google Gemini API, HuggingFace
 - **Database**: MySQL (Aiven Cloud)
 - **Infrastructure**: Docker, Redis, Nginx
-
-## 🏁 Quick Start
 
 ### Prerequisites
 
