@@ -10,6 +10,7 @@
     <script src="webshield-translation.js"></script>
     <link rel="stylesheet" href="enhanced-styles.css">
     <link rel="stylesheet" href="premium-effects.css">
+    <link rel="stylesheet" href="mobile-responsive.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
@@ -1509,72 +1510,73 @@
                             </div>
                         </div>
 
-                    <div class="scan-item">
-                        <div class="scan-info">
-                            <div class="scan-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <circle cx="12" cy="10" r="3" />
-                                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-                                </svg>
-                            </div>
-                            <div class="scan-details">
-                                <h4>https://suspicious-site.net</h4>
-                                <div class="scan-meta">
-                                    <span data-translate="time-15-min-ago">15 minutes ago</span>
-                                    <span>1.2s</span>
-                                    <span data-translate="threats-count-2">2 threats</span>
+                        <div class="scan-item">
+                            <div class="scan-info">
+                                <div class="scan-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <circle cx="12" cy="10" r="3" />
+                                        <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                                    </svg>
+                                </div>
+                                <div class="scan-details">
+                                    <h4>https://suspicious-site.net</h4>
+                                    <div class="scan-meta">
+                                        <span data-translate="time-15-min-ago">15 minutes ago</span>
+                                        <span>1.2s</span>
+                                        <span data-translate="threats-count-2">2 threats</span>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="scan-actions">
+                                <span class="badge badge-warning" data-translate="badge-warning">Warning</span>
+                                <button class="btn btn-ghost">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="scan-actions">
-                            <span class="badge badge-warning" data-translate="badge-warning">Warning</span>
-                            <button class="btn btn-ghost">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="scan-item">
-                        <div class="scan-info">
-                            <div class="scan-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <circle cx="12" cy="10" r="3" />
-                                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-                                </svg>
-                            </div>
-                            <div class="scan-details">
-                                <h4>https://malicious-domain.org</h4>
-                                <div class="scan-meta">
-                                    <span data-translate="time-1-hour-ago">1 hour ago</span>
-                                    <span>2.1s</span>
-                                    <span data-translate="threats-count-8">8 threats</span>
+                        <div class="scan-item">
+                            <div class="scan-info">
+                                <div class="scan-icon">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <circle cx="12" cy="10" r="3" />
+                                        <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
+                                    </svg>
+                                </div>
+                                <div class="scan-details">
+                                    <h4>https://malicious-domain.org</h4>
+                                    <div class="scan-meta">
+                                        <span data-translate="time-1-hour-ago">1 hour ago</span>
+                                        <span>2.1s</span>
+                                        <span data-translate="threats-count-8">8 threats</span>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="scan-actions">
+                                <span class="badge badge-danger" data-translate="badge-danger">Danger</span>
+                                <button class="btn btn-ghost">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
-                        <div class="scan-actions">
-                            <span class="badge badge-danger" data-translate="badge-danger">Danger</span>
-                            <button class="btn btn-ghost">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
 
                     </div>
 
                     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border) / 0.5);">
-                        <a href="reports.html" class="btn btn-outline" style="width: 100%;" data-translate="btn-view-all-scans">View
+                        <a href="reports.html" class="btn btn-outline" style="width: 100%;"
+                            data-translate="btn-view-all-scans">View
                             All Scans</a>
                     </div>
                 </div>

@@ -1,0 +1,738 @@
+/* ============================================
+   WEBSHIELD MOBILE RESPONSIVE STYLESHEET
+   Professional mobile-first design system
+   Include after enhanced-styles.css and premium-effects.css
+   ============================================ */
+
+/* ---- TABLET BREAKPOINT (1024px) ---- */
+@media (max-width: 1024px) {
+
+    /* Container adjustments */
+    .container {
+        padding: 0 1.25rem;
+    }
+
+    /* Navigation */
+    .nav {
+        gap: 1.5rem;
+    }
+
+    /* Hero section */
+    .hero {
+        padding: 2.5rem 0 3rem;
+        min-height: 70vh;
+    }
+
+    .hero-title,
+    .hero h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    /* Grid layouts */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    /* Cards */
+    .stat-card {
+        padding: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+    }
+}
+
+/* ---- MOBILE BREAKPOINT (768px) ---- */
+@media (max-width: 768px) {
+
+    /* Container */
+    .container {
+        padding: 0 1rem;
+    }
+
+    /* Header improvements */
+    .header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .header-content {
+        height: 56px;
+        padding: 0 0.75rem;
+    }
+
+    .logo {
+        gap: 0.5rem;
+    }
+
+    .logo-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .logo-text {
+        font-size: 1.25rem;
+    }
+
+    /* Mobile Navigation - Full screen overlay */
+    .nav {
+        position: fixed;
+        top: 56px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: hsl(var(--background) / 0.98);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 1.5rem;
+        gap: 0.5rem;
+        z-index: 999;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+    }
+
+    .nav.active {
+        transform: translateX(0);
+        display: flex;
+    }
+
+    .nav a {
+        display: block;
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+        font-weight: 500;
+        border-radius: 12px;
+        background: hsl(var(--card) / 0.5);
+        border: 1px solid hsl(var(--border) / 0.3);
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    .nav a:hover,
+    .nav a:active {
+        background: hsl(var(--primary) / 0.1);
+        border-color: hsl(var(--primary) / 0.3);
+    }
+
+    /* Mobile menu button - always visible on mobile */
+    .mobile-menu-btn {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: hsl(var(--muted) / 0.5);
+        border: 1px solid hsl(var(--border) / 0.5);
+        border-radius: 10px;
+        color: hsl(var(--foreground));
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-menu-btn:hover,
+    .mobile-menu-btn:active {
+        background: hsl(var(--muted));
+    }
+
+    /* Header buttons */
+    .header-buttons,
+    .header-actions {
+        gap: 0.5rem;
+    }
+
+    /* Hero Section - Mobile */
+    .hero {
+        padding: 2rem 0;
+        min-height: auto;
+    }
+
+    .hero-title,
+    .hero h1,
+    .page-title,
+    .dashboard-title {
+        font-size: clamp(1.75rem, 7vw, 2.25rem);
+        line-height: 1.2;
+    }
+
+    .hero-description,
+    .hero p,
+    .page-subtitle,
+    .dashboard-subtitle {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .hero-badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    /* Hero collaboration section (learn.html) */
+    .hero-collab {
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .hero-collab-text {
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+    }
+
+    .hero-collab-x {
+        font-size: 1.75rem;
+    }
+
+    .hero-collab-logo {
+        max-width: 160px;
+    }
+
+    /* Buttons - Touch friendly */
+    .btn {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+        min-height: 44px;
+        border-radius: 10px;
+    }
+
+    .btn-lg {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-scan {
+        padding: 0.875rem 1.75rem;
+        font-size: 0.85rem;
+    }
+
+    .btn-hero {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .theme-toggle-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+    }
+
+    /* Button groups stack vertically */
+    .dashboard-actions,
+    .hero-buttons,
+    .cta-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .dashboard-actions .btn,
+    .hero-buttons .btn,
+    .cta-buttons .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Grids - Single column on mobile */
+    .stats-grid,
+    .course-grid,
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .action-grid,
+    .result-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    /* Cards - Mobile optimized */
+    .card,
+    .stat-card,
+    .course-card,
+    .feature-card {
+        padding: 1.25rem;
+        border-radius: 14px;
+        margin: 0;
+    }
+
+    .card-glass,
+    .glass-card {
+        padding: 1.25rem;
+        border-radius: 14px;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+    }
+
+    /* Course cards (learn.html) */
+    .course-thumbnail {
+        height: 160px;
+        font-size: 4rem;
+    }
+
+    .course-body {
+        padding: 1.25rem;
+    }
+
+    .course-title {
+        font-size: 1.15rem;
+    }
+
+    .course-description {
+        font-size: 0.85rem;
+    }
+
+    .course-meta {
+        gap: 1rem;
+        font-size: 0.75rem;
+    }
+
+    /* Feature cards */
+    .feature-icon {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 1rem;
+    }
+
+    .feature-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .feature-card h3 {
+        font-size: 1.25rem;
+    }
+
+    .feature-list li {
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+
+    /* Filter section (learn.html) */
+    .filter-section {
+        padding: 1rem 0.75rem;
+        top: 56px;
+    }
+
+    .filter-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .filter-group {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .search-box {
+        min-width: 100%;
+        max-width: 100%;
+    }
+
+    .search-input {
+        padding: 0.75rem 1rem 0.75rem 2.75rem;
+        font-size: 16px;
+        /* Prevents iOS zoom */
+    }
+
+    /* Section headers */
+    .section-header h2,
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .section-header p,
+    .section-subtitle {
+        font-size: 0.9rem;
+    }
+
+    /* Forms */
+    .form-input,
+    .input,
+    .glass-input,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="url"],
+    textarea,
+    select {
+        min-height: 48px;
+        font-size: 16px;
+        /* Prevents iOS zoom */
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .scan-form-container {
+        padding: 1.25rem;
+        border-radius: 14px;
+    }
+
+    .scan-button {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.9rem;
+        min-height: 48px;
+    }
+
+    /* Scan items / List items */
+    .scan-item,
+    .list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .scan-info {
+        width: 100%;
+    }
+
+    .scan-actions {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+
+    .scan-details h4 {
+        font-size: 0.9rem;
+    }
+
+    .scan-meta {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Badges */
+    .badge {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.7rem;
+    }
+
+    /* Recent scans section */
+    .recent-scans-section {
+        padding: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    /* Navbar (learn.html style) */
+    .navbar {
+        height: 56px;
+        padding: 0 1rem;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .nav-cta {
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    /* Scrollbar - thinner on mobile */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    /* Disable hover effects on touch devices */
+    .card:hover,
+    .btn:not(:active):hover,
+    .stat-card:hover,
+    .course-card:hover,
+    .feature-card:hover,
+    .interactive:hover {
+        transform: none;
+    }
+
+    /* Enable active states instead */
+    .card:active,
+    .btn:active,
+    .stat-card:active,
+    .course-card:active,
+    .feature-card:active {
+        transform: scale(0.98);
+    }
+
+    /* Reduce animations on mobile for performance */
+    .card::before,
+    .btn::before,
+    .course-card::after {
+        display: none;
+    }
+}
+
+/* ---- SMALL MOBILE BREAKPOINT (480px) ---- */
+@media (max-width: 480px) {
+
+    /* Container */
+    .container {
+        padding: 0 0.75rem;
+    }
+
+    /* Header */
+    .header-content {
+        height: 52px;
+        padding: 0 0.5rem;
+    }
+
+    .logo-text {
+        font-size: 1.1rem;
+    }
+
+    /* Hero */
+    .hero {
+        padding: 1.5rem 0;
+    }
+
+    .hero-title,
+    .hero h1 {
+        font-size: 1.5rem;
+    }
+
+    .hero-description {
+        font-size: 0.9rem;
+    }
+
+    /* Buttons full width */
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        border-radius: 10px;
+        border-right: none;
+        border-bottom: 1px solid hsl(var(--border) / 0.2);
+    }
+
+    .btn-group .btn:last-child {
+        border-bottom: none;
+    }
+
+    /* Cards - minimal padding */
+    .card,
+    .stat-card,
+    .course-card,
+    .feature-card {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    /* Course cards */
+    .course-thumbnail {
+        height: 140px;
+        font-size: 3.5rem;
+    }
+
+    .course-body {
+        padding: 1rem;
+    }
+
+    .course-badges {
+        top: 0.75rem;
+        left: 0.75rem;
+        right: 0.75rem;
+    }
+
+    /* Filter buttons - scrollable */
+    .filter-group {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .filter-btn {
+        flex-shrink: 0;
+    }
+
+    /* Section spacing */
+    .courses-section,
+    .features-section {
+        padding: 1.5rem 0.75rem;
+    }
+
+    /* Scan form */
+    .scan-form-container {
+        padding: 1rem;
+    }
+
+    /* Status indicators */
+    .status-indicator {
+        font-size: 0.7rem;
+        padding: 0.35rem 0.6rem;
+    }
+
+    /* Tables scroll horizontally */
+    .skeleton-table-row {
+        min-width: 400px;
+    }
+}
+
+/* ---- EXTRA SMALL MOBILE (320px) ---- */
+@media (max-width: 360px) {
+    .container {
+        padding: 0 0.5rem;
+    }
+
+    .hero-title,
+    .hero h1 {
+        font-size: 1.35rem;
+    }
+
+    .logo-text {
+        font-size: 1rem;
+    }
+
+    .btn {
+        padding: 0.65rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .course-thumbnail {
+        height: 120px;
+        font-size: 3rem;
+    }
+
+    .stat-value {
+        font-size: 1.35rem;
+    }
+
+    .li-title {
+        max-width: 180px;
+    }
+}
+
+/* ============================================
+   TOUCH DEVICE OPTIMIZATIONS
+   ============================================ */
+
+@media (hover: none) and (pointer: coarse) {
+
+    /* Touch-friendly sizing */
+    .btn,
+    .filter-btn,
+    .chip,
+    .tab,
+    .nav a,
+    .list-item,
+    .settings-item,
+    button {
+        min-height: 44px;
+    }
+
+    /* Remove hover effects */
+    .btn:hover,
+    .card:hover,
+    .stat-card:hover,
+    .course-card:hover,
+    .feature-card:hover {
+        transform: none;
+        box-shadow: inherit;
+    }
+
+    /* Add touch feedback */
+    .btn:active,
+    .card:active,
+    .list-item:active {
+        opacity: 0.8;
+        transform: scale(0.98);
+    }
+
+    /* Disable complex animations */
+    .animate-float,
+    .animate-breathe,
+    .animate-glow {
+        animation: none;
+    }
+}
+
+/* ============================================
+   LANDSCAPE MOBILE
+   ============================================ */
+
+@media (max-width: 896px) and (orientation: landscape) {
+    .hero {
+        min-height: auto;
+        padding: 1.5rem 0;
+    }
+
+    .hero-title,
+    .hero h1 {
+        font-size: 1.75rem;
+    }
+
+    /* Two column grids in landscape */
+    .stats-grid,
+    .course-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
+   SAFE AREA INSETS (Notch devices)
+   ============================================ */
+
+@supports (padding: env(safe-area-inset-top)) {
+    .header {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    .nav {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .footer {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+}

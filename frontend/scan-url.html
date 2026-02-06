@@ -10,6 +10,7 @@
     <script src="webshield-translation.js"></script>
     <link rel="stylesheet" href="enhanced-styles.css">
     <link rel="stylesheet" href="premium-effects.css">
+    <link rel="stylesheet" href="mobile-responsive.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
@@ -1240,7 +1241,8 @@
         </div>
     </main>
 
-    <div class="report-save-modal" id="report-save-modal" role="dialog" aria-modal="true" aria-labelledby="report-save-title">
+    <div class="report-save-modal" id="report-save-modal" role="dialog" aria-modal="true"
+        aria-labelledby="report-save-title">
         <div class="report-save-dialog">
             <div class="report-save-title" id="report-save-title">Save scan report</div>
             <div class="report-save-subtitle">Choose where this report should be stored before scanning.</div>
@@ -1254,12 +1256,14 @@
 
                 <div class="report-save-row" style="flex-direction: row; align-items: center; gap: 0.5rem;">
                     <input type="checkbox" id="report-save-create-toggle" />
-                    <label class="form-label" for="report-save-create-toggle" style="margin:0;">Create new folder</label>
+                    <label class="form-label" for="report-save-create-toggle" style="margin:0;">Create new
+                        folder</label>
                 </div>
 
                 <div class="report-save-row" id="report-save-new-folder-wrap" style="display:none;">
                     <label class="form-label" for="report-save-new-folder">New folder name</label>
-                    <input type="text" class="form-input" id="report-save-new-folder" placeholder="e.g., Banking, Shopping, Work" />
+                    <input type="text" class="form-input" id="report-save-new-folder"
+                        placeholder="e.g., Banking, Shopping, Work" />
                 </div>
 
                 <div class="report-save-row">
@@ -1267,7 +1271,8 @@
                     <input type="text" class="form-input" id="report-save-name" placeholder="e.g., Paypal login page" />
                 </div>
 
-                <div class="report-save-hint" id="report-save-duplicate">Warning: You already saved a report for this URL. Saving again will create another entry.</div>
+                <div class="report-save-hint" id="report-save-duplicate">Warning: You already saved a report for this
+                    URL. Saving again will create another entry.</div>
             </div>
 
             <div class="report-save-actions">
