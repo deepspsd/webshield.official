@@ -43,6 +43,8 @@ const MSG = {
   safetyAction: 'GMAIL_EXT_SAFETY_ACTION'
 };
 
+let activeThreadId = null;
+
 // Initialize the popup
 function init() {
   // Check active tab for Gmail email
@@ -139,7 +141,7 @@ function renderResult(data) {
 
   els.resultArea.style.display = 'block';
   const res = data.scanResult;
-  activeThreadId = data.emailId;
+  activeThreadId = data.emailId || activeThreadId;
 
   // Threat score and level
   const score = res.threat_score || 0;
@@ -188,12 +190,37 @@ function renderResult(data) {
   els.linkCount.textContent = linkAnalysis.link_count ?? (linkAnalysis.links?.length || 0);
 
   // Details
-  els.trusted.textContent = senderRep.is_trusted_domain ? '✅ Yes' : '❌ No';
-  els.auth.textContent = details.header_analysis?.is_authenticated ? '✅ Pass' : '❌ Fail';
+  const isOffline = !!res.is_offline_analysis;
+  if (senderRep.is_trusted_domain && !isOffline) {
+    els.trusted.textContent = '✅ Verified';
+  } else if (senderRep.is_trusted_domain && isOffline) {
+    els.trusted.textContent = '➖ Trusted (offline)';
+  } else {
+    els.trusted.textContent = '❌ Not verified';
+  }
+  const ha = details.header_analysis || {};
+  const spf = (ha.spf_status || 'unknown').toLowerCase();
+  const dkim = (ha.dkim_status || 'unknown').toLowerCase();
+  const dmarc = (ha.dmarc_status || 'unknown').toLowerCase();
+  const anyFail = spf === 'fail' || dkim === 'fail' || dmarc === 'fail';
+  const allUnknown = spf === 'unknown' && dkim === 'unknown' && dmarc === 'unknown';
+  if (allUnknown) {
+    els.auth.textContent = '❓ Unknown';
+  } else if (anyFail) {
+    els.auth.textContent = '❌ Failed';
+  } else if (ha.is_authenticated) {
+    els.auth.textContent = '✅ Passed';
+  } else {
+    els.auth.textContent = '⚠️ Partial';
+  }
   els.susLinks.textContent = linkAnalysis.suspicious_links?.length || 0;
 
   // Show URL mismatches if any
-  const urlMismatches = linkAnalysis.suspicious_links?.filter(l => l.textUrlMismatch)?.length || 0;
+  const urlMismatches = (linkAnalysis.suspicious_links || []).filter(l => {
+    if (!l) return false;
+    if (typeof l === 'object') return !!l.textUrlMismatch;
+    return false;
+  }).length;
   if (els.urlMismatchRow && els.urlMismatches) {
     if (urlMismatches > 0) {
       els.urlMismatchRow.style.display = 'flex';
@@ -237,10 +264,22 @@ els.toggleTips?.addEventListener('click', () => {
 
 // Report button - scroll to in-page report
 els.reportBtn?.addEventListener('click', () => {
+  const openReportForThread = (threadId) => {
+    if (!threadId) return;
+    const url = chrome.runtime.getURL(`report.html?id=${encodeURIComponent(threadId)}`);
+    chrome.tabs.create({ url });
+  };
+
+  if (activeThreadId) {
+    openReportForThread(activeThreadId);
+    return;
+  }
+
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]?.id) {
-      chrome.tabs.sendMessage(tabs[0].id, { type: 'GMAIL_EXT_SCROLL_TO_REPORT' });
-    }
+    const tab = tabs?.[0];
+    const match = tab?.url?.match(/\/([A-Za-z0-9_-]+)$/);
+    const threadId = (match && match[1].length > 5) ? match[1] : null;
+    openReportForThread(threadId);
   });
 });
 

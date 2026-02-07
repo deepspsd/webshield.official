@@ -1142,14 +1142,21 @@ function renderBadgeHTML(scanResult) {
     icon = '⚠️';
     title = 'Suspicious Email';
   }
-  const isEncrypted = auth.encrypted || false;
   const isTrustedDomain = senderRep?.is_trusted_domain || HIGH_TRUST_DOMAINS.has(senderRep?.domain);
+  const isOffline = !!scanResult?.is_offline_analysis;
+  const isVerified = !!isTrustedDomain && !isOffline;
+  const verifiedDisplay = isVerified ? '✔' : (isTrustedDomain ? '~' : '-');
 
-  // Impute authentication for UI if missing but trusted
-  if (auth.spf_status === 'unknown' && isTrustedDomain && isEncrypted) {
-    auth.is_authenticated = true;
-    // We don't set SPF/DKIM flags to 'pass' to avoid lying, but we consider the EMAIL authenticated overall
-  }
+  const spf = (auth.spf_status || 'unknown').toLowerCase();
+  const dkim = (auth.dkim_status || 'unknown').toLowerCase();
+  const dmarc = (auth.dmarc_status || 'unknown').toLowerCase();
+  const anyFail = spf === 'fail' || dkim === 'fail' || dmarc === 'fail';
+  const anyPass = spf === 'pass' || dkim === 'pass' || dmarc === 'pass';
+  const allUnknown = spf === 'unknown' && dkim === 'unknown' && dmarc === 'unknown';
+
+  const authDisplay = anyPass
+    ? '✔'
+    : (anyFail ? '✕' : (auth.authentication_score > 40 ? '~' : (allUnknown ? '?' : '?')));
 
   // --- HTML Rendering ---
 
@@ -1222,14 +1229,14 @@ function renderBadgeHTML(scanResult) {
               <div class="gr-gmail-2025-float-stat-val">${links.length}</div>
             </div>
 
-            <div class="gr-gmail-2025-float-stat-card ${isTrustedDomain ? 'good' : ''}">
+            <div class="gr-gmail-2025-float-stat-card ${isVerified ? 'good' : ''}">
               <div class="gr-gmail-2025-float-stat-label">Verified</div>
-              <div class="gr-gmail-2025-float-stat-val">${isTrustedDomain ? '✔' : '-'}</div>
+              <div class="gr-gmail-2025-float-stat-val">${verifiedDisplay}</div>
             </div>
 
             <div class="gr-gmail-2025-float-stat-card ${auth.is_authenticated ? 'good' : (auth.authentication_score > 40 ? '' : 'bad')}">
               <div class="gr-gmail-2025-float-stat-label">Auth</div>
-              <div class="gr-gmail-2025-float-stat-val">${auth.is_authenticated ? '✔' : (auth.authentication_score > 40 ? '~' : (auth.spf_status === 'not_available' || auth.spf_status === 'unknown' ? 'N/A' : '✕'))}</div>
+              <div class="gr-gmail-2025-float-stat-val">${authDisplay}</div>
             </div>
 
           </div>
@@ -1289,6 +1296,9 @@ function createSafetyBadge(scanResult) {
         // Close current badge first
         close();
 
+        // Allow immediate manual re-scan (bypass rate limit)
+        lastScanTime = 0;
+
         // Clear cache for this email to force fresh scan
         const emailId = getCurrentEmailId();
         if (emailId) {
@@ -1307,23 +1317,31 @@ function createSafetyBadge(scanResult) {
   }
 
   // Action Buttons with Enhanced Logic
-  overlay.querySelectorAll('.gr-gmail-2025-action').forEach(btn => {
+  overlay.querySelectorAll('.gr-gmail-2025-action[data-do]').forEach(btn => {
     btn.onclick = (e) => {
-      const action = e.target.getAttribute('data-do');
+      const action = btn.getAttribute('data-do');
       let success = false;
       if (action === 'spam') success = clickGmailMenuItem('Report spam');
-      else if (action === 'report') success = clickGmailMenuItem('Report phishing');
+      else if (action === 'report') {
+        const emailId = getCurrentEmailId();
+        if (emailId) {
+          const url = chrome.runtime.getURL(`report.html?id=${encodeURIComponent(emailId)}`);
+          window.open(url, '_blank', 'noopener,noreferrer');
+          success = true;
+        }
+      }
       else if (action === 'unsubscribe') {
         const lnk = findUnsubscribeLink();
         if (lnk) { lnk.click(); success = true; }
       }
 
       if (success) {
-        e.target.textContent = 'Done';
-        e.target.disabled = true;
+        btn.textContent = 'Done';
+        btn.disabled = true;
       } else {
-        e.target.textContent = 'Failed / Not Found';
-        setTimeout(() => e.target.textContent = action === 'spam' ? 'Mark Spam' : action, 2000);
+        btn.textContent = 'Failed / Not Found';
+        btn.disabled = true;
+        setTimeout(() => { btn.textContent = action.toUpperCase(); btn.disabled = false; }, 1600);
       }
     };
   });
@@ -1573,9 +1591,18 @@ async function scanCurrentEmail() {
       // Ensure details exist and inject client-side metadata that backend might miss
       result.details = result.details || {};
       result.details.header_analysis = result.details.header_analysis || {};
-      // Inject encrypted status from metadata if not present
-      if (result.details.header_analysis.encrypted === undefined) {
-        result.details.header_analysis.encrypted = metadata.headers?.encrypted || false;
+
+      // Merge client-side link details (e.g., displayed-text vs actual URL mismatch)
+      // Backend link analysis returns string URLs; UI can also handle objects.
+      result.details.link_analysis = result.details.link_analysis || {};
+      const la = result.details.link_analysis;
+      la.links = la.links || metadata.links || [];
+      la.suspicious_links = Array.isArray(la.suspicious_links) ? la.suspicious_links : [];
+      if (Array.isArray(metadata.link_details)) {
+        const mismatches = metadata.link_details.filter(l => l && l.textUrlMismatch);
+        if (mismatches.length > 0) {
+          la.suspicious_links = [...la.suspicious_links, ...mismatches];
+        }
       }
 
 
@@ -1654,13 +1681,11 @@ async function scanCurrentEmail() {
       // Final AUTH check check logic for offline mode
       const isTrusted = senderAnalysis.isTrusted;
       // Ensure headers definition exists if we fell into catch block without full context
-      const headers = metadata.headers || { encrypted: false, spf: 'unknown', dkim: 'unknown' };
-      const isEncrypted = headers.encrypted;
+      const headers = metadata.headers || { spf: 'unknown', dkim: 'unknown', dmarc: 'unknown' };
 
       let finalAuth = false;
       if (headers.spf === 'pass' || headers.dkim === 'pass') finalAuth = true;
       else if (isTrusted) finalAuth = true; // STRONG ASSUMPTION: If it's a known trusted domain (gmail, google, amazon), and we can't find headers, it's likely fine.
-      else if (isEncrypted) finalAuth = true; // Fallback: TLS is "good enough" for unknown domains in offline mode
 
       // Score correction: match backend penalty logic
       // If not trusted and not authenticated, max reputation is low
@@ -1723,11 +1748,16 @@ async function scanCurrentEmail() {
             domain: senderAnalysis.domain || 'unknown'
           },
           header_analysis: {
-            spf_status: 'not_available',
-            dkim_status: 'not_available',
-            dmarc_status: 'not_available',
-            encrypted: (headers && headers.encrypted) || false,
-            is_authenticated: isTrusted // If trusted domain, assume authenticated
+            spf_status: (headers.spf || 'unknown'),
+            dkim_status: (headers.dkim || 'unknown'),
+            dmarc_status: (headers.dmarc || 'unknown'),
+            spf_posture: 'unknown',
+            dkim_posture: 'unknown',
+            dmarc_posture: 'unknown',
+            is_authenticated: (headers.spf === 'pass' || headers.dkim === 'pass' || headers.dmarc === 'pass'),
+            authentication_score: (headers.spf === 'pass' || headers.dkim === 'pass' || headers.dmarc === 'pass')
+              ? 80
+              : (isTrusted ? 60 : 0)
           },
           link_analysis: {
             links: metadata.links || [],

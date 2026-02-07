@@ -58,31 +58,17 @@ function renderAuthStatus(status) {
 
   // Passing statuses
   if (s === 'pass') {
-    return '<span class="status-pill pass">PASS</span>';
+    return '<span class="status-pill pass">PASSED</span>';
   }
 
   // Failing statuses
   if (s === 'fail' || s === 'permerror') {
-    return '<span class="status-pill fail">FAIL</span>';
+    return '<span class="status-pill fail">FAILED</span>';
   }
 
-  // Temporary/network errors
-  if (s === 'temperror') {
-    return '<span class="status-pill neutral">RETRY</span>';
-  }
-
-  // Not available in browser mode
-  if (s === 'not_available' || s === 'unavailable') {
-    return '<span class="status-pill neutral">N/A</span>';
-  }
-
-  // None (no record found)
-  if (s === 'none') {
-    return '<span class="status-pill neutral">NONE</span>';
-  }
-
-  // Unknown or other
-  return `<span class="status-pill neutral">${escapeHTML(s.toUpperCase())}</span>`;
+  // Anything else should be treated as unknown for user-facing semantics.
+  // (Examples: none/temperror/unavailable/not_available/neutral)
+  return '<span class="status-pill neutral">UNKNOWN</span>';
 }
 
 /**
@@ -131,9 +117,20 @@ function renderLink(link, linkAnalysis) {
   const isSuspicious = suspiciousLinks.some(sl => sl.url === url || sl === url);
   const hasTextMismatch = typeof link === 'object' && link.textUrlMismatch;
 
+  const scanResult = (linkAnalysis && linkAnalysis.link_scan_results && url)
+    ? linkAnalysis.link_scan_results[url]
+    : null;
+  const scanVerdict = (scanResult && scanResult.verdict) ? String(scanResult.verdict).toLowerCase() : null;
+
   if (hasTextMismatch) {
     riskClass = 'danger';
     riskLabel = 'URL Mismatch';
+  } else if (scanVerdict === 'malicious') {
+    riskClass = 'danger';
+    riskLabel = 'Dangerous';
+  } else if (scanVerdict === 'suspicious') {
+    riskClass = 'warning';
+    riskLabel = 'Suspicious';
   } else if (isSuspicious) {
     riskClass = 'warning';
     riskLabel = 'Suspicious';
@@ -193,8 +190,19 @@ function renderReport(scanResult) {
   const linkAnalysis = scanResult?.details?.link_analysis || {};
   const contentAnalysis = scanResult?.details?.content_analysis || {};
 
+  const authPostureParts = [];
+  if (auth.spf_posture) authPostureParts.push(`SPF: ${escapeHTML(String(auth.spf_posture))}`);
+  if (auth.dkim_posture) authPostureParts.push(`DKIM: ${escapeHTML(String(auth.dkim_posture))}`);
+  if (auth.dmarc_posture) authPostureParts.push(`DMARC: ${escapeHTML(String(auth.dmarc_posture))}`);
+  const authPostureText = authPostureParts.length ? authPostureParts.join(' | ') : 'Unknown';
+
   const isOffline = scanResult?.is_offline_analysis || false;
   const scannedAt = scanResult?.timestamp || Date.now();
+
+  const isTrustedDomain = !!senderRep.is_trusted_domain;
+  const verifiedText = isTrustedDomain && !isOffline
+    ? '✅ Verified'
+    : (isTrustedDomain ? '➖ Trusted (offline)' : '❌ Not verified');
 
   // Determine severity
   let severity = 'safe';
@@ -225,7 +233,7 @@ function renderReport(scanResult) {
   // Generate links HTML
   const linksHTML = links.length === 0
     ? '<div class="empty-state">No links found in this email</div>'
-    : `<ul class="links-list">${links.slice(0, 10).map(l => renderLink(l, linkAnalysis)).join('')}</ul>`;
+    : `<ul class="links-list">${links.map(l => renderLink(l, linkAnalysis)).join('')}</ul>`;
 
   // Suspicious links count
   const suspiciousLinkCount = linkAnalysis.suspicious_links?.length || 0;
@@ -298,12 +306,12 @@ function renderReport(scanResult) {
                         <span class="info-value">${senderDomain}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Authenticated</span>
-                        <span class="info-value">${auth.is_authenticated ? '✅ Yes' : '❌ No'}</span>
+                        <span class="info-label">Verified</span>
+                        <span class="info-value">${verifiedText}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Encrypted (TLS)</span>
-                        <span class="info-value">${auth.encrypted ? '🔒 Yes' : '🔓 No'}</span>
+                        <span class="info-label">Authenticated</span>
+                        <span class="info-value">${auth.is_authenticated ? '✅ Yes' : '❌ No'}</span>
                     </div>
                 </div>
             </section>
@@ -311,6 +319,12 @@ function renderReport(scanResult) {
             <!-- Authentication Checks -->
             <section class="report-section">
                 <h2 class="section-title">Email Authentication</h2>
+                <div class="info-table" style="margin-bottom: 12px;">
+                    <div class="info-row">
+                        <span class="info-label">Domain posture (DNS)</span>
+                        <span class="info-value">${authPostureText}</span>
+                    </div>
+                </div>
                 <div class="auth-grid">
                     <div class="auth-item">
                         <span class="auth-label">SPF</span>
@@ -348,7 +362,6 @@ function renderReport(scanResult) {
             <section class="report-section">
                 <h2 class="section-title">Links Analysis</h2>
                 ${linksHTML}
-                ${links.length > 10 ? `<p class="link-note">Showing first 10 of ${links.length} links</p>` : ''}
             </section>
 
             <!-- Footer -->
@@ -420,6 +433,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const root = document.getElementById('report-root');
   let currentScanData = null;
 
+  function findGmailTabForThread(threadId, callback) {
+    chrome.tabs.query({ url: '*://mail.google.com/*' }, (tabs) => {
+      const t = (tabs || []).find(tb => {
+        const u = tb?.url || '';
+        return u.includes(threadId) || new RegExp(`\\/(${threadId})$`).test(u);
+      }) || (tabs?.[0] || null);
+      callback(t);
+    });
+  }
+
   if (!threadId) {
     load.innerHTML = `
             <div class="error-state">
@@ -465,8 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>Scanning email...</p>
                     </div>`;
 
-        chrome.tabs.query({ url: "*://mail.google.com/*" }, (gtabs) => {
-          const target = gtabs?.[0];
+        findGmailTabForThread(threadId, (target) => {
           if (target) {
             chrome.tabs.sendMessage(target.id, { type: 'GMAIL_EXT_SCAN_EMAIL_MANUAL' }, (resp) => {
               if (chrome.runtime.lastError) {
@@ -525,8 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Wire up rescan button
     document.getElementById('rescan-btn')?.addEventListener('click', () => {
-      chrome.tabs.query({ url: "*://mail.google.com/*" }, (gtabs) => {
-        const target = gtabs?.[0];
+      findGmailTabForThread(threadId, (target) => {
         if (target) {
           const btn = document.getElementById('rescan-btn');
           btn.textContent = '⏳ Scanning...';
