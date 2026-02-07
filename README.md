@@ -78,7 +78,7 @@ WebShield is a state-of-the-art URL scanning and phishing detection system power
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/deepugangadhar46/webshield.official.git
+   git clone https://github.com/deepspsdwebshield.official.git
    cd webshield.official
    ```
 
