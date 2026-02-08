@@ -86,6 +86,7 @@ let isScanning = false;
 let manualScanInProgress = false;
 let lastScanTime = 0; // Rate limiting
 let scanCache = new Map(); // Cache scan results to avoid duplicate API calls
+let activeScanRunId = 0;
 
 // ===== ERROR BOUNDARY - Safe DOM Operations =====
 
@@ -1146,6 +1147,9 @@ function renderBadgeHTML(scanResult) {
   const isOffline = !!scanResult?.is_offline_analysis;
   const isVerified = !!isTrustedDomain && !isOffline;
   const verifiedDisplay = isVerified ? '✔' : (isTrustedDomain ? '~' : '-');
+  const verifiedTooltip = isVerified
+    ? 'Verified: trusted domain + live scan'
+    : (isTrustedDomain ? 'Trusted domain, but not verified via live scan (offline/local result)' : 'Not verified');
 
   const spf = (auth.spf_status || 'unknown').toLowerCase();
   const dkim = (auth.dkim_status || 'unknown').toLowerCase();
@@ -1156,7 +1160,10 @@ function renderBadgeHTML(scanResult) {
 
   const authDisplay = anyPass
     ? '✔'
-    : (anyFail ? '✕' : (auth.authentication_score > 40 ? '~' : (allUnknown ? '?' : '?')));
+    : (anyFail ? '✕' : (allUnknown ? '?' : (auth.authentication_score > 40 ? '~' : '?')));
+  const authTooltip = anyPass
+    ? 'Auth passed (SPF/DKIM/DMARC)'
+    : (anyFail ? 'Auth failed (SPF/DKIM/DMARC)' : (allUnknown ? 'Auth unknown (headers not available)' : 'Auth partial/uncertain'));
 
   // --- HTML Rendering ---
 
@@ -1231,12 +1238,12 @@ function renderBadgeHTML(scanResult) {
 
             <div class="gr-gmail-2025-float-stat-card ${isVerified ? 'good' : ''}">
               <div class="gr-gmail-2025-float-stat-label">Verified</div>
-              <div class="gr-gmail-2025-float-stat-val">${verifiedDisplay}</div>
+              <div class="gr-gmail-2025-float-stat-val" title="${escapeHTML(verifiedTooltip)}">${verifiedDisplay}</div>
             </div>
 
             <div class="gr-gmail-2025-float-stat-card ${auth.is_authenticated ? 'good' : (auth.authentication_score > 40 ? '' : 'bad')}">
               <div class="gr-gmail-2025-float-stat-label">Auth</div>
-              <div class="gr-gmail-2025-float-stat-val">${authDisplay}</div>
+              <div class="gr-gmail-2025-float-stat-val" title="${escapeHTML(authTooltip)}">${authDisplay}</div>
             </div>
 
           </div>
@@ -1288,30 +1295,25 @@ function createSafetyBadge(scanResult) {
   const cardScanBtn = overlay.querySelector(`#${ID.floatingScanBtn}`);
   if (cardScanBtn) {
     cardScanBtn.onclick = async () => {
-      cardScanBtn.textContent = 'Scanning...';
-      cardScanBtn.style.opacity = '0.7';
-      cardScanBtn.disabled = true;
-
       try {
-        // Close current badge first
+        // Close the overlay to avoid stacking
         close();
+        cardScanBtn.style.opacity = '0.7';
+        cardScanBtn.disabled = true;
 
-        // Allow immediate manual re-scan (bypass rate limit)
-        lastScanTime = 0;
+        try {
+          // Close current badge first
+          close();
 
-        // Clear cache for this email to force fresh scan
-        const emailId = getCurrentEmailId();
-        if (emailId) {
-          scanCache.delete(emailId);
+          // Small delay to let UI update
+          await new Promise((r) => setTimeout(r, 120));
+
+          await scanCurrentEmail({ force: true, timeoutMs: 20000 });
+        } catch (e) {
+          console.error('WebShield Gmail: RE-SCAN failed', e);
         }
-
-        // Small delay to let UI update
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        // Perform fresh scan (this will create a new badge)
-        await scanCurrentEmail();
-      } catch (err) {
-        log.error('Re-scan failed:', err);
+      } catch (e) {
+        console.error('WebShield Gmail: RE-SCAN failed', e);
       }
     };
   }
@@ -1513,12 +1515,16 @@ async function isExtensionDisabled() {
   try { return (await chrome.storage.session.get('disabled')).disabled; } catch (e) { return false; }
 }
 
-async function scanCurrentEmail() {
+async function scanCurrentEmail(options = {}) {
   if (await isExtensionDisabled()) return;
   if (isScanning) return;
 
+  const runId = ++activeScanRunId;
+  const isForce = !!options.force;
+  const timeoutMs = typeof options.timeoutMs === 'number' ? options.timeoutMs : 30000;
+
   // Rate limiting check
-  if (!canScan()) {
+  if (!isForce && !canScan()) {
     return;
   }
 
@@ -1529,13 +1535,15 @@ async function scanCurrentEmail() {
   // Check cache first to avoid duplicate scans
   const cacheKey = emailId;
   const cachedResult = scanCache.get(cacheKey);
-  if (cachedResult && Date.now() - cachedResult.timestamp < CACHE_TTL_MS) {
+  if (!isForce && cachedResult && Date.now() - cachedResult.timestamp < CACHE_TTL_MS) {
     createSafetyBadge(cachedResult.result);
     return cachedResult.result;
   }
 
   // Update rate limit timestamp
-  updateScanTimestamp();
+  if (!isForce) {
+    updateScanTimestamp();
+  }
 
   isScanning = true;
   updateScanButtonState(true, '🔍 Scanning...');
@@ -1556,7 +1564,7 @@ async function scanCurrentEmail() {
     let result;
     try {
       // Try backend scan
-      result = await scanEmailMetadata(metadata, 30000);
+      result = await scanEmailMetadata(metadata, timeoutMs);
 
       // Merge client-side flags with backend result
       if (clientAnalysis.clientFlags.length > 0) {
@@ -1607,6 +1615,26 @@ async function scanCurrentEmail() {
 
 
     } catch (backendError) {
+      const msg = (backendError && (backendError.message || backendError.error)) ? String(backendError.message || backendError.error) : '';
+      const isTimeout = /timeout|timed out|aborterror/i.test(msg);
+
+      // If live scan timed out, keep the last cached result instead of flipping to offline/local.
+      if (isTimeout) {
+        const prev = scanCache.get(cacheKey);
+        if (prev && prev.result) {
+          const prevResult = prev.result;
+          const displayResult = {
+            ...prevResult,
+            reasons: [`⚠️ Live scan timed out; showing last result`, ...(prevResult.reasons || [])]
+          };
+          if (activeScanRunId === runId) {
+            createSafetyBadge(displayResult);
+            storeLastScanResult(displayResult, 'scan');
+          }
+          return displayResult;
+        }
+      }
+
       log.warn('Backend unavailable, using client-side analysis', backendError.message);
 
       // OFFLINE FALLBACK: Use comprehensive client-side analysis
@@ -1787,6 +1815,11 @@ async function scanCurrentEmail() {
       result.threat_level = 'safe';
     }
 
+    // Only allow the latest scan invocation to update UI/cache
+    if (activeScanRunId !== runId) {
+      return result;
+    }
+
     // Cache the result
     scanCache.set(cacheKey, { result, timestamp: Date.now() });
 
@@ -1833,8 +1866,13 @@ async function scanCurrentEmail() {
       createSafetyBadge(errorResult);
     }
   } finally {
-    isScanning = false;
-    updateScanButtonState(false);
+    if (activeScanRunId === runId) {
+      isScanning = false;
+      updateScanButtonState(false);
+    } else {
+      isScanning = false;
+      updateScanButtonState(false);
+    }
   }
 }
 
