@@ -219,7 +219,7 @@ When explaining scan results:
             h.update(b"missing")
             return h.hexdigest()
 
-        pdfs = sorted([p for p in self.legal_docs_dir.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf"] )
+        pdfs = sorted([p for p in self.legal_docs_dir.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf"])
         for p in pdfs:
             try:
                 st = p.stat()
@@ -341,7 +341,7 @@ When explaining scan results:
         metas = (res.get("metadatas") or [[]])[0]
 
         retrieved: List[Dict[str, str]] = []
-        for doc, md in zip(docs, metas):
+        for doc, md in zip(docs, metas, strict=False):
             if not isinstance(doc, str) or not doc.strip():
                 continue
             source = "unknown"
@@ -351,7 +351,9 @@ When explaining scan results:
             retrieved.append({"source": label, "text": doc.strip()})
         return retrieved
 
-    def _query_groq(self, messages: List[Dict[str, str]], temperature: float = 0.2, max_tokens: int = 512) -> Optional[str]:
+    def _query_groq(
+        self, messages: List[Dict[str, str]], temperature: float = 0.2, max_tokens: int = 512
+    ) -> Optional[str]:
         if not self.groq_api_key:
             return None
 
@@ -382,7 +384,9 @@ When explaining scan results:
         pdf_count = 0
         try:
             if self.legal_docs_dir.exists():
-                pdf_count = len([p for p in self.legal_docs_dir.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf"])
+                pdf_count = len(
+                    [p for p in self.legal_docs_dir.rglob("*") if p.is_file() and p.suffix.lower() == ".pdf"]
+                )
         except Exception:
             pdf_count = 0
 
@@ -426,13 +430,13 @@ When explaining scan results:
         """Get AI-powered response using Groq + RAG over legal_docs PDFs"""
         try:
             self._ensure_kb_ready()
-            
+
             # Try to retrieve relevant documents from knowledge base
             retrieved = self._retrieve(user_message, k=int(os.getenv("CHATBOT_RETRIEVAL_K", "5")))
-            
+
             # Check if this is a simple greeting
             is_greeting = self._is_greeting(user_message)
-            
+
             # For greetings without RAG context, use friendly fallback
             if is_greeting and not retrieved and not context:
                 return self._get_fallback_response("hello")
@@ -453,7 +457,11 @@ When explaining scan results:
             user_msg = (
                 "Answer the user question.\n\n"
                 + (f"User Context (JSON):\n{user_context}\n\n" if user_context else "")
-                + (f"Knowledge Base Excerpts:{kb_block}\n\n" if kb_block else "Knowledge Base Excerpts: (none found)\n\n")
+                + (
+                    f"Knowledge Base Excerpts:{kb_block}\n\n"
+                    if kb_block
+                    else "Knowledge Base Excerpts: (none found)\n\n"
+                )
                 + f"User Question: {user_message}"
             )
 
@@ -478,7 +486,12 @@ When explaining scan results:
         message_norm = re.sub(r"[^a-z0-9\s]", " ", message_lower)
         message_norm = re.sub(r"\s+", " ", message_norm).strip()
 
-        if ("check url" in message_norm) or ("check urls" in message_norm) or ("scan url" in message_norm) or ("scan urls" in message_norm):
+        if (
+            ("check url" in message_norm)
+            or ("check urls" in message_norm)
+            or ("scan url" in message_norm)
+            or ("scan urls" in message_norm)
+        ):
             for k in ("how to check urls", "how to check url"):
                 if k in self.fallback_responses:
                     return self.fallback_responses[k]

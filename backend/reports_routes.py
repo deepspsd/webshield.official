@@ -3,12 +3,19 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException
 
 from .db import get_db_connection_with_retry
-from .models import CreateFolderRequest, FolderListResponse, ReportFolder, ReportListResponse, SaveReportRequest, ScanReportDetail
+from .models import (
+    CreateFolderRequest,
+    FolderListResponse,
+    ReportFolder,
+    ReportListResponse,
+    SaveReportRequest,
+    ScanReportDetail,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +61,7 @@ def _discover_tables(conn) -> Tuple[Optional[str], Optional[str]]:
     reports_candidates: List[str] = []
 
     for t in tables:
-        cols = set(c.lower() for c in show_columns(t))
+        cols = {c.lower() for c in show_columns(t)}
 
         if {"user_email", "folder_name"}.issubset(cols) and ("folder_id" not in cols):
             folders_candidates.append(t)
@@ -201,7 +208,9 @@ def list_folders(user_email: str):
         finally:
             count_cur.close()
 
-        count_map = {int(row["folder_id"]): int(row["report_count"]) for row in counts if row.get("folder_id") is not None}
+        count_map = {
+            int(row["folder_id"]): int(row["report_count"]) for row in counts if row.get("folder_id") is not None
+        }
 
         out: List[ReportFolder] = []
         for f in folders:
@@ -526,11 +535,15 @@ def list_reports(user_email: str, folder_id: int):
         if not id_col:
             raise HTTPException(status_code=500, detail="Reports table missing id column")
 
-        full_data_col = "full_report_data" if "full_report_data" in rcols else ("full_report" if "full_report" in rcols else None)
+        full_data_col = (
+            "full_report_data" if "full_report_data" in rcols else ("full_report" if "full_report" in rcols else None)
+        )
         if not full_data_col:
             raise HTTPException(status_code=500, detail="Reports table missing full report JSON column")
 
-        scanned_at_col = "scanned_at" if "scanned_at" in rcols else ("scan_timestamp" if "scan_timestamp" in rcols else None)
+        scanned_at_col = (
+            "scanned_at" if "scanned_at" in rcols else ("scan_timestamp" if "scan_timestamp" in rcols else None)
+        )
         created_col = "created_at" if "created_at" in rcols else None
         updated_col = "updated_at" if "updated_at" in rcols else None
         summary_col = "summary" if "summary" in rcols else None
@@ -592,11 +605,14 @@ def list_reports(user_email: str, folder_id: int):
                     scan_id=str(row.get("scan_id") or ""),
                     url=str(row.get("url") or ""),
                     risk_level=str(row.get("risk_level") or "unknown"),
+                    threat_category=None,
                     summary=str(row.get("summary") or "") if row.get("summary") is not None else None,
                     full_report_data=fr_data,
                     scanned_at=row.get("scanned_at") or datetime.now(),
                     created_at=row.get(created_col) if created_col else None,
                     updated_at=row.get(updated_col) if updated_col else None,
+                    tags=None,
+                    notes=None,
                 )
             )
 
@@ -630,11 +646,15 @@ def search_reports(
         if not id_col:
             raise HTTPException(status_code=500, detail="Reports table missing id column")
 
-        full_data_col = "full_report_data" if "full_report_data" in rcols else ("full_report" if "full_report" in rcols else None)
+        full_data_col = (
+            "full_report_data" if "full_report_data" in rcols else ("full_report" if "full_report" in rcols else None)
+        )
         if not full_data_col:
             raise HTTPException(status_code=500, detail="Reports table missing full report JSON column")
 
-        scanned_at_col = "scanned_at" if "scanned_at" in rcols else ("scan_timestamp" if "scan_timestamp" in rcols else None)
+        scanned_at_col = (
+            "scanned_at" if "scanned_at" in rcols else ("scan_timestamp" if "scan_timestamp" in rcols else None)
+        )
         created_col = "created_at" if "created_at" in rcols else None
         updated_col = "updated_at" if "updated_at" in rcols else None
         summary_col = "summary" if "summary" in rcols else None
@@ -706,11 +726,14 @@ def search_reports(
                     scan_id=str(row.get("scan_id") or ""),
                     url=str(row.get("url") or ""),
                     risk_level=str(row.get("risk_level") or "unknown"),
+                    threat_category=None,
                     summary=str(row.get("summary") or "") if row.get("summary") is not None else None,
                     full_report_data=fr_data,
                     scanned_at=row.get("scanned_at") or datetime.now(),
                     created_at=row.get(created_col) if created_col else None,
                     updated_at=row.get(updated_col) if updated_col else None,
+                    tags=None,
+                    notes=None,
                 )
             )
 
@@ -855,48 +878,52 @@ def save_report(payload: SaveReportRequest):
             },
         }
 
-        full_data_col = "full_report_data" if "full_report_data" in rcols else ("full_report" if "full_report" in rcols else None)
+        full_data_col = (
+            "full_report_data" if "full_report_data" in rcols else ("full_report" if "full_report" in rcols else None)
+        )
         if not full_data_col:
             raise HTTPException(status_code=500, detail="Reports table missing full report JSON column")
 
-        scanned_at_col = "scanned_at" if "scanned_at" in rcols else ("scan_timestamp" if "scan_timestamp" in rcols else None)
+        scanned_at_col = (
+            "scanned_at" if "scanned_at" in rcols else ("scan_timestamp" if "scan_timestamp" in rcols else None)
+        )
         created_col = "created_at" if "created_at" in rcols else None
         updated_col = "updated_at" if "updated_at" in rcols else None
         summary_col = "summary" if "summary" in rcols else None
         risk_col = "risk_level" if "risk_level" in rcols else ("threat_level" if "threat_level" in rcols else None)
 
         insert_fields = ["folder_id", "user_email", "scan_id", "url", "report_name"]
-        insert_vals: List[Any] = [int(folder_id), email, payload.scan_id, scan_row.get("url"), report_name]
+        report_insert_vals: List[Any] = [int(folder_id), email, payload.scan_id, scan_row.get("url"), report_name]
 
         if risk_col:
             insert_fields.append(risk_col)
-            insert_vals.append(risk_level)
+            report_insert_vals.append(risk_level)
 
         if summary_col:
             insert_fields.append(summary_col)
-            insert_vals.append(summary)
+            report_insert_vals.append(summary)
 
         insert_fields.append(full_data_col)
-        insert_vals.append(_json_dumps_safe(full_report_data))
+        report_insert_vals.append(_json_dumps_safe(full_report_data))
 
         now = datetime.now()
         if scanned_at_col:
             insert_fields.append(scanned_at_col)
-            insert_vals.append(scanned_at)
+            report_insert_vals.append(scanned_at)
 
         if created_col:
             insert_fields.append(created_col)
-            insert_vals.append(now)
+            report_insert_vals.append(now)
         if updated_col:
             insert_fields.append(updated_col)
-            insert_vals.append(now)
+            report_insert_vals.append(now)
 
         cur = conn.cursor()
         try:
             placeholders = ", ".join(["%s"] * len(insert_fields))
             cur.execute(
                 f"INSERT INTO `{reports_table}` ({', '.join([f'`{c}`' for c in insert_fields])}) VALUES ({placeholders})",  # nosec B608
-                tuple(insert_vals),
+                tuple(report_insert_vals),
             )
             conn.commit()
             new_id = int(cur.lastrowid) if cur.lastrowid else None
@@ -911,9 +938,12 @@ def save_report(payload: SaveReportRequest):
             scan_id=str(payload.scan_id),
             url=str(scan_row.get("url") or ""),
             risk_level=str(risk_level),
+            threat_category=None,
             summary=summary,
             full_report_data=full_report_data,
             scanned_at=scanned_at if isinstance(scanned_at, datetime) else datetime.now(),
             created_at=now,
             updated_at=now,
+            tags=payload.tags,
+            notes=payload.notes,
         )

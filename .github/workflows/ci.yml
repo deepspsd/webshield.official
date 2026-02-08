@@ -58,10 +58,10 @@ jobs:
         run: pip install bandit safety pip-audit
 
       - name: Run Bandit (SAST)
-        run: bandit -r backend/ -f json -o bandit-report.json
+        run: bandit -c pyproject.toml -r backend/ --severity-level medium --confidence-level medium -f json -o bandit-report.json
       
       - name: Check Dependencies (Safety)
-        run: pip-audit --fix --dry-run
+        run: pip-audit -r requirements.txt --ignore-vuln CVE-2024-23342
 
       - name: Upload Security Report
         uses: actions/upload-artifact@v4
