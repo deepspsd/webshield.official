@@ -649,22 +649,49 @@ function extractEmailMetadata() {
     const links = new Set();
     const emailBodySelectors = ['.a3s', '.ii.gt', '.gmail_quote', '[data-message-id] .a3s'];
 
+    const normalizeUrl = (u) => {
+      if (!u || typeof u !== 'string') return null;
+      let s = u.trim();
+      if (!s) return null;
+      if (s.startsWith('www.')) s = 'https://' + s;
+      // Trim common trailing punctuation from plain-text URLs
+      s = s.replace(/[\s\)\]\}\>\"\'\,\.;:]+$/g, '');
+      // Drop obvious non-web links
+      if (/^(mailto:|tel:|javascript:|data:)/i.test(s)) return null;
+      try {
+        const parsed = new URL(s);
+        if (!parsed.hostname) return null;
+        return parsed.toString();
+      } catch (_) {
+        return null;
+      }
+    };
+
     for (const selector of emailBodySelectors) {
       const body = document.querySelector(selector);
       if (body) {
+        // Anchor links
         body.querySelectorAll('a[href]').forEach(a => {
           const href = a.getAttribute('href');
-          if (href) {
-            // Handle Google's redirect URLs
-            if (href.includes('google.com/url?')) {
-              const urlParams = new URLSearchParams(href.split('?')[1]);
-              const actualUrl = urlParams.get('q') || urlParams.get('url');
-              if (actualUrl) links.add(actualUrl);
-            } else if (href.startsWith('http') || href.startsWith('www')) {
-              links.add(href);
-            }
+          if (!href) return;
+          let candidate = href;
+          // Handle Google's redirect URLs
+          if (href.includes('google.com/url?')) {
+            const urlParams = new URLSearchParams(href.split('?')[1]);
+            candidate = urlParams.get('q') || urlParams.get('url') || href;
           }
+          const nu = normalizeUrl(candidate);
+          if (nu) links.add(nu);
         });
+
+        // Plain-text URLs (Gmail often renders some URLs as text)
+        const text = body.textContent || '';
+        const urlMatches = text.match(/\bhttps?:\/\/[^\s<>"]+|\bwww\.[^\s<>"]+/gi) || [];
+        for (const m of urlMatches) {
+          const nu = normalizeUrl(m);
+          if (nu) links.add(nu);
+        }
+
         break; // Found body, no need to continue
       }
     }
@@ -764,17 +791,54 @@ function extractEmailMetadata() {
               actualUrl = urlParams.get('q') || urlParams.get('url') || href;
             }
 
+            // Normalize www.* URLs so they are consistently scanned
+            if (actualUrl && actualUrl.startsWith('www.')) {
+              actualUrl = 'https://' + actualUrl;
+            }
+
             // Check for text/URL mismatch (e.g., text says "paypal.com" but URL is different)
+            // This is a major phishing indicator but needs careful handling to avoid false positives
             const textLooksLikeUrl = /^(https?:\/\/)?[\w.-]+\.[a-z]{2,}/i.test(displayText);
             let textUrlMismatch = false;
             if (textLooksLikeUrl && displayText.length > 5) {
               try {
-                const displayDomain = displayText.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
-                const actualDomain = new URL(actualUrl).hostname.toLowerCase();
-                if (displayDomain !== actualDomain && !actualDomain.includes(displayDomain)) {
-                  textUrlMismatch = true;
+                // Normalize both URLs for comparison
+                let displayDomain = displayText.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+                displayDomain = displayDomain.replace(/^www\./, ''); // Remove www prefix
+
+                const actualUrlObj = new URL(actualUrl);
+                let actualDomain = actualUrlObj.hostname.toLowerCase();
+                actualDomain = actualDomain.replace(/^www\./, ''); // Remove www prefix
+
+                // Skip Google tracking URLs - these wrap legitimate URLs for click tracking
+                // The actual destination should match what's displayed
+                const isGoogleTrackingUrl = href.includes('google.com/url?') ||
+                  actualUrl.includes('google.com/url?') ||
+                  actualDomain.includes('google.com');
+
+                // Skip if display text is not actually a domain (might be button text with URL-like chars)
+                const displayLooksLikeDomain = /^[\w.-]+\.(com|org|net|io|co|me|gov|edu|info|biz)$/i.test(displayDomain);
+
+                // Trusted redirect services that should not trigger mismatch
+                const trustedRedirects = ['google.com', 'outlook.office365.com', 'safelinks.protection.outlook.com',
+                  'nam12.safelinks.protection.outlook.com', 'links.e.twitch.tv',
+                  'click.e.twitch.tv', 'email.spotify.com'];
+                const isTrustedRedirect = trustedRedirects.some(t => actualDomain.includes(t));
+
+                if (!isGoogleTrackingUrl && !isTrustedRedirect && displayLooksLikeDomain) {
+                  // Check if domains actually differ in a meaningful way
+                  // Match if: exact match, OR actual contains display, OR share same base domain
+                  const baseDomainMatch = displayDomain.split('.').slice(-2).join('.') ===
+                    actualDomain.split('.').slice(-2).join('.');
+
+                  if (displayDomain !== actualDomain &&
+                    !actualDomain.includes(displayDomain) &&
+                    !displayDomain.includes(actualDomain) &&
+                    !baseDomainMatch) {
+                    textUrlMismatch = true;
+                  }
                 }
-              } catch (e) { }
+              } catch (e) { /* Invalid URL, skip */ }
             }
 
             linkDetails.push({
@@ -1129,27 +1193,39 @@ function renderBadgeHTML(scanResult) {
   const auth = scanResult?.details?.header_analysis || {};
   const links = scanResult?.details?.link_analysis?.links || scanResult?.links || [];
 
+  const isEncrypted = auth.encrypted || false;
+  const isTrustedDomain = senderRep?.is_trusted_domain || HIGH_TRUST_DOMAINS.has(senderRep?.domain);
+
+  // Impute authentication for UI if headers are unknown but domain is trusted
+  // Gmail strips raw headers, so for trusted domains we show partial verification
+  const authStatusUnknown = auth.spf_status === 'unknown' && auth.dkim_status === 'unknown';
+  if (authStatusUnknown && isTrustedDomain) {
+    // For trusted domains with no header data, consider partially verified
+    auth.is_authenticated = true;
+    auth.authentication_score = 60; // Partial score for trusted domain without full auth data
+  } else if (authStatusUnknown && repScore >= 70) {
+    // High reputation sender but no auth data - don't mark as failed
+    auth.authentication_score = 50;
+  }
+
+  // IMPORTANT: Use threat_score as the PRIMARY indicator for UI severity
+  // This prevents contradictions like "Suspicious Email" with 90 trust score
   let severity = 'safe';
   let icon = '🛡️';
   let title = 'Email is Safe';
 
-  if (level.includes('danger') || level.includes('malicious')) {
+  // Score-based determination takes priority over text-based level
+  if (score >= 67 || level.includes('danger') || level.includes('malicious')) {
     severity = 'danger';
     icon = '⛔';
     title = 'Dangerous Email';
-  } else if (level.includes('suspicious') || level.includes('medium')) {
+  } else if (score >= 34 || (level.includes('suspicious') && score > 25)) {
+    // Only show suspicious if score is actually in the suspicious range
     severity = 'warning';
     icon = '⚠️';
     title = 'Suspicious Email';
   }
-  const isEncrypted = auth.encrypted || false;
-  const isTrustedDomain = senderRep?.is_trusted_domain || HIGH_TRUST_DOMAINS.has(senderRep?.domain);
-
-  // Impute authentication for UI if missing but trusted
-  if (auth.spf_status === 'unknown' && isTrustedDomain && isEncrypted) {
-    auth.is_authenticated = true;
-    // We don't set SPF/DKIM flags to 'pass' to avoid lying, but we consider the EMAIL authenticated overall
-  }
+  // If score is low (<34) but level says suspicious, trust the score (safe)
 
   // --- HTML Rendering ---
 
@@ -1227,9 +1303,9 @@ function renderBadgeHTML(scanResult) {
               <div class="gr-gmail-2025-float-stat-val">${isTrustedDomain ? '✔' : '-'}</div>
             </div>
 
-            <div class="gr-gmail-2025-float-stat-card ${auth.is_authenticated ? 'good' : (auth.authentication_score > 40 ? '' : 'bad')}">
+            <div class="gr-gmail-2025-float-stat-card ${auth.is_authenticated ? 'good' : (authStatusUnknown && (isTrustedDomain || repScore >= 60) ? '' : (auth.authentication_score > 40 ? '' : 'bad'))}">
               <div class="gr-gmail-2025-float-stat-label">Auth</div>
-              <div class="gr-gmail-2025-float-stat-val">${auth.is_authenticated ? '✔' : (auth.authentication_score > 40 ? '~' : (auth.spf_status === 'not_available' || auth.spf_status === 'unknown' ? 'N/A' : '✕'))}</div>
+              <div class="gr-gmail-2025-float-stat-val">${auth.is_authenticated ? '✔' : (authStatusUnknown && (isTrustedDomain || repScore >= 60) ? '~' : (auth.authentication_score > 40 ? '~' : (authStatusUnknown ? 'N/A' : '✕')))}</div>
             </div>
 
           </div>

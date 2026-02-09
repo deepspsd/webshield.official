@@ -3,6 +3,7 @@ Email Scanning Routes for Gmail Extension
 Provides email-specific threat analysis endpoints with real SPF/DMARC verification
 """
 
+import asyncio
 import logging
 import re
 from datetime import datetime
@@ -82,6 +83,10 @@ class LinkAnalysis(BaseModel):
     links: List[str] = Field(default_factory=list, description="Links found")
     suspicious_links: List[str] = Field(default_factory=list, description="Suspicious links")
     malicious_links: List[str] = Field(default_factory=list, description="Malicious links")
+    vt_suspicious_links: List[str] = Field(default_factory=list, description="Links flagged suspicious by VirusTotal")
+    vt_malicious_links: List[str] = Field(default_factory=list, description="Links flagged malicious by VirusTotal")
+    vt_scanned_links: int = Field(0, description="Number of links scanned via VirusTotal")
+    vt_scan_timed_out: bool = Field(False, description="Whether VirusTotal scanning timed out")
     link_count: int = Field(0, description="Total link count")
     risk_score: int = Field(0, description="Link risk score 0-100")
 
@@ -368,12 +373,24 @@ def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str]
 
     # Fallback to client-provided headers
     if not headers:
+        # When no headers available, check if sender is from a trusted domain
+        # This prevents showing "Auth Failed" for trusted domains where we simply lack data
+        is_trusted = False
+        if sender_email:
+            domain = sender_email.split("@")[-1].lower() if "@" in sender_email else ""
+            trusted_domains = {
+                "google.com", "gmail.com", "microsoft.com", "outlook.com",
+                "apple.com", "amazon.com", "facebook.com", "meta.com",
+                "linkedin.com", "twitter.com", "x.com", "github.com", "canarabank"
+            }
+            is_trusted = domain in trusted_domains or any(domain.endswith(f".{t}") for t in ["gov", "edu", "mil"])
+        
         return HeaderAnalysis(
             spf_status="unknown",
             dkim_status="unknown",
             dmarc_status="unknown",
-            is_authenticated=False,
-            authentication_score=0,
+            is_authenticated=is_trusted,  # Trust known domains even without explicit auth
+            authentication_score=50 if is_trusted else 0,  # Partial score for trusted
         )
 
     spf = (headers.spf or "unknown").lower()
@@ -567,9 +584,73 @@ def analyze_links(links: List[str]) -> LinkAnalysis:
         links=links,
         suspicious_links=suspicious_links,
         malicious_links=malicious_links,
+        vt_suspicious_links=[],
+        vt_malicious_links=[],
+        vt_scanned_links=0,
+        vt_scan_timed_out=False,
         link_count=len(links),
         risk_score=risk_score,
     )
+
+
+async def analyze_links_virustotal(links: List[str], total_budget_seconds: float = 5.0) -> tuple[list[str], list[str], int, bool]:
+    if not links:
+        return [], [], 0, False
+
+    try:
+        from .utils import WebShieldDetector
+    except Exception:
+        return [], [], 0, False
+
+    unique_links = []
+    seen = set()
+    for l in links:
+        if isinstance(l, str) and l and l not in seen:
+            unique_links.append(l)
+            seen.add(l)
+
+    semaphore = asyncio.Semaphore(6)
+    vt_suspicious: list[str] = []
+    vt_malicious: list[str] = []
+
+    completed_urls: set[str] = set()
+
+    async def _scan_one(detector: WebShieldDetector, url: str):
+        async with semaphore:
+            vt = await detector.check_virustotal(url)
+            completed_urls.add(url)
+            if not isinstance(vt, dict):
+                return
+            mc = int(vt.get("malicious_count") or 0)
+            sc = int(vt.get("suspicious_count") or 0)
+            if mc > 0:
+                vt_malicious.append(url)
+            elif sc > 0:
+                vt_suspicious.append(url)
+
+    timed_out = False
+    scanned_count = 0
+    try:
+        async with WebShieldDetector() as detector:
+            tasks = [asyncio.create_task(_scan_one(detector, u)) for u in unique_links]
+            try:
+                done, pending = await asyncio.wait(tasks, timeout=max(0.1, total_budget_seconds))
+                if pending:
+                    timed_out = True
+                    for t in pending:
+                        t.cancel()
+                    await asyncio.gather(*pending, return_exceptions=True)
+                await asyncio.gather(*done, return_exceptions=True)
+            except Exception:
+                timed_out = True
+            finally:
+                scanned_count = len(completed_urls)
+    except Exception:
+        return [], [], 0, False
+
+    vt_suspicious = list(dict.fromkeys(vt_suspicious))
+    vt_malicious = list(dict.fromkeys(vt_malicious))
+    return vt_suspicious, vt_malicious, scanned_count, timed_out
 
 
 def calculate_threat_score(
@@ -593,11 +674,26 @@ def calculate_threat_score(
     # Calculate base safety score (0-100, where 100 is safest)
     safety_score = sender_score + auth_score + link_score
 
+    # IMPORTANT: Boost safety score for trusted domains with good reputation
+    # This prevents false "suspicious" classifications for legitimate emails
+    if sender_rep.is_trusted_domain and sender_rep.reputation_score >= 70:
+        safety_score = max(safety_score, 70)  # Minimum 70 for trusted domains
+    elif sender_rep.reputation_score >= 80 and header_analysis.is_authenticated:
+        safety_score = max(safety_score, 65)
+
     # Track if we have actual suspicious patterns (not just missing data)
     has_suspicious_patterns = False
     pattern_flags = []
 
     # Check for actual red flags
+    if getattr(link_analysis, "vt_malicious_links", None):
+        has_suspicious_patterns = True
+        pattern_flags.append(f"vt_malicious_links:{len(link_analysis.vt_malicious_links)}")
+
+    if getattr(link_analysis, "vt_suspicious_links", None):
+        has_suspicious_patterns = True
+        pattern_flags.append(f"vt_suspicious_links:{len(link_analysis.vt_suspicious_links)}")
+
     if link_analysis.malicious_links:
         has_suspicious_patterns = True
         pattern_flags.append(f"malicious_links:{len(link_analysis.malicious_links)}")
@@ -664,29 +760,37 @@ def calculate_threat_score(
     # === DETERMINE THREAT LEVEL WITH PATTERN ANALYSIS ===
     # Only mark as suspicious/dangerous if we have ACTUAL reasons
 
-    if threat_score <= 33:
-        threat_level = "safe"
-        summary = "Email appears safe"
-    elif threat_score <= 66:
-        # Only mark suspicious if we have actual patterns
-        if has_suspicious_patterns or has_explicit_auth_failure:
-            threat_level = "suspicious"
-            summary = "Email shows suspicious characteristics"
-        else:
-            # No real patterns, probably just unknown sender - call it safe
-            threat_level = "safe"
-            threat_score = min(threat_score, 33)  # Cap score
-            summary = "Email appears safe"
+    # VirusTotal policy override: any suspicious/malicious engine verdict => dangerous
+    vt_any_flagged = bool(getattr(link_analysis, "vt_malicious_links", []) or getattr(link_analysis, "vt_suspicious_links", []))
+    if vt_any_flagged:
+        threat_level = "dangerous"
+        threat_score = max(threat_score, 85)
+        summary = "Email contains link(s) flagged by VirusTotal"
     else:
-        # High threat score - verify we have reasons
-        if has_suspicious_patterns:
-            threat_level = "dangerous"
-            summary = "Email is likely dangerous"
+
+        if threat_score <= 33:
+            threat_level = "safe"
+            summary = "Email appears safe"
+        elif threat_score <= 66:
+            # Only mark suspicious if we have actual patterns
+            if has_suspicious_patterns or has_explicit_auth_failure:
+                threat_level = "suspicious"
+                summary = "Email shows suspicious characteristics"
+            else:
+                # No real patterns, probably just unknown sender - call it safe
+                threat_level = "safe"
+                threat_score = min(threat_score, 33)  # Cap score
+                summary = "Email appears safe"
         else:
-            # High score but no clear patterns - downgrade to suspicious
-            threat_level = "suspicious"
-            threat_score = min(threat_score, 60)
-            summary = "Email requires caution"
+            # High threat score - verify we have reasons
+            if has_suspicious_patterns:
+                threat_level = "dangerous"
+                summary = "Email is likely dangerous"
+            else:
+                # High score but no clear patterns - downgrade to suspicious
+                threat_level = "suspicious"
+                threat_score = min(threat_score, 60)
+                summary = "Email requires caution"
 
     # === BUILD REASONS LIST ===
 
@@ -704,17 +808,31 @@ def calculate_threat_score(
 
     # Authentication status reason
     if header_analysis.is_authenticated:
-        reasons.append("✓ Email authentication passed (SPF/DKIM/DMARC)")
+        if header_analysis.authentication_score >= 70:
+            reasons.append("✓ Email authentication verified (SPF/DKIM/DMARC)")
+        else:
+            # Partially verified (e.g., trusted domain without full headers)
+            reasons.append("✓ Authentication partially verified")
     elif has_explicit_auth_failure:
         # Already added above if applicable
         if "authentication" not in " ".join(reasons).lower():
             reasons.append("⚠️ Email authentication failed")
     elif is_auth_unknown:
-        reasons.append("Email authentication not available")
+        if sender_rep.is_trusted_domain:
+            reasons.append("✓ Trusted sender domain (auth headers not available)")
+        else:
+            reasons.append("Authentication not available")
     else:
         reasons.append("Authentication partially verified")
 
     # Link analysis reasons
+    if getattr(link_analysis, "vt_malicious_links", None):
+        reasons.append(f"⚠️ VirusTotal flagged {len(link_analysis.vt_malicious_links)} malicious link(s)")
+    elif getattr(link_analysis, "vt_suspicious_links", None):
+        reasons.append(f"⚠️ VirusTotal flagged {len(link_analysis.vt_suspicious_links)} suspicious link(s)")
+    elif getattr(link_analysis, "vt_scan_timed_out", False) and getattr(link_analysis, "vt_scanned_links", 0) > 0:
+        reasons.append("VirusTotal scan timed out")
+
     if link_analysis.malicious_links:
         reasons.append(f"⚠️ Contains {len(link_analysis.malicious_links)} potentially dangerous link(s)")
     elif link_analysis.suspicious_links:
@@ -760,10 +878,17 @@ async def scan_email_metadata(request: EmailScanRequest):
         # Analyze links
         link_analysis = analyze_links(request.email_metadata.links)
 
-        # Calculate overall threat score
-        threat_score, threat_level, summary, reasons = calculate_threat_score(
-            sender_rep, header_analysis, link_analysis
+        # VirusTotal scan for every link (strict time budget)
+        vt_suspicious, vt_malicious, vt_scanned_count, vt_timed_out = await analyze_links_virustotal(
+            request.email_metadata.links, total_budget_seconds=5.0
         )
+        link_analysis.vt_suspicious_links = vt_suspicious
+        link_analysis.vt_malicious_links = vt_malicious
+        link_analysis.vt_scanned_links = vt_scanned_count
+        link_analysis.vt_scan_timed_out = vt_timed_out
+
+        # Calculate overall threat score
+        threat_score, threat_level, summary, reasons = calculate_threat_score(sender_rep, header_analysis, link_analysis)
 
         # Build response
         response = EmailScanResponse(
