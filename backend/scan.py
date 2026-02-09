@@ -676,7 +676,9 @@ async def _do_scan(url: str, scan_id: str):
 
                                 # Keep UI score consistent with the escalated verdict.
                                 try:
-                                    score_total = int(detection_details.get("score_breakdown", {}).get("total_score", score_total))
+                                    score_total = int(
+                                        detection_details.get("score_breakdown", {}).get("total_score", score_total)
+                                    )
                                 except Exception:
                                     score_total = score_total
                                 if threat_level == "medium":
@@ -685,7 +687,9 @@ async def _do_scan(url: str, scan_id: str):
                                     score_total = max(score_total, 75)
 
                                 try:
-                                    if "score_breakdown" in detection_details and isinstance(detection_details["score_breakdown"], dict):
+                                    if "score_breakdown" in detection_details and isinstance(
+                                        detection_details["score_breakdown"], dict
+                                    ):
                                         detection_details["score_breakdown"]["total_score"] = score_total
                                 except Exception:
                                     pass

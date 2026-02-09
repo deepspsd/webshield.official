@@ -116,6 +116,16 @@ function getSafeBody() {
   try {
     const url = window.location.href;
 
+    // Never run website-protection logic inside Gmail. The project has a dedicated Gmail extension.
+    try {
+      const host = new URL(url).hostname;
+      if (host === 'mail.google.com') {
+        return;
+      }
+    } catch (_) {
+      // ignore
+    }
+
     // Skip system URLs (chrome://, about:, file://, etc.)
     if (shouldSkipUrl(url)) {
       console.log('WebShield: Skipping system URL:', url);

@@ -64,7 +64,7 @@ WebShield is a state-of-the-art URL scanning and phishing detection system power
 ## 🛠️ Technology Stack
 
 - **Backend**: Python 3.11+, FastAPI, Uvicorn
-- **ML/AI**: Scikit-learn, TensorFlow, Google Gemini API, HuggingFace
+- **ML/AI**: Scikit-learn, Numpy, Scipy, Groq API,Virus Total API 
 - **Database**: MySQL (Aiven Cloud)
 - **Infrastructure**: Docker, Redis, Nginx
 
@@ -78,7 +78,7 @@ WebShield is a state-of-the-art URL scanning and phishing detection system power
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/deepugangadhar46/webshield.official.git
+   git clone https://github.com/deepspsdwebshield.official.git
    cd webshield.official
    ```
 

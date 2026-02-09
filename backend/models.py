@@ -202,6 +202,7 @@ class ExportFormat(str, Enum):
 # Scan Report Organization Models
 # ========================================
 
+
 # Folder Models
 class ReportFolder(BaseModel):
     id: Optional[int] = Field(None, description="Folder ID")

@@ -46,11 +46,20 @@
             margin: 0;
             padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            width: 500px;
+            width: 100%;
+            max-width: 760px;
+            margin-left: auto;
+            margin-right: auto;
             min-height: 100vh;
             background: var(--dark);
             color: var(--text-primary);
             position: relative;
+        }
+
+        .page {
+            width: 100%;
+            position: relative;
+            z-index: 1;
         }
 
         /* Gradient Background Effect */
@@ -296,100 +305,102 @@
 </head>
 
 <body>
-    <div class="header">
-        <div class="header-icon">⚙️</div>
-        <div class="header-title">Settings</div>
-    </div>
+    <div class="page">
+        <div class="header">
+            <div class="header-icon">⚙️</div>
+            <div class="header-title">Settings</div>
+        </div>
 
-    <!-- General Settings -->
-    <div class="section">
-        <div class="section-title">General</div>
+        <!-- General Settings -->
+        <div class="section">
+            <div class="section-title">General</div>
 
-        <div class="setting-row">
-            <div class="setting-label">
-                <div class="setting-label-title">Auto-scan emails</div>
-                <div class="setting-label-desc">Automatically scan emails when opened</div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <div class="setting-label-title">Auto-scan emails</div>
+                    <div class="setting-label-desc">Automatically scan emails when opened</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="auto-scan">
+                    <span class="slider"></span>
+                </label>
             </div>
-            <label class="switch">
-                <input type="checkbox" id="auto-scan">
-                <span class="slider"></span>
-            </label>
-        </div>
 
-        <div class="setting-row">
-            <div class="setting-label">
-                <div class="setting-label-title">Show notifications</div>
-                <div class="setting-label-desc">Display notifications for dangerous emails</div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <div class="setting-label-title">Show notifications</div>
+                    <div class="setting-label-desc">Display notifications for dangerous emails</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="notifications" checked>
+                    <span class="slider"></span>
+                </label>
             </div>
-            <label class="switch">
-                <input type="checkbox" id="notifications" checked>
-                <span class="slider"></span>
-            </label>
-        </div>
 
-        <div class="setting-row">
-            <div class="setting-label">
-                <div class="setting-label-title">Dark mode</div>
-                <div class="setting-label-desc">Use dark theme</div>
+            <div class="setting-row">
+                <div class="setting-label">
+                    <div class="setting-label-title">Dark mode</div>
+                    <div class="setting-label-desc">Use dark theme</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="dark-mode">
+                    <span class="slider"></span>
+                </label>
             </div>
-            <label class="switch">
-                <input type="checkbox" id="dark-mode">
-                <span class="slider"></span>
-            </label>
-        </div>
-    </div>
-
-    <!-- API Settings -->
-    <div class="section">
-        <div class="section-title">API Configuration</div>
-
-        <div class="input-group">
-            <label for="api-endpoint">Backend API Endpoint</label>
-            <input type="text" id="api-endpoint" placeholder="http://localhost:8000">
         </div>
 
-        <div class="input-group">
-            <label for="scan-timeout">Scan Timeout (seconds)</label>
-            <input type="number" id="scan-timeout" value="30" min="10" max="120">
-        </div>
+        <!-- API Settings -->
+        <div class="section">
+            <div class="section-title">API Configuration</div>
 
-        <button class="btn" id="save-api">Save API Settings</button>
-    </div>
-
-    <!-- Data Management -->
-    <div class="section">
-        <div class="section-title">Data Management</div>
-
-        <div class="setting-row">
-            <div class="setting-label">
-                <div class="setting-label-title">Scan history</div>
-                <div class="setting-label-desc">Clear all stored scan results</div>
+            <div class="input-group">
+                <label for="api-endpoint">Backend API Endpoint</label>
+                <input type="text" id="api-endpoint" placeholder="http://localhost:8000">
             </div>
-            <button class="btn btn-secondary" id="clear-history" style="width: auto; padding: 6px 16px;">Clear</button>
-        </div>
 
-        <div class="setting-row">
-            <div class="setting-label">
-                <div class="setting-label-title">Cache</div>
-                <div class="setting-label-desc">Clear extension cache</div>
+            <div class="input-group">
+                <label for="scan-timeout">Scan Timeout (seconds)</label>
+                <input type="number" id="scan-timeout" value="30" min="10" max="120">
             </div>
-            <button class="btn btn-secondary" id="clear-cache" style="width: auto; padding: 6px 16px;">Clear</button>
+
+            <button class="btn" id="save-api">Save API Settings</button>
         </div>
-    </div>
 
-    <!-- About -->
-    <div class="section">
-        <div class="section-title">About</div>
-        <div style="font-size: 13px; color: var(--sub); line-height: 1.6;">
-            <p><strong>WebShield Gmail Scanner</strong></p>
-            <p>Version: 2.0.0</p>
-            <p>Protects your inbox from phishing, malware, and suspicious emails.</p>
+        <!-- Data Management -->
+        <div class="section">
+            <div class="section-title">Data Management</div>
+
+            <div class="setting-row">
+                <div class="setting-label">
+                    <div class="setting-label-title">Scan history</div>
+                    <div class="setting-label-desc">Clear all stored scan results</div>
+                </div>
+                <button class="btn btn-secondary" id="clear-history" style="width: auto; padding: 6px 16px;">Clear</button>
+            </div>
+
+            <div class="setting-row">
+                <div class="setting-label">
+                    <div class="setting-label-title">Cache</div>
+                    <div class="setting-label-desc">Clear extension cache</div>
+                </div>
+                <button class="btn btn-secondary" id="clear-cache" style="width: auto; padding: 6px 16px;">Clear</button>
+            </div>
         </div>
+
+        <!-- About -->
+        <div class="section">
+            <div class="section-title">About</div>
+            <div style="font-size: 13px; color: var(--sub); line-height: 1.6;">
+                <p><strong>WebShield Gmail Scanner</strong></p>
+                <p>Version: 2.0.0</p>
+                <p>Protects your inbox from phishing, malware, and suspicious emails.</p>
+            </div>
+        </div>
+
+        <div id="status-message" class="status-message"></div>
+
+        <script src="settings.js"></script>
     </div>
-
-    <div id="status-message" class="status-message"></div>
-
-    <script src="settings.js"></script>
 </body>
 
 </html>

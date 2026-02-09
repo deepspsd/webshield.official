@@ -189,12 +189,12 @@ class URLThreatClassifier:
     def _load_blacklist(self):
         """Load known malicious patterns"""
         return {
-            "phishing_domains": [], 
-            "malware_hashes": [], 
+            "phishing_domains": [],
+            "malware_hashes": [],
             "suspicious_patterns": [
                 r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}",  # IP addresses
                 r"[a-z0-9]{32,}",  # Long random strings
-                r"(.)\\1{4,}",  
+                r"(.)\\1{4,}",
             ],
         }
 

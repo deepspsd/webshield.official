@@ -13,7 +13,7 @@ class MLConfig:
     """ML Configuration class to control resource usage"""
 
     # Parallel processing limits
-    MAX_PARALLEL_JOBS = 1 
+    MAX_PARALLEL_JOBS = 1
     MAX_OMP_THREADS = 1
     MAX_MKL_THREADS = 1
 
@@ -35,8 +35,8 @@ class MLConfig:
             "OMP_NUM_THREADS": str(cls.MAX_OMP_THREADS),
             "MKL_NUM_THREADS": str(cls.MAX_MKL_THREADS),
             "NUMEXPR_NUM_THREADS": str(cls.MAX_OMP_THREADS),
-            "JOBLIB_MULTIPROCESSING": "0", 
-            "LOKY_MAX_CPU_COUNT": "1", 
+            "JOBLIB_MULTIPROCESSING": "0",
+            "LOKY_MAX_CPU_COUNT": "1",
         }
 
         for key, value in env_vars.items():
@@ -73,5 +73,6 @@ class MLConfig:
             "max_iter": cls.MAX_ITERATIONS,
             "random_state": 42,
         }
-        
+
+
 MLConfig.configure_environment()
