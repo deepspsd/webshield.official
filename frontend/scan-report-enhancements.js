@@ -658,12 +658,22 @@ function createLLMAnalysisSection(llmAnalysis, result) {
 function createSecurityGlossary() {
     const terms = [
         { term: 'Phishing', definition: 'Fraudulent attempts to obtain sensitive information by disguising as a trustworthy entity' },
+        { term: 'VirusTotal', definition: 'A threat intelligence platform that scans URLs/files using many security engines and aggregates results' },
         { term: 'SSL/TLS', definition: 'Encryption protocols that secure data transmitted between your browser and websites' },
         { term: 'Domain Reputation', definition: 'Assessment of how trustworthy a website domain is based on historical data' },
+        { term: 'Typosquatting', definition: 'A scam where attackers register look-alike domains (e.g., g00gle.com) to trick users' },
+        { term: 'Spoofing', definition: 'Impersonating a trusted sender/domain/site to make something malicious appear legitimate' },
         { term: 'Malware', definition: 'Software designed to harm, exploit, or gain unauthorized access to computer systems' },
+        { term: 'Ransomware', definition: 'Malware that encrypts files and demands payment for decryption' },
+        { term: 'Brand Impersonation', definition: 'A page that copies a trusted brand’s logo/text/UI to trick you into trusting it.'},
+        { term: 'Credential Harvesting', definition: 'Techniques used to steal usernames/passwords via fake login pages or deceptive prompts' },
         { term: 'Social Engineering', definition: 'Manipulation techniques used to trick people into revealing sensitive information' },
+        { term: 'Two-Factor Authentication (2FA)', definition: 'An extra login step (code/app/prompt) that reduces risk even if passwords are stolen' },
+        { term: 'Data Exfiltration', definition: 'Unauthorized transfer of data from a device or network to an attacker' },
         { term: 'HTTPS', definition: 'Secure version of HTTP that encrypts data between your browser and the website' },
-        { term: 'Certificate', definition: 'Digital document that verifies a website\'s identity and enables encrypted connections' },
+        { term: 'Certificate Mismatch', definition: 'A TLS certificate does not match the domain you are visiting, indicating potential interception or misconfiguration' },
+        { term: 'Content-Based Detection', definition: 'Analyzing page text/structure/behaviors to identify phishing indicators (e.g., urgency, fake forms, brand impersonation)' },
+        { term: 'URL Heuristics', definition: 'Rules that flag suspicious URLs (e.g., long subdomains, IP-based URLs, misleading paths)' },
         { term: 'Threat Level', definition: 'Classification of risk: low, medium, or high based on multiple security signals' }
     ];
 
