@@ -316,6 +316,11 @@ function createBestActionSection(result, details) {
     const llmAnalysis = details.llm_analysis || {};
     const explanation = llmAnalysis.explanation || {};
 
+    const normalizeNumberedStep = (step) => {
+        const s = String(step ?? '').trim();
+        return s.replace(/^\s*\d+\s*[\.)]\s*/, '');
+    };
+
     // Determine recommended action
     let actionBg, actionBorder, actionIcon, actionTitle, actionSteps;
 
@@ -389,7 +394,7 @@ function createBestActionSection(result, details) {
                         📋 Steps to Follow:
                     </div>
                     <ol style="margin: 0; padding-left: 1.5rem; line-height: 1.9; color: hsl(var(--foreground));">
-                        ${actionSteps.map(step => `<li style="margin-bottom: 0.35rem;">${escapeHtml(step)}</li>`).join('')}
+                        ${actionSteps.map(step => `<li style="margin-bottom: 0.35rem;">${escapeHtml(normalizeNumberedStep(step))}</li>`).join('')}
                     </ol>
                 </div>
 

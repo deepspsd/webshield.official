@@ -65,6 +65,30 @@ def generate_scan_id():
     return unique_id[:36]  # Keep standard UUID length for compatibility
 
 
+@scan_router.post("/clear-cache")
+async def clear_scan_cache():
+    """Clear in-memory scan/report caches."""
+    try:
+        reports_count = len(SCAN_REPORTS_BY_ID)
+        in_progress_count = len(SCAN_IN_PROGRESS)
+        timestamps_count = len(SCAN_IN_PROGRESS_TIMESTAMPS)
+
+        SCAN_REPORTS_BY_ID.clear()
+        SCAN_IN_PROGRESS.clear()
+        SCAN_IN_PROGRESS_TIMESTAMPS.clear()
+
+        return {
+            "ok": True,
+            "cleared": {
+                "scan_reports_by_id": reports_count,
+                "scan_in_progress": in_progress_count,
+                "scan_in_progress_timestamps": timestamps_count,
+            },
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to clear scan cache: {e}") from e
+
+
 async def _do_scan(url: str, scan_id: str):
     """
     Advanced Multi-Engine Threat Detection Scan
