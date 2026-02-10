@@ -226,6 +226,16 @@ class AccessibilityManager {
     }
 
     setupModalFocusTrap(modal) {
+        // Only move focus when the modal is actually open/visible.
+        // Focusing a hidden modal during initial page parse can cause the page
+        // to jump/scroll unexpectedly (e.g., on pages that include modals at the bottom).
+        const ariaHidden = modal.getAttribute('aria-hidden');
+        const style = window.getComputedStyle(modal);
+        const isVisible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+        const isOpen = ariaHidden === 'false' || modal.classList.contains('open') || modal.dataset.open === 'true';
+
+        if (!isVisible || !isOpen) return;
+
         const focusableElements = modal.querySelectorAll(this.focusableElements.join(', '));
         if (focusableElements.length > 0) {
             focusableElements[0].focus();
