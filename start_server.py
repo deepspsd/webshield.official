@@ -146,7 +146,8 @@ def start_server_with_monitoring(port, max_restarts=10):
                 "--no-use-colors",
             ]
 
-            logger.info(f"[CONFIG] Command: {' '.join(cmd)}")
+            # Use repr to avoid confusing line wraps in some terminals
+            logger.info(f"[CONFIG] Command: {cmd!r}")
 
             # Start the server process
             process = subprocess.Popen(
@@ -170,6 +171,9 @@ def start_server_with_monitoring(port, max_restarts=10):
                 logger.info("Press Ctrl+C to stop the server...")
 
                 # Monitor the process
+                started_ok = True
+                stop_requested = False
+
                 try:
                     # Stream output in real-time
                     while True:
@@ -191,18 +195,22 @@ def start_server_with_monitoring(port, max_restarts=10):
                     exit_code = process.poll()
                     if exit_code == 0:
                         logger.info("Server stopped normally")
-                        break
+                        return True
                     else:
                         logger.warning(f"Server process exited with code {exit_code}")
 
                 except KeyboardInterrupt:
+                    stop_requested = True
                     logger.info("Received interrupt signal, stopping server...")
                     process.terminate()
                     try:
                         process.wait(timeout=10)
                     except subprocess.TimeoutExpired:
                         process.kill()
-                    break
+
+                # If the server was started and the user stopped it (Ctrl+C), treat as success.
+                if started_ok and stop_requested:
+                    return True
 
             else:
                 # Process failed to start

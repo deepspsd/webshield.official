@@ -168,63 +168,46 @@ function enhanceScanReportWithCharts(result, details) {
     const sections = rightPanel.querySelectorAll('.analysis-section');
     let insertPoint = sections.length > 0 ? sections[0] : null;
 
-    // 1. Create and insert User Education Section (TOP PRIORITY)
-    const userEducationHTML = createUserEducationSection(result, details);
-    if (insertPoint) {
-        insertPoint.insertAdjacentHTML('beforebegin', userEducationHTML);
-    } else {
-        rightPanel.insertAdjacentHTML('afterbegin', userEducationHTML);
-    }
-
-    // 2. Create and insert Best Action Section
-    const bestActionHTML = createBestActionSection(result, details);
-    const educationSection = document.getElementById('user-education-section');
-    if (educationSection) {
-        educationSection.insertAdjacentHTML('afterend', bestActionHTML);
-    }
-
-    // 3. Create and insert Chart Sections
+    // Create and insert Chart Sections (collapsed by default)
     const chartSectionsHTML = createChartSections(result, details);
-    const bestActionSection = document.getElementById('best-action-section');
-    if (bestActionSection) {
-        bestActionSection.insertAdjacentHTML('afterend', chartSectionsHTML);
+    if (insertPoint) {
+        insertPoint.insertAdjacentHTML('beforebegin', chartSectionsHTML);
+    } else {
+        rightPanel.insertAdjacentHTML('afterbegin', chartSectionsHTML);
     }
 
-    // 4. Create and insert ML Analysis Section
-    if (details.ml_analysis && details.ml_analysis.ml_enabled) {
-        const mlAnalysisHTML = createMLAnalysisSection(details);
-        const chartSection = document.getElementById('charts-section');
-        if (chartSection) {
-            chartSection.insertAdjacentHTML('afterend', mlAnalysisHTML);
-        }
-    }
-
-    // 5. Create and insert LLM Analysis Section
+    // Create and insert LLM Analysis Section
     if (details.llm_analysis) {
         console.log('📊 LLM Analysis data found:', details.llm_analysis);
         const llmHTML = createLLMAnalysisSection(details.llm_analysis, result);
-        const mlSection = document.getElementById('ml-analysis-section');
-        if (mlSection) {
-            mlSection.insertAdjacentHTML('afterend', llmHTML);
+        const chartSection = document.getElementById('charts-section');
+        if (chartSection) {
+            chartSection.insertAdjacentHTML('afterend', llmHTML);
         } else {
-            const chartSection = document.getElementById('charts-section');
-            if (chartSection) {
-                chartSection.insertAdjacentHTML('afterend', llmHTML);
-            }
+            rightPanel.insertAdjacentHTML('afterbegin', llmHTML);
         }
     }
 
-    // 6. Create and insert Security Glossary
+    // Create and insert Security Glossary (collapsed by default)
     const glossaryHTML = createSecurityGlossary();
     rightPanel.insertAdjacentHTML('beforeend', glossaryHTML);
 
-    // Render charts after a short delay to ensure DOM is ready
-    setTimeout(() => {
-        console.log('🎨 Starting chart rendering with fresh data...');
-        ensureScoreBreakdown(result, details);
-        renderRiskGaugeChart(result, details);
-        renderThreatScoreChart(result, details);
-    }, 200);
+    // Render charts only when user expands the panel (avoids rendering into hidden/collapsed containers)
+    const chartsDetails = document.getElementById('charts-details');
+    if (chartsDetails) {
+        const renderIfNeeded = () => {
+            if (!chartsDetails.open) return;
+            if (chartsDetails.dataset.rendered === 'true') return;
+            chartsDetails.dataset.rendered = 'true';
+
+            console.log('🎨 Rendering charts on expand...');
+            ensureScoreBreakdown(result, details);
+            renderRiskGaugeChart(result, details);
+            renderThreatScoreChart(result, details);
+        };
+
+        chartsDetails.addEventListener('toggle', renderIfNeeded);
+    }
 
     console.log('✅ Report enhancement complete');
 }
@@ -321,6 +304,7 @@ function createUserEducationSection(result, details) {
                     </div>
                 </div>
             </div>
+            </details>
         </div>
     `;
 }
@@ -405,7 +389,7 @@ function createBestActionSection(result, details) {
                         📋 Steps to Follow:
                     </div>
                     <ol style="margin: 0; padding-left: 1.5rem; line-height: 1.9; color: hsl(var(--foreground));">
-                        ${actionSteps.map((step, i) => `<li style="margin-bottom: 0.35rem;"><strong>${i + 1}.</strong> ${escapeHtml(step)}</li>`).join('')}
+                        ${actionSteps.map(step => `<li style="margin-bottom: 0.35rem;">${escapeHtml(step)}</li>`).join('')}
                     </ol>
                 </div>
 
@@ -429,7 +413,8 @@ function createBestActionSection(result, details) {
 function createChartSections(result, details) {
     return `
         <div class="analysis-section" id="charts-section" style="margin-bottom: 1.5rem;">
-            <h2 class="section-title">📊 Visual Analysis Dashboard</h2>
+            <details id="charts-details" style="background: transparent;">
+                <summary class="section-title" style="cursor:pointer; list-style: none;">📊 Visual Analysis Dashboard</summary>
             
             <!-- Risk Gauge -->
             <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -448,6 +433,7 @@ function createChartSections(result, details) {
                     <canvas id="threatScoreChart"></canvas>
                 </div>
             </div>
+            </details>
         </div>
     `;
 }
@@ -664,48 +650,36 @@ function createLLMAnalysisSection(llmAnalysis, result) {
     return html;
 }
 
-// ==================== SECURITY GLOSSARY ====================
 function createSecurityGlossary() {
     const terms = [
         { term: 'Phishing', definition: 'Fraudulent attempts to obtain sensitive information by disguising as a trustworthy entity' },
         { term: 'SSL/TLS', definition: 'Encryption protocols that secure data transmitted between your browser and websites' },
-        { term: 'Malware', definition: 'Malicious software designed to damage, disrupt, or gain unauthorized access to systems' },
-        { term: 'VirusTotal', definition: 'A service that analyzes files and URLs using 70+ antivirus engines' },
-        { term: 'Threat Score', definition: 'A numerical rating (0-100) indicating the likelihood of malicious activity' },
-        { term: 'Domain Reputation', definition: 'Historical trustworthiness of a website based on past behavior' }
+        { term: 'Domain Reputation', definition: 'Assessment of how trustworthy a website domain is based on historical data' },
+        { term: 'Malware', definition: 'Software designed to harm, exploit, or gain unauthorized access to computer systems' },
+        { term: 'Social Engineering', definition: 'Manipulation techniques used to trick people into revealing sensitive information' },
+        { term: 'HTTPS', definition: 'Secure version of HTTP that encrypts data between your browser and the website' },
+        { term: 'Certificate', definition: 'Digital document that verifies a website\'s identity and enables encrypted connections' },
+        { term: 'Threat Level', definition: 'Classification of risk: low, medium, or high based on multiple security signals' }
     ];
 
     return `
-        <div class="analysis-section" id="security-glossary" style="margin-top: 1.5rem;">
-            <h2 class="section-title" style="cursor: pointer;" onclick="toggleGlossary()">
-                📖 Security Terms Glossary <span id="glossary-toggle" style="font-size: 0.8rem; color: hsl(var(--muted-foreground));">▼ Click to expand</span>
-            </h2>
-            <div id="glossary-content" style="display: none; background: hsl(var(--muted)); border-radius: 0.75rem; padding: 1rem;">
-                <div style="display: grid; gap: 0.75rem;">
-                    ${terms.map(t => `
-                        <div style="padding: 0.75rem; background: hsl(var(--card)); border-radius: 0.5rem; border: 1px solid hsl(var(--border));">
-                            <div style="font-weight: 600; color: hsl(var(--primary)); font-size: 0.9rem;">${escapeHtml(t.term)}</div>
-                            <div style="font-size: 0.85rem; color: hsl(var(--muted-foreground)); margin-top: 0.25rem; line-height: 1.5;">${escapeHtml(t.definition)}</div>
-                        </div>
-                    `).join('')}
+        <div class="analysis-section" id="security-glossary" style="margin-bottom: 1.5rem;">
+            <details id="glossary-details" style="background: transparent;">
+                <summary class="section-title" style="cursor:pointer; list-style: none;">📚 Security Glossary</summary>
+                <div class="analysis-card" style="background: hsl(var(--muted));">
+                    <div style="display: grid; gap: 0.75rem;">
+                        ${terms.map(t => `
+                            <div style="padding: 0.75rem; background: hsl(var(--card)); border-radius: 0.5rem; border: 1px solid hsl(var(--border));">
+                                <div style="font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 0.25rem;">${escapeHtml(t.term)}</div>
+                                <div style="font-size: 0.85rem; color: hsl(var(--muted-foreground)); line-height: 1.5;">${escapeHtml(t.definition)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
-            </div>
+            </details>
         </div>
     `;
 }
-
-// Toggle glossary visibility
-window.toggleGlossary = function () {
-    const content = document.getElementById('glossary-content');
-    const toggle = document.getElementById('glossary-toggle');
-    if (content.style.display === 'none') {
-        content.style.display = 'block';
-        toggle.textContent = '▲ Click to collapse';
-    } else {
-        content.style.display = 'none';
-        toggle.textContent = '▼ Click to expand';
-    }
-};
 
 // ==================== HELPER FUNCTIONS ====================
 function buildThreatExplanations(result, details) {
