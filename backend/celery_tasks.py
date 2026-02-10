@@ -73,27 +73,17 @@ def scan_url_task(self, url: str, scan_id: str):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                result = loop.run_until_complete(_do_scan(url, scan_id))
+                result = loop.run_until_complete(asyncio.wait_for(_do_scan(url, scan_id), timeout=120))
                 return result
             finally:
                 loop.close()
 
         # Execute with timeout and circuit breaker protection
-        import signal
-
-        def timeout_handler(signum, frame):
-            raise TimeoutError("Scan timed out after 120 seconds")
-
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(120)  # 2 minute timeout per scan
-
         try:
             result = protected_scan()
-            signal.alarm(0)  # Cancel timeout
             logger.info(f"✅ Celery task completed for scan {scan_id}")
             return {"scan_id": scan_id, "status": "completed", "result": result}
-        except TimeoutError as e:
-            signal.alarm(0)
+        except asyncio.TimeoutError as e:
             raise self.retry(countdown=60, exc=TimeoutError("Scan timeout - retrying")) from e
 
     except Exception as e:

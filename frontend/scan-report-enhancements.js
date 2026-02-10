@@ -318,7 +318,7 @@ function createBestActionSection(result, details) {
 
     const normalizeNumberedStep = (step) => {
         const s = String(step ?? '').trim();
-        return s.replace(/^\s*\d+\s*[\.)]\s*/, '');
+        return s.replace(/^(?:\s*\d+\s*[\.)]\s*)+/, '');
     };
 
     // Determine recommended action
