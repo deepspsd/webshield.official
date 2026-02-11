@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 # VirusTotal API configuration
 VT_API_KEY = os.getenv("VT_API_KEY")
+VT_API_KEY2 = os.getenv("VT_API_KEY2")
 VT_BASE_URL = "https://www.virustotal.com/api/v3"
 
 # VirusTotal response cache (in-memory, TTL-based) to reduce API usage.
@@ -695,11 +696,12 @@ class WebShieldDetector:
             "ml_enabled": False,
         }
 
-    async def check_virustotal(self, url: str) -> Dict[str, Any]:
+    async def check_virustotal(self, url: str, api_key: str | None = None) -> Dict[str, Any]:
         """Check URL against VirusTotal API with aggressive timeout handling.
         If no cached analysis is available, submit a URL analysis and poll briefly for a result.
         """
-        if not VT_API_KEY or VT_API_KEY == "your_virustotal_api_key_here":
+        key = api_key or VT_API_KEY
+        if not key or key == "your_virustotal_api_key_here":
             return {
                 "malicious_count": 0,
                 "suspicious_count": 0,
@@ -728,32 +730,37 @@ class WebShieldDetector:
                 logger.debug(f"VT cache lookup failed: {e_cache}")
 
             url_id = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
-            headers = {"x-apikey": VT_API_KEY, "Content-Type": "application/json"}
+            headers = {"x-apikey": key, "Content-Type": "application/json"}
 
             check_url = f"{VT_BASE_URL}/urls/{url_id}"
 
             # CRITICAL FIX: Ultra-fast cached analysis check with timeout
             try:
-                # Correct: Use async with for session.get, then wrap in wait_for
-                response = await asyncio.wait_for(self.session.get(check_url, headers=headers), timeout=3.0)
-                if response.status == 200:
-                    data = await response.json()
-                    stats = data["data"]["attributes"]["last_analysis_stats"]
-                    result = {
-                        "malicious_count": stats.get("malicious", 0),
-                        "suspicious_count": stats.get("suspicious", 0),
-                        "harmless_count": stats.get("harmless", 0),
-                        "undetected_count": stats.get("undetected", 0),
-                        "total_engines": sum(stats.values()),
-                        "engines_results": {},
-                        "reputation": data["data"]["attributes"].get("reputation", 0),
-                        "cached": True,
-                    }
+                async def _fetch_cached():
+                    async with self.session.get(check_url, headers=headers, timeout=3.0) as response:
+                        if response.status != 200:
+                            return None
+                        data = await response.json()
+                        stats = data["data"]["attributes"]["last_analysis_stats"]
+                        result = {
+                            "malicious_count": stats.get("malicious", 0),
+                            "suspicious_count": stats.get("suspicious", 0),
+                            "harmless_count": stats.get("harmless", 0),
+                            "undetected_count": stats.get("undetected", 0),
+                            "total_engines": sum(stats.values()),
+                            "engines_results": {},
+                            "reputation": data["data"]["attributes"].get("reputation", 0),
+                            "cached": True,
+                        }
+                        return result
+
+                cached_result = await asyncio.wait_for(_fetch_cached(), timeout=3.5)
+                if isinstance(cached_result, dict) and cached_result:
                     try:
-                        _VT_CACHE_BY_URL[url] = {"_cached_at": time.time(), "result": result}
+                        _VT_CACHE_BY_URL[url] = {"_cached_at": time.time(), "result": cached_result}
                     except Exception as e_cache_w:
                         logger.debug(f"VT cache write failed: {e_cache_w}")
-                    return result
+                    return cached_result
             except asyncio.TimeoutError:
                 logger.warning(f"VirusTotal check timed out after 3s for {url}")
             except Exception as e:
@@ -766,7 +773,7 @@ class WebShieldDetector:
             submit_id = None
             try:
                 async with self.session.post(
-                    submit_url, headers={"x-apikey": VT_API_KEY}, data=form, timeout=3.0
+                    submit_url, headers={"x-apikey": key}, data=form, timeout=3.0
                 ) as resp:
                     if resp.status in (200, 202):
                         sub = await resp.json()

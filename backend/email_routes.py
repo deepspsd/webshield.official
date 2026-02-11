@@ -5,7 +5,7 @@ Provides email-specific threat analysis endpoints with real SPF/DMARC verificati
 
 import asyncio
 import logging
-import re
+import os
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -399,19 +399,41 @@ def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str]
                 f"DNS Auth posture - SPF: {spf_posture}, DKIM: {dkim_posture}, DMARC: {dmarc_posture}, Score: {auth_result.overall_score}"
             )
 
-            client_spf = (headers.spf if headers else None) or "unknown"
-            client_dkim = (headers.dkim if headers else None) or "unknown"
-            client_dmarc = (headers.dmarc if headers else None) or "unknown"
+            client_spf = str((headers.spf if headers else None) or "unknown").lower()
+            client_dkim = str((headers.dkim if headers else None) or "unknown").lower()
+            client_dmarc = str((headers.dmarc if headers else None) or "unknown").lower()
+
+            # IMPORTANT: DNS posture/configuration is not message authentication.
+            # We only mark is_authenticated when we have message-level results.
+            msg_is_authenticated = (client_spf == "pass" or client_dkim == "pass") and client_dmarc != "fail"
+
+            # Keep score as a blend: if we have message-level signals, use those; otherwise keep posture score.
+            msg_score = 0
+            if client_spf == "pass":
+                msg_score += 33
+            elif client_spf == "fail":
+                msg_score -= 20
+            if client_dkim == "pass":
+                msg_score += 33
+            elif client_dkim == "fail":
+                msg_score -= 20
+            if client_dmarc == "pass":
+                msg_score += 34
+            elif client_dmarc == "fail":
+                msg_score -= 20
+            msg_score = max(0, min(100, msg_score))
+
+            blended_score = msg_score if (client_spf, client_dkim, client_dmarc) != ("unknown", "unknown", "unknown") else auth_result.overall_score
 
             return HeaderAnalysis(
-                spf_status=str(client_spf).lower(),
-                dkim_status=str(client_dkim).lower(),
-                dmarc_status=str(client_dmarc).lower(),
+                spf_status=client_spf,
+                dkim_status=client_dkim,
+                dmarc_status=client_dmarc,
                 spf_posture=spf_posture,
                 dkim_posture=dkim_posture,
                 dmarc_posture=dmarc_posture,
-                is_authenticated=auth_result.is_authenticated,
-                authentication_score=auth_result.overall_score,
+                is_authenticated=bool(msg_is_authenticated),
+                authentication_score=int(blended_score or 0),
             )
 
         except Exception as e:
@@ -419,18 +441,8 @@ def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str]
 
     # Fallback to client-provided headers
     if not headers:
-        # When no headers available, check if sender is from a trusted domain
-        # This prevents showing "Auth Failed" for trusted domains where we simply lack data
-        is_trusted = False
-        if sender_email:
-            domain = sender_email.split("@")[-1].lower() if "@" in sender_email else ""
-            trusted_domains = {
-                "google.com", "gmail.com", "microsoft.com", "outlook.com",
-                "apple.com", "amazon.com", "facebook.com", "meta.com",
-                "linkedin.com", "twitter.com", "x.com", "github.com", "canarabank"
-            }
-            is_trusted = domain in trusted_domains or any(domain.endswith(f".{t}") for t in ["gov", "edu", "mil"])
-        
+        # With no message headers, we do NOT claim authentication.
+        # Keep a neutral score so UI doesn't show an explicit fail.
         return HeaderAnalysis(
             spf_status="unknown",
             dkim_status="unknown",
@@ -438,8 +450,8 @@ def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str]
             spf_posture="unknown",
             dkim_posture="unknown",
             dmarc_posture="unknown",
-            is_authenticated=is_trusted,  # Trust known domains even without explicit auth
-            authentication_score=50 if is_trusted else 0,  # Partial score for trusted
+            is_authenticated=False,
+            authentication_score=50,
         )
 
     spf = (headers.spf or "unknown").lower()
@@ -645,7 +657,9 @@ def analyze_links(links: List[str]) -> LinkAnalysis:
     )
 
 
-async def analyze_links_virustotal(links: List[str], total_budget_seconds: float = 5.0) -> tuple[list[str], list[str], int, bool]:
+async def analyze_links_virustotal(
+    links: List[str], total_budget_seconds: float = 5.0, api_key: Optional[str] = None
+) -> tuple[list[str], list[str], int, bool]:
     if not links:
         return [], [], 0, False
 
@@ -669,7 +683,7 @@ async def analyze_links_virustotal(links: List[str], total_budget_seconds: float
 
     async def _scan_one(detector: WebShieldDetector, url: str):
         async with semaphore:
-            vt = await detector.check_virustotal(url)
+            vt = await detector.check_virustotal(url, api_key=api_key)
             completed_urls.add(url)
             if not isinstance(vt, dict):
                 return
@@ -923,9 +937,12 @@ async def scan_email_metadata(request: EmailScanRequest):
         # Analyze links (heuristics first)
         link_analysis = analyze_links(request.email_metadata.links)
 
-        # VirusTotal scan for every link (strict time budget)
+        # VirusTotal scan for every link. Use separate key for Gmail/email scanning.
+        # Time budget is configurable so you can trade off completeness vs latency.
+        vt_budget = float(os.getenv("EMAIL_VT_BUDGET_SECONDS", "8.0"))
+        vt_key_email = os.getenv("VT_API_KEY2") or os.getenv("VT_API_KEY")
         vt_suspicious, vt_malicious, vt_scanned_count, vt_timed_out = await analyze_links_virustotal(
-            request.email_metadata.links, total_budget_seconds=5.0
+            request.email_metadata.links, total_budget_seconds=vt_budget, api_key=vt_key_email
         )
         link_analysis.vt_suspicious_links = vt_suspicious
         link_analysis.vt_malicious_links = vt_malicious
@@ -934,15 +951,6 @@ async def scan_email_metadata(request: EmailScanRequest):
 
         # Analyze subject for lightweight content warnings
         content_analysis = analyze_content(request.email_metadata.subject)
-
-        # Calculate overall threat score
-        threat_score, threat_level, summary, reasons = calculate_threat_score(
-            sender_rep, header_analysis, link_analysis
-        )
-        link_analysis.vt_suspicious_links = vt_suspicious
-        link_analysis.vt_malicious_links = vt_malicious
-        link_analysis.vt_scanned_links = vt_scanned_count
-        link_analysis.vt_scan_timed_out = vt_timed_out
 
         # Calculate overall threat score
         threat_score, threat_level, summary, reasons = calculate_threat_score(sender_rep, header_analysis, link_analysis)

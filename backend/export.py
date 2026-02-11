@@ -152,23 +152,31 @@ async def process_export(export_id: int, request: Dict[str, Any]):
         if not conn:
             raise RuntimeError("Database connection unavailable")
         cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT user_email, export_type, format, file_name
+                FROM export_history
+                WHERE id = %s
+                """,
+                (export_id,),
+            )
 
-        cursor.execute(
-            """
-            SELECT user_email, export_type, format, file_name
-            FROM export_history
-            WHERE id = %s
-            """,
-            (export_id,),
-        )
+            export_data = cursor.fetchone()
+            if not export_data:
+                logger.error(f"Export record not found for id: {export_id}")
+                return
 
-        export_data = cursor.fetchone()
-        if not export_data:
-            logger.error(f"Export record not found for id: {export_id}")
-            cursor.close()
-            return
-
-        user_email, export_type, format_type, file_name = export_data
+            user_email, export_type, format_type, file_name = export_data
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         # Create exports directory if it doesn't exist
         exports_dir = Path("exports")
@@ -200,17 +208,29 @@ async def process_export(export_id: int, request: Dict[str, Any]):
 
         # Update export status
         file_size = os.path.getsize(file_path) if os.path.exists(file_path) else 0
-        cursor.execute(
-            """
-            UPDATE export_history
-            SET status = 'completed', file_path = %s, file_size = %s, completed_at = %s
-            WHERE id = %s
-            """,
-            (str(file_path), file_size, datetime.now(), export_id),
-        )
-
-        conn.commit()
-        cursor.close()
+        conn = get_mysql_connection()
+        if not conn:
+            raise RuntimeError("Database connection unavailable")
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                UPDATE export_history
+                SET status = 'completed', file_path = %s, file_size = %s, completed_at = %s
+                WHERE id = %s
+                """,
+                (str(file_path), file_size, datetime.now(), export_id),
+            )
+            conn.commit()
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
         logger.info(f"Export completed successfully for export_id: {export_id}")
 
     except Exception as e:
@@ -221,16 +241,25 @@ async def process_export(export_id: int, request: Dict[str, Any]):
             conn = get_mysql_connection()
             if conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    UPDATE export_history
-                    SET status = 'failed', completed_at = %s
-                    WHERE id = %s
-                    """,
-                    (datetime.now(), export_id),
-                )
-                conn.commit()
-                cursor.close()
+                try:
+                    cursor.execute(
+                        """
+                        UPDATE export_history
+                        SET status = 'failed', completed_at = %s
+                        WHERE id = %s
+                        """,
+                        (datetime.now(), export_id),
+                    )
+                    conn.commit()
+                finally:
+                    try:
+                        cursor.close()
+                    except Exception:
+                        pass
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
         except Exception as update_error:
             logger.error(f"Error updating export status: {update_error}")
 
@@ -242,20 +271,28 @@ async def export_scan_data(format_type: str = "json"):
         if not conn:
             raise RuntimeError("Database connection unavailable")
         cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                """
+                SELECT scan_id, url, status, is_malicious, threat_level,
+                       malicious_count, suspicious_count, total_engines,
+                       ssl_valid, domain_reputation, detection_details,
+                       user_email, created_at, completed_at, scan_timestamp
+                FROM scans
+                ORDER BY created_at DESC
+                """
+            )
 
-        cursor.execute(
-            """
-            SELECT scan_id, url, status, is_malicious, threat_level,
-                   malicious_count, suspicious_count, total_engines,
-                   ssl_valid, domain_reputation, detection_details,
-                   user_email, created_at, completed_at, scan_timestamp
-            FROM scans
-            ORDER BY created_at DESC
-            """
-        )
-
-        scans = cursor.fetchall()
-        cursor.close()
+            scans = cursor.fetchall()
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         # Ensure JSON serializable types
         if format_type.lower() == "json":
@@ -284,21 +321,29 @@ async def export_report_data(format_type: str = "json"):
         if not conn:
             raise RuntimeError("Database connection unavailable")
         cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                """
+                SELECT scan_id, url, is_malicious, threat_level,
+                       malicious_count, suspicious_count, total_engines,
+                       ssl_valid, domain_reputation, detection_details,
+                       user_email, scan_timestamp, created_at, completed_at
+                FROM scans
+                WHERE status = 'completed'
+                ORDER BY created_at DESC
+                """
+            )
 
-        cursor.execute(
-            """
-            SELECT scan_id, url, is_malicious, threat_level,
-                   malicious_count, suspicious_count, total_engines,
-                   ssl_valid, domain_reputation, detection_details,
-                   user_email, scan_timestamp, created_at, completed_at
-            FROM scans
-            WHERE status = 'completed'
-            ORDER BY created_at DESC
-            """
-        )
-
-        reports = cursor.fetchall()
-        cursor.close()
+            reports = cursor.fetchall()
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         if format_type.lower() == "json":
             for row in reports:
@@ -345,19 +390,27 @@ async def get_export_status(export_id: int):
         if not conn:
             raise RuntimeError("Database connection unavailable")
         cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT id, export_type, format, file_name, file_size, status,
+                       created_at, completed_at
+                FROM export_history
+                WHERE id = %s
+                """,
+                (export_id,),
+            )
 
-        cursor.execute(
-            """
-            SELECT id, export_type, format, file_name, file_size, status,
-                   created_at, completed_at
-            FROM export_history
-            WHERE id = %s
-            """,
-            (export_id,),
-        )
-
-        export = cursor.fetchone()
-        cursor.close()
+            export = cursor.fetchone()
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         if not export:
             raise HTTPException(status_code=404, detail="Export not found")
@@ -386,17 +439,25 @@ async def download_export_file(export_id: int):
         if not conn:
             raise RuntimeError("Database connection unavailable")
         cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT file_name, file_path, status FROM export_history
+                WHERE id = %s
+                """,
+                (export_id,),
+            )
 
-        cursor.execute(
-            """
-            SELECT file_name, file_path, status FROM export_history
-            WHERE id = %s
-            """,
-            (export_id,),
-        )
-
-        export = cursor.fetchone()
-        cursor.close()
+            export = cursor.fetchone()
+        finally:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         if not export:
             raise HTTPException(status_code=404, detail="Export not found")

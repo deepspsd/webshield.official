@@ -2,6 +2,7 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -28,6 +29,31 @@ SCAN_IN_PROGRESS_TIMESTAMPS = {}
 
 # In-memory scan cache keyed by scan_id (DB-independent fallback)
 SCAN_REPORTS_BY_ID = {}
+SCAN_REPORTS_BY_ID_TIMESTAMPS = {}
+
+
+def _cache_scan_report(scan_id: str, report: ThreatReport):
+    try:
+        max_items = int(os.getenv("SCAN_REPORT_CACHE_MAX", "500"))
+    except Exception:
+        max_items = 500
+
+    try:
+        SCAN_REPORTS_BY_ID[scan_id] = report
+        SCAN_REPORTS_BY_ID_TIMESTAMPS[scan_id] = time.time()
+    except Exception:
+        return
+
+    try:
+        if max_items > 0 and len(SCAN_REPORTS_BY_ID) > max_items:
+            over = len(SCAN_REPORTS_BY_ID) - max_items
+            if over > 0:
+                oldest = sorted(SCAN_REPORTS_BY_ID_TIMESTAMPS.items(), key=lambda kv: kv[1])[:over]
+                for sid, _ts in oldest:
+                    SCAN_REPORTS_BY_ID.pop(sid, None)
+                    SCAN_REPORTS_BY_ID_TIMESTAMPS.pop(sid, None)
+    except Exception:
+        pass
 
 # Thread pool to prevent thread exhaustion (CRITICAL FIX)
 MAX_WORKER_THREADS = 5  # Reduced from 10 to 5 to prevent resource exhaustion
@@ -51,7 +77,7 @@ def set_cached_scan(url, result):
     try:
         # Store only by scan_id for result retrieval, not for caching by URL
         if result and getattr(result, "scan_id", None):
-            SCAN_REPORTS_BY_ID[result.scan_id] = result
+            _cache_scan_report(result.scan_id, result)
     except Exception:  # nosec B110
         pass
 
@@ -74,6 +100,7 @@ async def clear_scan_cache():
         timestamps_count = len(SCAN_IN_PROGRESS_TIMESTAMPS)
 
         SCAN_REPORTS_BY_ID.clear()
+        SCAN_REPORTS_BY_ID_TIMESTAMPS.clear()
         SCAN_IN_PROGRESS.clear()
         SCAN_IN_PROGRESS_TIMESTAMPS.clear()
 
@@ -903,7 +930,7 @@ async def _do_scan(url: str, scan_id: str):
             logger.info(f"Total scan time: {time.time()-start_time:.2f}s")
             resp = ThreatReport(scan_id=scan_id, url=url, status="completed", results=result)
             try:
-                SCAN_REPORTS_BY_ID[scan_id] = resp
+                _cache_scan_report(scan_id, resp)
             except Exception as e_mem:
                 logger.warning(f"Failed to update scan cache: {e_mem}")
     except Exception as e:
@@ -967,7 +994,7 @@ async def _do_scan(url: str, scan_id: str):
                 logger.error(f"No database connection available for scan {scan_id} error handling")
         resp = ThreatReport(scan_id=scan_id, url=url, status="completed", results=result)
         try:
-            SCAN_REPORTS_BY_ID[scan_id] = resp
+            _cache_scan_report(scan_id, resp)
         except Exception as e_mem:
             logger.warning(f"Failed to update scan cache in error handler: {e_mem}")
     finally:
@@ -1067,7 +1094,7 @@ async def scan_url(request: URLScanRequest, background_tasks: BackgroundTasks):
                 )
                 completed = ThreatReport(scan_id=scan_id, url=url, status="completed", results=result)
                 try:
-                    SCAN_REPORTS_BY_ID[scan_id] = completed
+                    _cache_scan_report(scan_id, completed)
                 except Exception as e:
                     logger.debug(f"Failed to cache whitelist scan: {e}")
                 return completed
@@ -1094,7 +1121,7 @@ async def scan_url(request: URLScanRequest, background_tasks: BackgroundTasks):
 
         # Store initial processing state in-memory so UI can poll even if DB is down
         try:
-            SCAN_REPORTS_BY_ID[scan_id] = ThreatReport(scan_id=scan_id, url=url, status="processing", results=None)
+            _cache_scan_report(scan_id, ThreatReport(scan_id=scan_id, url=url, status="processing", results=None))
         except Exception as e:
             logger.warning(f"Failed to cache initial scan state: {e}")
 

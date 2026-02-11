@@ -824,7 +824,7 @@ function extractEmailMetadata() {
                 const trustedRedirects = ['google.com', 'outlook.office365.com', 'safelinks.protection.outlook.com',
                   'nam12.safelinks.protection.outlook.com', 'links.e.twitch.tv',
                   'click.e.twitch.tv', 'email.spotify.com'];
-d                const isTrustedRedirect = trustedRedirects.some(t => actualDomain.includes(t));
+                const isTrustedRedirect = trustedRedirects.some(t => actualDomain.includes(t));
 
                 if (!isGoogleTrackingUrl && !isTrustedRedirect && displayLooksLikeDomain) {
                   // Check if domains actually differ in a meaningful way
@@ -1226,7 +1226,6 @@ function renderBadgeHTML(scanResult) {
     icon = '⚠️';
     title = 'Suspicious Email';
   }
-  const isTrustedDomain = senderRep?.is_trusted_domain || HIGH_TRUST_DOMAINS.has(senderRep?.domain);
   const isOffline = !!scanResult?.is_offline_analysis;
   const isVerified = !!isTrustedDomain && !isOffline;
   const verifiedDisplay = isVerified ? '✔' : (isTrustedDomain ? '~' : '-');

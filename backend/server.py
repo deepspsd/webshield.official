@@ -236,7 +236,7 @@ async def lifespan(app: FastAPI):
             logger.critical(
                 f"Server crashed {CRASH_COUNT} times in {uptime:.1f}s. Stopping to prevent infinite crashes."
             )
-            sys.exit(1)
+            raise RuntimeError("Maximum server crash threshold exceeded")
         else:
             logger.warning(f"Server crash #{CRASH_COUNT} after {uptime:.1f}s uptime. Restarting...")
             raise
