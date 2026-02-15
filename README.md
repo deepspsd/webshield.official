@@ -1,7 +1,6 @@
 # WebShield: Advanced AI-Powered Security
 
 ![WebShield Banner](https://img.shields.io/badge/WebShield-Security-blue?style=for-the-badge&logo=shield)
-[![CI/CD](https://github.com/deepspsd  /webshield.official/actions/workflows/ci.yml/badge.svg)](https://github.com/deepspsd/webshield.official/actions)
 [![Code Quality](https://img.shields.io/badge/Quality-A%2B-green)](https://github.com/deepspsd/webshield.official)
 [![Security Status](https://img.shields.io/badge/Security-High-green)](https://github.com/deepspsd/webshield.official)
 
