@@ -1,22 +1,30 @@
 """
 Email Scanning Routes for Gmail Extension
-Provides email-specific threat analysis endpoints with real SPF/DMARC verification
+Provides email-specific threat analysis endpoints with real SPF/DMARC verification,
+Google Safe Browsing, WHOIS domain age, NLP phishing detection, and AI explanations
 """
 
+from __future__ import annotations
+
 import asyncio
+import hashlib
+import json
 import logging
 import os
+import re
+import time
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 
 from .utils import WebShieldDetector
 
-# Import our auth checker for real DNS lookups
 try:
-    from .auth_checker import check_email_authentication
+    from .auth_checker import check_email_authentication, check_email_authentication_async
 
     AUTH_CHECKER_AVAILABLE = True
 except ImportError:
@@ -28,6 +36,129 @@ logger = logging.getLogger(__name__)
 email_router = APIRouter(prefix="/email", tags=["Email"])
 
 
+AUTH_CACHE: Dict[str, Tuple[dict, float]] = {}
+AUTH_CACHE_TTL_SECONDS = 86400
+
+
+def _now_s() -> float:
+    return time.time()
+
+
+def _normalize_scan_type(scan_type: Optional[str]) -> str:
+    s = (scan_type or "quick").strip().lower()
+    return "full" if s == "full" else "quick"
+
+
+def _extract_sender_domain(sender_email: str) -> str:
+    if not sender_email or "@" not in sender_email:
+        return ""
+    return sender_email.split("@", 1)[1].lower().strip()
+
+
+def _dedupe_and_limit_links(links: List[str], limit: int) -> List[str]:
+    out: List[str] = []
+    seen: set[str] = set()
+    for l in links or []:
+        if not isinstance(l, str):
+            continue
+        s = l.strip()
+        if not s or s in seen:
+            continue
+        out.append(s)
+        seen.add(s)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _get_cached_auth(domain: str) -> Optional[dict]:
+    if not domain:
+        return None
+    try:
+        entry = AUTH_CACHE.get(domain)
+        if not entry:
+            return None
+        payload, ts = entry
+        if (_now_s() - float(ts or 0)) <= AUTH_CACHE_TTL_SECONDS and isinstance(payload, dict):
+            return dict(payload)
+        AUTH_CACHE.pop(domain, None)
+        return None
+    except Exception:
+        return None
+
+
+def _set_cached_auth(domain: str, payload: dict) -> None:
+    if not domain or not isinstance(payload, dict):
+        return
+    try:
+        AUTH_CACHE[domain] = (dict(payload), _now_s())
+    except Exception:
+        return
+
+
+def _build_minimal_details(
+    *,
+    sender_rep: Optional[SenderReputation] = None,
+    header_analysis: Optional[HeaderAnalysis] = None,
+    link_analysis: Optional[LinkAnalysis] = None,
+    content_analysis: Optional[ContentAnalysis] = None,
+) -> EmailScanDetails:
+    sr = sender_rep or SenderReputation(
+        domain="",
+        reputation_score=50,
+        is_trusted_domain=False,
+        domain_age_days=None,
+        domain_created=None,
+        is_newly_registered=False,
+        is_disposable=False,
+        is_free_provider=False,
+    )
+    ha = header_analysis or HeaderAnalysis(
+        spf_status="unknown",
+        dkim_status="unknown",
+        dmarc_status="unknown",
+        spf_posture="unknown",
+        dkim_posture="unknown",
+        dmarc_posture="unknown",
+        is_authenticated=False,
+        authentication_score=50,
+        gmail_api_verified=False,
+        reply_to=None,
+        return_path=None,
+        received=[],
+        authentication_results=None,
+    )
+    la = link_analysis or LinkAnalysis(
+        links=[],
+        suspicious_links=[],
+        malicious_links=[],
+        vt_suspicious_links=[],
+        vt_malicious_links=[],
+        vt_scanned_links=0,
+        vt_scan_timed_out=False,
+        safe_browsing_threats={},
+        redirect_chains={},
+        link_count=0,
+        risk_score=0,
+        link_scan_results={},
+    )
+    ca = content_analysis or ContentAnalysis(
+        phishing_keywords_found=0,
+        detected_keywords=[],
+        nlp_score=0,
+        nlp_patterns=[],
+        nlp_confidence=0.0,
+    )
+    return EmailScanDetails(
+        sender_reputation=sr,
+        header_analysis=ha,
+        link_analysis=la,
+        content_analysis=ca,
+        attachments=[],
+        has_dangerous_attachments=False,
+    )
+
+
 # Request/Response Models
 class EmailHeaders(BaseModel):
     """Email authentication headers"""
@@ -36,6 +167,20 @@ class EmailHeaders(BaseModel):
     dkim: Optional[str] = Field(None, description="DKIM status")
     dmarc: Optional[str] = Field(None, description="DMARC status")
     via: Optional[str] = Field(None, description="Via header")
+    reply_to: Optional[str] = Field(None, description="Reply-To header")
+    return_path: Optional[str] = Field(None, description="Return-Path header")
+    received: Optional[List[str]] = Field(None, description="Received headers")
+    authentication_results: Optional[str] = Field(None, description="Authentication-Results header")
+
+
+class GmailApiAuth(BaseModel):
+    """Gmail API authentication data - untrusted client input that requires server validation"""
+    spf: Optional[str] = Field(None, description="SPF status from Gmail API")
+    dkim: Optional[str] = Field(None, description="DKIM status from Gmail API")
+    dmarc: Optional[str] = Field(None, description="DMARC status from Gmail API")
+    
+    class Config:
+        extra = "forbid"  # Reject unknown fields
 
 
 class EmailMetadata(BaseModel):
@@ -46,17 +191,23 @@ class EmailMetadata(BaseModel):
     subject: Optional[str] = Field(None, description="Email subject")
     links: List[str] = Field(default_factory=list, description="URLs found in email")
     attachment_hashes: List[str] = Field(default_factory=list, description="Attachment file hashes")
+    attachment_names: List[str] = Field(default_factory=list, description="Attachment file names")
+    attachments: List[Dict[str, Any]] = Field(default_factory=list, description="Attachment objects")
+    has_dangerous_attachments: bool = Field(False, description="Whether dangerous attachment types were detected")
     headers: Optional[EmailHeaders] = Field(None, description="Email headers")
     user_email: Optional[EmailStr] = Field(None, description="Recipient email address")
     gmail_message_id: Optional[str] = Field(None, description="Gmail message ID")
     thread_id: Optional[str] = Field(None, description="Gmail thread ID")
+    # NOTE: gmail_api_auth is untrusted client data and is NOT used for auto-verification.
+    # Server-side verification via Gmail API or DNS lookups is required before trusting auth data.
+    gmail_api_auth: Optional[GmailApiAuth] = Field(None, description="Untrusted Gmail API auth data from client - requires server validation")
 
 
 class EmailScanRequest(BaseModel):
     """Request to scan email metadata"""
 
     email_metadata: EmailMetadata = Field(..., description="Email metadata to scan")
-    scan_type: str = Field("full", description="Type of scan (full, quick)")
+    scan_type: str = Field("quick", description="Type of scan (full, quick)")
 
 
 class SenderReputation(BaseModel):
@@ -66,6 +217,8 @@ class SenderReputation(BaseModel):
     reputation_score: int = Field(..., description="Reputation score 0-100")
     is_trusted_domain: bool = Field(..., description="Whether domain is trusted")
     domain_age_days: Optional[int] = Field(None, description="Domain age in days")
+    domain_created: Optional[str] = Field(None, description="Domain creation date")
+    is_newly_registered: bool = Field(False, description="Whether domain is < 30 days old")
     is_disposable: bool = Field(False, description="Whether email is from disposable provider")
     is_free_provider: bool = Field(False, description="Whether email is from free provider")
 
@@ -81,6 +234,11 @@ class HeaderAnalysis(BaseModel):
     dmarc_posture: str = Field("unknown", description="DMARC DNS posture (reject/quarantine/none/missing/unknown)")
     is_authenticated: bool = Field(False, description="Overall authentication status")
     authentication_score: int = Field(0, description="Authentication score 0-100")
+    gmail_api_verified: bool = Field(False, description="Whether SPF/DKIM/DMARC were verified via Gmail API OAuth headers")
+    reply_to: Optional[str] = Field(None, description="Reply-To header")
+    return_path: Optional[str] = Field(None, description="Return-Path header")
+    received: List[str] = Field(default_factory=list, description="Received headers")
+    authentication_results: Optional[str] = Field(None, description="Authentication-Results header")
 
 
 class LinkAnalysis(BaseModel):
@@ -93,9 +251,20 @@ class LinkAnalysis(BaseModel):
     vt_malicious_links: List[str] = Field(default_factory=list, description="Links flagged malicious by VirusTotal")
     vt_scanned_links: int = Field(0, description="Number of links scanned via VirusTotal")
     vt_scan_timed_out: bool = Field(False, description="Whether VirusTotal scanning timed out")
+    safe_browsing_threats: Dict[str, List[str]] = Field(default_factory=dict, description="Google Safe Browsing threats per URL")
+    redirect_chains: Dict[str, List[str]] = Field(default_factory=dict, description="URL redirect chains")
     link_count: int = Field(0, description="Total link count")
     risk_score: int = Field(0, description="Link risk score 0-100")
     link_scan_results: Dict[str, dict] = Field(default_factory=dict, description="Per-link scan results")
+
+
+class NlpPatternResult(BaseModel):
+    """Single NLP pattern detection result"""
+    pattern_type: str = Field(..., description="Type of pattern detected")
+    description: str = Field("", description="Human-readable description")
+    severity: str = Field("low", description="low/medium/high/critical")
+    confidence: float = Field(0.0, description="0.0-1.0 confidence score")
+    matched_text: str = Field("", description="Text that triggered the pattern")
 
 
 class ContentAnalysis(BaseModel):
@@ -103,6 +272,9 @@ class ContentAnalysis(BaseModel):
 
     phishing_keywords_found: int = Field(0, description="Count of phishing keywords found")
     detected_keywords: List[str] = Field(default_factory=list, description="Detected phishing keywords")
+    nlp_score: int = Field(0, description="NLP phishing pattern score 0-100")
+    nlp_patterns: List[NlpPatternResult] = Field(default_factory=list, description="Detected NLP phishing patterns")
+    nlp_confidence: float = Field(0.0, description="Overall NLP pattern confidence")
 
 
 class EmailScanDetails(BaseModel):
@@ -112,6 +284,16 @@ class EmailScanDetails(BaseModel):
     header_analysis: HeaderAnalysis
     link_analysis: LinkAnalysis
     content_analysis: ContentAnalysis
+    attachments: List[Dict[str, Any]] = Field(default_factory=list, description="Attachment objects")
+    has_dangerous_attachments: bool = Field(False, description="Whether dangerous attachment types were detected")
+
+
+class ThreatExplanation(BaseModel):
+    """AI-generated threat explanation"""
+    why_marked: str = Field("", description="Why the email was marked at this threat level")
+    factor_breakdown: List[Dict[str, Any]] = Field(default_factory=list, description="Individual factor scores")
+    confidence_explanation: str = Field("", description="Explanation of confidence level")
+    recommendations: List[str] = Field(default_factory=list, description="Recommended actions")
 
 
 class EmailScanResponse(BaseModel):
@@ -121,7 +303,9 @@ class EmailScanResponse(BaseModel):
     threat_level: str = Field(..., description="Threat level (safe, suspicious, malicious)")
     summary: str = Field(..., description="Human-readable summary")
     reasons: List[str] = Field(default_factory=list, description="Reasons for the assessment")
+    confidence: float = Field(0.85, description="Overall confidence 0.0-1.0")
     details: EmailScanDetails = Field(..., description="Detailed analysis")
+    ai_explanation: Optional[ThreatExplanation] = Field(None, description="AI-generated threat explanation")
     scanned_at: datetime = Field(default_factory=datetime.now, description="Scan timestamp")
 
 
@@ -185,6 +369,30 @@ def analyze_sender_reputation(sender_email: str, sender_name: Optional[str] = No
         "gov",
         "edu",
         "mil",  # Government, education, military TLDs
+        # Indian Banks (official domains)
+        "sbi.co.in",
+        "onlinesbi.sbi",
+        "hdfcbank.com",
+        "hdfcbank.net",
+        "icicibank.com",
+        "pnb.co.in",
+        "kotak.com",
+        "kotaksecurities.co.in",
+        "axisbank.com",
+        "bankofindia.co.in",
+        "bankofbaroda.co.in",
+        "bankofbaroda.com",
+        "unionbankofindia.co.in",
+        "canarabank.com",
+        "idbibank.in",
+        "idbi.com",
+        "indusind.com",
+        "yesbank.in",
+        "federalbank.co.in",
+        "rbi.org.in",
+        "npci.org.in",
+        "paytm.com",
+        "phonepe.com",
     }
 
     # Check if domain ends with trusted TLD
@@ -331,9 +539,11 @@ def analyze_sender_reputation(sender_email: str, sender_name: Optional[str] = No
         domain=domain,
         reputation_score=reputation_score,
         is_trusted_domain=is_trusted,
+        domain_age_days=None,
+        domain_created=None,
+        is_newly_registered=False,
         is_disposable=is_disposable,
         is_free_provider=is_free,
-        domain_age_days=None,  # Would require external API
     )
 
 
@@ -345,29 +555,526 @@ def analyze_content(subject: Optional[str]) -> ContentAnalysis:
         return ContentAnalysis(phishing_keywords_found=0, detected_keywords=[])
 
     phishing_keywords = [
+        # Urgency & fear
         "urgent",
         "immediately",
         "action required",
-        "verify",
-        "suspended",
         "security alert",
+        "suspended",
+        "account locked",
+        "unauthorized access",
+        # Verification & credential harvesting
+        "verify",
         "confirm",
+        "login",
+        "signin",
         "password",
         "reset",
+        "update your account",
+        "confirm your identity",
+        # Financial
         "invoice",
         "payment",
         "refund",
         "wire transfer",
         "gift card",
-        "login",
-        "signin",
+        "bank transfer",
+        "overdue payment",
+        # Prize / social engineering
+        "congratulations",
+        "you have won",
+        "lottery",
+        "jackpot",
+        "claim your prize",
+        "free offer",
+        "limited time",
+        # Impersonation
+        "dear customer",
+        "dear user",
+        "dear account holder",
     ]
 
     detected = [k for k in phishing_keywords if k in text]
     return ContentAnalysis(phishing_keywords_found=len(detected), detected_keywords=detected[:10])
 
 
-def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str] = None) -> HeaderAnalysis:
+# ============================================
+# WHOIS API Domain Age Check (cached)
+# ============================================
+_domain_age_cache: Dict[str, dict] = {}
+_DOMAIN_AGE_CACHE_TTL = 86400  # 24 hours
+
+
+def _check_domain_age_sync(domain: str, api_key: str) -> Optional[dict]:
+    """Check domain age via WHOIS XML API (whoisxmlapi.com) with caching."""
+    cache_key = domain.lower()
+    cached = _domain_age_cache.get(cache_key)
+    if cached and (time.time() - cached.get("_ts", 0)) < _DOMAIN_AGE_CACHE_TTL:
+        return cached
+
+    try:
+        import httpx as _httpx
+        url = "https://www.whoisxmlapi.com/whoisserver/WhoisService"
+        params = {
+            "apiKey": api_key,
+            "domainName": domain,
+            "outputFormat": "JSON",
+        }
+        resp = _httpx.get(url, params=params, timeout=3.0)
+        resp.raise_for_status()
+        data = resp.json()
+
+        whois_record = data.get("WhoisRecord", {})
+        created_date_str = whois_record.get("createdDate") or whois_record.get("registryData", {}).get("createdDate")
+
+        if not created_date_str:
+            return None
+
+        # Parse the ISO date
+        created_date_str_clean = created_date_str.split("T")[0] if "T" in created_date_str else created_date_str[:10]
+        from datetime import datetime as _dt
+        try:
+            created_dt = _dt.strptime(created_date_str_clean, "%Y-%m-%d")
+        except ValueError:
+            return None
+
+        age_days = (datetime.now() - created_dt).days
+        result = {
+            "age_days": age_days,
+            "created": created_date_str_clean,
+            "is_new": age_days < 30,
+            "_ts": time.time(),
+        }
+        _domain_age_cache[cache_key] = result
+        logger.info(f"Domain age for {domain}: {age_days} days (created {created_date_str_clean})")
+        return result
+
+    except Exception as e:
+        logger.warning(f"WHOIS API lookup failed for {domain}: {e}")
+        return None
+
+
+# ============================================
+# Google Safe Browsing API v4
+# ============================================
+_safe_browsing_cache: Dict[str, dict] = {}
+_SB_CACHE_TTL = 3600  # 1 hour
+
+
+async def check_google_safe_browsing(urls: List[str], api_key: Optional[str] = None) -> Dict[str, List[str]]:
+    """
+    Check URLs against Google Safe Browsing API v4.
+    Returns dict mapping each flagged URL to its threat types.
+    """
+    key = api_key or os.getenv("GOOGLE_SAFE_BROWSING_KEY", "")
+    if not key or not urls:
+        return {}
+
+    # Deduplicate and filter
+    unique_urls = list(dict.fromkeys(u for u in urls if isinstance(u, str) and u))
+    if not unique_urls:
+        return {}
+
+    # Check cache first
+    threats: Dict[str, List[str]] = {}
+    uncached_urls = []
+    for u in unique_urls:
+        cache_key = hashlib.md5(u.encode()).hexdigest()
+        cached = _safe_browsing_cache.get(cache_key)
+        if cached and (time.time() - cached.get("_ts", 0)) < _SB_CACHE_TTL:
+            if cached.get("threats"):
+                threats[u] = cached["threats"]
+        else:
+            uncached_urls.append(u)
+
+    if not uncached_urls:
+        return threats
+
+    # Build Safe Browsing API request
+    sb_url = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={key}"
+    threat_entries = [{"url": u} for u in uncached_urls[:500]]  # API limit
+    payload = {
+        "client": {"clientId": "webshield", "clientVersion": "2.0.0"},
+        "threatInfo": {
+            "threatTypes": [
+                "MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE",
+                "POTENTIALLY_HARMFUL_APPLICATION", "THREAT_TYPE_UNSPECIFIED"
+            ],
+            "platformTypes": ["ANY_PLATFORM"],
+            "threatEntryTypes": ["URL"],
+            "threatEntries": threat_entries,
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.post(sb_url, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+
+        # Parse matches
+        for match in data.get("matches", []):
+            matched_url = match.get("threat", {}).get("url", "")
+            threat_type = match.get("threatType", "UNKNOWN")
+            if matched_url:
+                threats.setdefault(matched_url, []).append(threat_type)
+
+        # Cache all results (including clean URLs)
+        for u in uncached_urls:
+            cache_key = hashlib.md5(u.encode()).hexdigest()
+            _safe_browsing_cache[cache_key] = {
+                "threats": threats.get(u, []),
+                "_ts": time.time(),
+            }
+
+        if threats:
+            logger.warning(f"Google Safe Browsing flagged {len(threats)} URLs: {list(threats.keys())[:3]}")
+        else:
+            logger.info(f"Google Safe Browsing: {len(uncached_urls)} URLs clean")
+
+    except Exception as e:
+        logger.warning(f"Google Safe Browsing API error: {e}")
+
+    return threats
+
+
+# ============================================
+# URL Redirect Chain Resolution
+# ============================================
+async def resolve_redirect_chain(url: str, max_redirects: int = 5) -> List[str]:
+    """
+    Follow HTTP redirects and return the chain of URLs.
+    Returns list starting with the original URL and ending at final destination.
+    """
+    chain = [url]
+    current = url
+    try:
+        async with httpx.AsyncClient(
+            timeout=3.0,
+            follow_redirects=False,
+            verify=False,
+        ) as client:
+            for _ in range(max_redirects):
+                try:
+                    resp = await client.head(current, follow_redirects=False)
+                except httpx.RequestError:
+                    # Try GET as fallback (some servers don't support HEAD)
+                    try:
+                        resp = await client.get(current, follow_redirects=False)
+                    except httpx.RequestError:
+                        break
+
+                if resp.status_code in (301, 302, 303, 307, 308):
+                    location = resp.headers.get("location", "")
+                    if not location:
+                        break
+                    # Handle relative URLs
+                    if location.startswith("/"):
+                        parsed = urlparse(current)
+                        location = f"{parsed.scheme}://{parsed.netloc}{location}"
+                    chain.append(location)
+                    current = location
+                else:
+                    break  # No more redirects
+    except Exception as e:
+        logger.warning(f"Redirect chain resolution failed for {url}: {e}")
+
+    return chain
+
+
+async def resolve_redirect_chains_batch(urls: List[str]) -> Dict[str, List[str]]:
+    """Resolve redirect chains for multiple URLs concurrently."""
+    if not urls:
+        return {}
+
+    enable_redirect = os.getenv("ENABLE_REDIRECT_RESOLUTION", "true").lower() == "true"
+    if not enable_redirect:
+        return {}
+
+    # Only resolve shortened/suspicious URLs to save time
+    shortener_domains = {
+        "bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd",
+        "buff.ly", "adf.ly", "tiny.cc", "lnkd.in", "cutt.ly", "rb.gy",
+        "shorturl.at", "j.mp", "v.gd",
+    }
+
+    urls_to_resolve = []
+    for u in urls:
+        try:
+            parsed = urlparse(u)
+            if parsed.netloc.lower().replace("www.", "") in shortener_domains:
+                urls_to_resolve.append(u)
+        except Exception:
+            pass
+
+    if not urls_to_resolve:
+        return {}
+
+    semaphore = asyncio.Semaphore(4)
+    results: Dict[str, List[str]] = {}
+
+    async def _resolve_one(url: str):
+        async with semaphore:
+            chain = await resolve_redirect_chain(url)
+            if len(chain) > 1:  # Only store if there were actual redirects
+                results[url] = chain
+
+    tasks = [asyncio.create_task(_resolve_one(u)) for u in urls_to_resolve[:5]]
+    try:
+        await asyncio.wait(tasks, timeout=3.0)
+    except Exception:
+        pass
+
+    return results
+
+
+# ============================================
+# NLP Phishing Pattern Detection
+# ============================================
+def analyze_phishing_patterns_nlp(
+    subject: Optional[str] = None,
+    body_snippet: Optional[str] = None,
+    sender_email: Optional[str] = None,
+    sender_name: Optional[str] = None,
+) -> Tuple[int, List[NlpPatternResult], float]:
+    """
+    Multi-signal NLP phishing pattern detection with compound scoring.
+    Returns (nlp_score 0-100, patterns list, confidence 0.0-1.0).
+    """
+    enable_nlp = os.getenv("ENABLE_NLP_ANALYSIS", "true").lower() == "true"
+    if not enable_nlp:
+        return 0, [], 0.0
+
+    text = " ".join(filter(None, [subject, body_snippet, sender_name])).lower()
+    if not text or len(text) < 5:
+        return 0, [], 0.0
+
+    patterns: List[NlpPatternResult] = []
+    score = 0
+
+    # --- Pattern 1: Urgency Escalation ---
+    urgency_phrases = [
+        (r"\b(urgent|immediately|right now|asap|within \d+ hours?)\b", "high"),
+        (r"\b(act now|don'?t delay|limited time|expires? (today|soon|tomorrow))\b", "high"),
+        (r"\b(final (notice|warning|reminder)|last chance|before it'?s too late)\b", "critical"),
+        (r"\b(time.?sensitive|critical update|immediate action)\b", "high"),
+    ]
+    for pattern, severity in urgency_phrases:
+        match = re.search(pattern, text)
+        if match:
+            patterns.append(NlpPatternResult(
+                pattern_type="urgency_escalation",
+                description=f"Urgency language detected: '{match.group()}'",
+                severity=severity,
+                confidence=0.85,
+                matched_text=match.group(),
+            ))
+            score += 18 if severity == "critical" else 12
+
+    # --- Pattern 2: Authority Impersonation ---
+    authority_phrases = [
+        (r"\b(security team|it department|system administrator|compliance officer)\b", "high"),
+        (r"\b(ceo|cfo|cto|managing director|board of directors)\b", "medium"),
+        (r"\b(official notice|legal action|law enforcement|court order)\b", "critical"),
+        (r"\b(internal audit|security review|policy violation)\b", "medium"),
+    ]
+    for pattern, severity in authority_phrases:
+        match = re.search(pattern, text)
+        if match:
+            patterns.append(NlpPatternResult(
+                pattern_type="authority_impersonation",
+                description=f"Authority impersonation detected: '{match.group()}'",
+                severity=severity,
+                confidence=0.80,
+                matched_text=match.group(),
+            ))
+            score += 15 if severity == "critical" else 10
+
+    # --- Pattern 3: Credential Harvesting ---
+    cred_phrases = [
+        (r"\b(verify your (account|identity|password|email))\b", "critical"),
+        (r"\b(confirm your (credentials|login|information))\b", "critical"),
+        (r"\b(update your (password|payment|billing|account))\b", "high"),
+        (r"\b(re-?enter your (password|pin|ssn|social security))\b", "critical"),
+        (r"\b(click (here|below|the link) to (verify|confirm|update|login|sign.?in))\b", "critical"),
+    ]
+    for pattern, severity in cred_phrases:
+        match = re.search(pattern, text)
+        if match:
+            patterns.append(NlpPatternResult(
+                pattern_type="credential_harvesting",
+                description=f"Credential request detected: '{match.group()}'",
+                severity=severity,
+                confidence=0.90,
+                matched_text=match.group(),
+            ))
+            score += 20 if severity == "critical" else 12
+
+    # --- Pattern 4: Emotional Manipulation ---
+    emotional_phrases = [
+        (r"\b(congratulations|you('ve| have) (been selected|won))\b", "high"),
+        (r"\b(your account (has been|will be) (suspended|closed|terminated|locked))\b", "critical"),
+        (r"\b(unusual (activity|login|sign.?in)|unauthorized (access|transaction))\b", "high"),
+        (r"\b(failure to (comply|respond|verify) will result in)\b", "critical"),
+    ]
+    for pattern, severity in emotional_phrases:
+        match = re.search(pattern, text)
+        if match:
+            patterns.append(NlpPatternResult(
+                pattern_type="emotional_manipulation",
+                description=f"Emotional manipulation detected: '{match.group()}'",
+                severity=severity,
+                confidence=0.82,
+                matched_text=match.group(),
+            ))
+            score += 15 if severity == "critical" else 10
+
+    # --- Pattern 5: Information Harvesting ---
+    info_phrases = [
+        (r"\b(social security|ssn|tax.?id|national.?id)\b", "critical"),
+        (r"\b(credit card|bank account|routing number|swift code)\b", "critical"),
+        (r"\b(date of birth|mother'?s maiden|security question)\b", "high"),
+        (r"\b(send (us|me) your (details|information|documents))\b", "high"),
+    ]
+    for pattern, severity in info_phrases:
+        match = re.search(pattern, text)
+        if match:
+            patterns.append(NlpPatternResult(
+                pattern_type="information_harvesting",
+                description=f"Information harvesting detected: '{match.group()}'",
+                severity=severity,
+                confidence=0.88,
+                matched_text=match.group(),
+            ))
+            score += 20 if severity == "critical" else 12
+
+    # --- Compound scoring: multiple patterns compound the threat ---
+    unique_pattern_types = set(p.pattern_type for p in patterns)
+    if len(unique_pattern_types) >= 3:
+        score += 15  # Multiple attack vectors = high threat
+        # Add compound pattern
+        patterns.append(NlpPatternResult(
+            pattern_type="compound_threat",
+            description=f"Multiple attack vectors detected: {', '.join(unique_pattern_types)}",
+            severity="critical",
+            confidence=0.92,
+            matched_text="",
+        ))
+    elif len(unique_pattern_types) >= 2:
+        score += 8
+
+    # Specific dangerous combos
+    if "credential_harvesting" in unique_pattern_types and "urgency_escalation" in unique_pattern_types:
+        score += 10  # Classic phishing combo
+
+    # Cap score
+    score = min(100, max(0, score))
+
+    # Calculate confidence based on number and quality of patterns
+    if patterns:
+        avg_confidence = sum(p.confidence for p in patterns) / len(patterns)
+        confidence = min(0.98, avg_confidence + (len(patterns) * 0.02))
+    else:
+        confidence = 0.0
+
+    return score, patterns, confidence
+
+
+# ============================================
+# AI Threat Explanation via Groq LLM
+# ============================================
+async def generate_threat_explanation(
+    threat_score: int,
+    threat_level: str,
+    summary: str,
+    reasons: List[str],
+    sender_email: str,
+    details: dict,
+) -> Optional[ThreatExplanation]:
+    """Generate AI-powered natural language threat explanation using Groq LLM."""
+    groq_key = os.getenv("GROQ_API_KEY", "").strip()
+    groq_model = os.getenv("GROQ_EXPLANATION_MODEL", "llama-3.1-8b-instant")
+    if not groq_key:
+        return None
+
+    # Build context for the LLM
+    sender_rep = details.get("sender_reputation", {})
+    header_info = details.get("header_analysis", {})
+    link_info = details.get("link_analysis", {})
+    content_info = details.get("content_analysis", {})
+
+    prompt = f"""You are a cybersecurity analyst explaining email threat scan results to a non-technical user.
+
+Email scan results:
+- Sender: {sender_email}
+- Threat Score: {threat_score}/100 (higher = more dangerous)
+- Threat Level: {threat_level}
+- Summary: {summary}
+- Reasons: {json.dumps(reasons)}
+- Sender domain: {sender_rep.get("domain", "unknown")}
+- Trusted domain: {sender_rep.get("is_trusted_domain", False)}
+- Domain age: {sender_rep.get("domain_age_days", "unknown")} days
+- SPF: {header_info.get("spf_status", "unknown")}, DKIM: {header_info.get("dkim_status", "unknown")}, DMARC: {header_info.get("dmarc_status", "unknown")}
+- Links found: {link_info.get("link_count", 0)}, Suspicious: {len(link_info.get("suspicious_links", []))}, Malicious: {len(link_info.get("malicious_links", []))}
+- Phishing keywords: {content_info.get("phishing_keywords_found", 0)}
+- NLP score: {content_info.get("nlp_score", 0)}
+
+Respond ONLY with valid JSON in this exact format:
+{{
+  "why_marked": "2-3 sentences explaining why this email received its threat level in plain English",
+  "factor_breakdown": [
+    {{"factor": "Sender Reputation", "score": 0-100, "weight": "40%", "summary": "brief explanation"}},
+    {{"factor": "Email Authentication", "score": 0-100, "weight": "30%", "summary": "brief explanation"}},
+    {{"factor": "Link Safety", "score": 0-100, "weight": "30%", "summary": "brief explanation"}},
+    {{"factor": "Content Analysis", "score": 0-100, "weight": "bonus", "summary": "brief explanation"}}
+  ],
+  "confidence_explanation": "1 sentence about how confident we are in this assessment",
+  "recommendations": ["actionable recommendation 1", "actionable recommendation 2", "actionable recommendation 3"]
+}}"""
+
+    try:
+        groq_timeout = float(os.getenv("GROQ_REQUEST_TIMEOUT_SECONDS", "5.0"))
+        async with httpx.AsyncClient(timeout=groq_timeout) as client:
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": groq_model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.3,
+                    "max_tokens": 600,
+                    "response_format": {"type": "json_object"},
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        if not content:
+            return None
+
+        parsed = json.loads(content)
+        return ThreatExplanation(
+            why_marked=parsed.get("why_marked", ""),
+            factor_breakdown=parsed.get("factor_breakdown", []),
+            confidence_explanation=parsed.get("confidence_explanation", ""),
+            recommendations=parsed.get("recommendations", []),
+        )
+
+    except Exception as e:
+        logger.warning(f"Groq AI explanation failed: {e}")
+        return None
+
+
+async def analyze_headers(
+    headers: Optional[EmailHeaders],
+    sender_email: Optional[str] = None,
+    allow_live_dns: bool = True,
+    cache_only: bool = False,
+) -> HeaderAnalysis:
     """
     Analyze email authentication using real DNS lookups for SPF/DMARC/DKIM.
 
@@ -375,15 +1082,20 @@ def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str]
     DNS lookups. Otherwise falls back to headers provided by the client.
     """
 
+    domain = _extract_sender_domain(sender_email or "")
+    cached = _get_cached_auth(domain)
+
+    if cached and isinstance(cached, dict):
+        try:
+            return HeaderAnalysis(**cached)
+        except Exception:
+            pass
+
     # Try real DNS-based authentication check first
-    if AUTH_CHECKER_AVAILABLE and sender_email:
+    if (not cache_only) and allow_live_dns and AUTH_CHECKER_AVAILABLE and sender_email:
         try:
             logger.info(f"Performing real DNS auth check for: {sender_email}")
-            auth_result = check_email_authentication(sender_email)
-
-            # IMPORTANT: DNS posture is not the same as message-level SPF/DKIM/DMARC evaluation.
-            # We therefore expose posture separately and keep message-level status as unknown
-            # unless the client provided real header evaluation.
+            auth_result = await asyncio.wait_for(check_email_authentication_async(sender_email), timeout=3.0)
 
             spf_posture = "configured" if auth_result.spf.record else "missing"
             if auth_result.spf.record and auth_result.spf.all_mechanism in ("+all", "?all"):
@@ -403,38 +1115,59 @@ def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str]
             client_dkim = str((headers.dkim if headers else None) or "unknown").lower()
             client_dmarc = str((headers.dmarc if headers else None) or "unknown").lower()
 
-            # IMPORTANT: DNS posture/configuration is not message authentication.
-            # We only mark is_authenticated when we have message-level results.
-            msg_is_authenticated = (client_spf == "pass" or client_dkim == "pass") and client_dmarc != "fail"
+            # If client headers are unknown, derive status from DNS posture
+            final_spf = client_spf
+            final_dkim = client_dkim
+            final_dmarc = client_dmarc
+            if client_spf == "unknown":
+                final_spf = "pass" if spf_posture == "configured" else ("neutral" if spf_posture == "weak" else "none")
+            if client_dkim == "unknown":
+                final_dkim = "pass" if dkim_posture == "configured" else "none"
+            if client_dmarc == "unknown":
+                final_dmarc = "pass" if dmarc_posture in ("reject", "quarantine", "configured") else "none"
 
-            # Keep score as a blend: if we have message-level signals, use those; otherwise keep posture score.
+            # IMPORTANT: Use DNS-derived status for authentication check
+            msg_is_authenticated = (final_spf == "pass" or final_dkim == "pass") and final_dmarc != "fail"
+
+            # Calculate score based on final status values
             msg_score = 0
-            if client_spf == "pass":
+            if final_spf == "pass":
                 msg_score += 33
-            elif client_spf == "fail":
+            elif final_spf == "fail":
                 msg_score -= 20
-            if client_dkim == "pass":
+            if final_dkim == "pass":
                 msg_score += 33
-            elif client_dkim == "fail":
+            elif final_dkim == "fail":
                 msg_score -= 20
-            if client_dmarc == "pass":
+            if final_dmarc == "pass":
                 msg_score += 34
-            elif client_dmarc == "fail":
+            elif final_dmarc == "fail":
                 msg_score -= 20
             msg_score = max(0, min(100, msg_score))
 
-            blended_score = msg_score if (client_spf, client_dkim, client_dmarc) != ("unknown", "unknown", "unknown") else auth_result.overall_score
+            blended_score = msg_score if (final_spf, final_dkim, final_dmarc) != ("unknown", "unknown", "unknown") else auth_result.overall_score
 
-            return HeaderAnalysis(
-                spf_status=client_spf,
-                dkim_status=client_dkim,
-                dmarc_status=client_dmarc,
+            ha = HeaderAnalysis(
+                spf_status=final_spf,
+                dkim_status=final_dkim,
+                dmarc_status=final_dmarc,
                 spf_posture=spf_posture,
                 dkim_posture=dkim_posture,
                 dmarc_posture=dmarc_posture,
                 is_authenticated=bool(msg_is_authenticated),
                 authentication_score=int(blended_score or 0),
+                reply_to=(headers.reply_to if headers else None),
+                return_path=(headers.return_path if headers else None),
+                received=list(headers.received or []) if headers and headers.received else [],
+                authentication_results=(headers.authentication_results if headers else None),
             )
+
+            try:
+                _set_cached_auth(domain, ha.model_dump() if hasattr(ha, "model_dump") else ha.dict())
+            except Exception:
+                pass
+
+            return ha
 
         except Exception as e:
             logger.warning(f"DNS auth check failed, falling back to header analysis: {e}")
@@ -452,6 +1185,10 @@ def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str]
             dmarc_posture="unknown",
             is_authenticated=False,
             authentication_score=50,
+            reply_to=None,
+            return_path=None,
+            received=[],
+            authentication_results=None,
         )
 
     spf = (headers.spf or "unknown").lower()
@@ -490,7 +1227,53 @@ def analyze_headers(headers: Optional[EmailHeaders], sender_email: Optional[str]
         dmarc_posture="unknown",
         is_authenticated=is_authenticated,
         authentication_score=auth_score,
+        reply_to=headers.reply_to,
+        return_path=headers.return_path,
+        received=list(headers.received or []) if headers.received else [],
+        authentication_results=headers.authentication_results,
     )
+
+
+async def analyze_links_patterns(links: List[str], total_budget_seconds: float = 4.0) -> Dict[str, dict]:
+    if not links:
+        return {}
+
+    unique_links: list[str] = []
+    seen: set[str] = set()
+    for l in links:
+        if isinstance(l, str) and l and l not in seen:
+            unique_links.append(l)
+            seen.add(l)
+
+    unique_links = unique_links[:10]
+    if not unique_links:
+        return {}
+
+    semaphore = asyncio.Semaphore(8)
+    results: Dict[str, dict] = {}
+
+    async def _one(detector: WebShieldDetector, url: str):
+        async with semaphore:
+            try:
+                r = await detector.analyze_url_patterns(url)
+                if isinstance(r, dict):
+                    results[url] = r
+            except Exception:
+                return
+
+    try:
+        detector = WebShieldDetector()
+        tasks = [asyncio.create_task(_one(detector, u)) for u in unique_links]
+        done, pending = await asyncio.wait(tasks, timeout=max(0.2, total_budget_seconds))
+        for t in pending:
+            t.cancel()
+        await asyncio.gather(*done, return_exceptions=True)
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
+    except Exception:
+        return results
+
+    return results
 
 
 def analyze_links(links: List[str]) -> LinkAnalysis:
@@ -579,18 +1362,19 @@ def analyze_links(links: List[str]) -> LinkAnalysis:
 
     # Brand impersonation patterns
     brand_impersonation = [
-        # PayPal impersonation
+        # Global brands
         (r"paypal", r"paypa[l1]|paypai|peypal|paypaI"),
-        # Apple impersonation
         (r"apple", r"app[l1]e|app1e|appie"),
-        # Amazon impersonation
         (r"amazon", r"amaz[o0]n|arnazon|amazom"),
-        # Microsoft impersonation
         (r"microsoft", r"micr[o0]soft|mircosoft|m1crosoft"),
-        # Netflix impersonation
         (r"netflix", r"netf[l1]ix|netfiix|netfl1x"),
-        # Google impersonation
         (r"google", r"g[o0][o0]gle|googie|g00gle"),
+        # Indian bank impersonation
+        (r"hdfc", r"hdf[c0]|hdtc|hd[f]+[c]+bank"),
+        (r"icici", r"[i1]c[i1]c[i1]|1c1c1"),
+        (r"sbi", r"sb[i1l]\.co|sb[i1l]bank"),
+        (r"axisbank", r"ax[i1]sbank|axis[b8]ank"),
+        (r"kotak", r"k[o0]tak|k0tak"),
     ]
 
     for link in links:
@@ -719,10 +1503,54 @@ async def analyze_links_virustotal(
     return vt_suspicious, vt_malicious, scanned_count, timed_out
 
 
-def calculate_threat_score(
-    sender_rep: SenderReputation, header_analysis: HeaderAnalysis, link_analysis: LinkAnalysis
-) -> tuple[int, str, str, List[str]]:
-    """Calculate overall threat score and assessment"""
+async def analyze_attachment_hashes_virustotal(
+    hashes: List[str], total_budget_seconds: float = 6.0, api_key: Optional[str] = None
+) -> Dict[str, dict]:
+    if not hashes:
+        return {}
+
+    unique_hashes: list[str] = []
+    seen: set[str] = set()
+    for h in hashes:
+        if isinstance(h, str):
+            s = h.strip().lower()
+            if len(s) >= 64 and s not in seen:
+                seen.add(s)
+                unique_hashes.append(s)
+
+    unique_hashes = unique_hashes[:10]
+    if not unique_hashes:
+        return {}
+
+    semaphore = asyncio.Semaphore(6)
+    results: Dict[str, dict] = {}
+
+    async def _scan_one(detector: WebShieldDetector, sha256: str):
+        async with semaphore:
+            r = await detector.check_virustotal_file_hash(sha256, api_key=api_key)
+            if isinstance(r, dict):
+                results[sha256] = r
+
+    try:
+        async with WebShieldDetector() as detector:
+            tasks = [asyncio.create_task(_scan_one(detector, h)) for h in unique_hashes]
+            done, pending = await asyncio.wait(tasks, timeout=max(0.2, total_budget_seconds))
+            for t in pending:
+                t.cancel()
+            await asyncio.gather(*done, return_exceptions=True)
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
+    except Exception:
+        return results
+
+    return results
+
+
+async def calculate_threat_score(
+    sender_rep: SenderReputation, header_analysis: HeaderAnalysis, link_analysis: LinkAnalysis,
+    content_analysis: Optional[ContentAnalysis] = None,
+) -> tuple[int, str, str, List[str], float]:
+    """Calculate overall threat score and assessment. Returns (score, level, summary, reasons, confidence)."""
 
     # Generate reasons first (needed for override logic)
     reasons = []
@@ -752,14 +1580,6 @@ def calculate_threat_score(
     pattern_flags = []
 
     # Check for actual red flags
-    if getattr(link_analysis, "vt_malicious_links", None):
-        has_suspicious_patterns = True
-        pattern_flags.append(f"vt_malicious_links:{len(link_analysis.vt_malicious_links)}")
-
-    if getattr(link_analysis, "vt_suspicious_links", None):
-        has_suspicious_patterns = True
-        pattern_flags.append(f"vt_suspicious_links:{len(link_analysis.vt_suspicious_links)}")
-
     if link_analysis.malicious_links:
         has_suspicious_patterns = True
         pattern_flags.append(f"malicious_links:{len(link_analysis.malicious_links)}")
@@ -823,15 +1643,22 @@ def calculate_threat_score(
     # Ensure score is in valid range
     threat_score = max(0, min(100, threat_score))
 
-    # === DETERMINE THREAT LEVEL WITH PATTERN ANALYSIS ===
-    # Only mark as suspicious/dangerous if we have ACTUAL reasons
+    # === SAFE BROWSING FIRST (authoritative, real-time) ===
+    sb_threats = getattr(link_analysis, 'safe_browsing_threats', {})
+    sb_any_flagged = len(sb_threats) > 0
 
-    # VirusTotal policy override: any suspicious/malicious engine verdict => dangerous
-    vt_any_flagged = bool(getattr(link_analysis, "vt_malicious_links", []) or getattr(link_analysis, "vt_suspicious_links", []))
-    if vt_any_flagged:
+    gmail_api_verified = getattr(header_analysis, 'gmail_api_verified', False)
+
+    if sb_any_flagged:
+        # Google Safe Browsing is authoritative — mark dangerous
+        sb_count = len(sb_threats)
+        threat_types = set()
+        for types in sb_threats.values():
+            threat_types.update(types)
         threat_level = "dangerous"
         threat_score = max(threat_score, 85)
-        summary = "Email contains link(s) flagged by VirusTotal"
+        summary = f"Google Safe Browsing flagged {sb_count} malicious URL(s): {', '.join(threat_types)}"
+        logger.warning(f"Safe Browsing flagged {sb_count} URLs — marking dangerous")
     else:
 
         if threat_score <= 33:
@@ -885,12 +1712,7 @@ def calculate_threat_score(
         reasons.append("Authentication partially verified")
 
     # Link analysis reasons
-    if getattr(link_analysis, "vt_malicious_links", None):
-        reasons.append(f"⚠️ VirusTotal flagged {len(link_analysis.vt_malicious_links)} malicious link(s)")
-    elif getattr(link_analysis, "vt_suspicious_links", None):
-        reasons.append(f"⚠️ VirusTotal flagged {len(link_analysis.vt_suspicious_links)} suspicious link(s)")
-    elif getattr(link_analysis, "vt_scan_timed_out", False) and getattr(link_analysis, "vt_scanned_links", 0) > 0:
-        reasons.append("VirusTotal scan timed out")
+    # (VirusTotal removed — using Safe Browsing + pattern analysis instead)
 
     if link_analysis.malicious_links:
         reasons.append(f"⚠️ Contains {len(link_analysis.malicious_links)} potentially dangerous link(s)")
@@ -907,79 +1729,407 @@ def calculate_threat_score(
     if sender_rep.is_disposable:
         reasons.append("⚠️ Sender uses disposable email address")
 
+    # Domain age warnings
+    if sender_rep.is_newly_registered:
+        reasons.append(f"⚠️ Domain registered < 30 days ago")
+        threat_score = max(threat_score, 40)  # Newly registered domain is suspicious
+    elif sender_rep.domain_age_days is not None and sender_rep.domain_age_days < 90:
+        reasons.append(f"⚠️ Domain is only {sender_rep.domain_age_days} days old")
+
+    # Google Safe Browsing reasons (scoring handled in primary threat level logic above)
+    if sb_any_flagged:
+        sb_count = len(sb_threats)
+        sb_types = set()
+        for types in sb_threats.values():
+            sb_types.update(types)
+        reasons.append(f"🛡️ Google Safe Browsing flagged {sb_count} URL(s): {', '.join(sb_types)}")
+
+    # NLP pattern reasons
+    if content_analysis and content_analysis.nlp_score > 0:
+        nlp_score = content_analysis.nlp_score
+        if nlp_score >= 50:
+            reasons.append(f"⚠️ High phishing pattern score: {nlp_score}/100")
+            threat_score = max(threat_score, 55)
+            if threat_level == "safe":
+                threat_level = "suspicious"
+                summary = "Email shows strong phishing patterns"
+        elif nlp_score >= 25:
+            reasons.append(f"⚠️ Moderate phishing patterns detected (score: {nlp_score})")
+        # Show top NLP patterns
+        for pat in (content_analysis.nlp_patterns or [])[:2]:
+            if pat.severity in ("critical", "high"):
+                reasons.append(f"  → {pat.description}")
+
+    # Redirect chain warnings
+    redirects = getattr(link_analysis, 'redirect_chains', {})
+    if redirects:
+        reasons.append(f"⚠️ {len(redirects)} shortened URL(s) resolved with redirect chains")
+
+    # Calculate confidence
+    confidence = 0.85  # Base confidence
+    if header_analysis.gmail_api_verified:
+        confidence += 0.05
+    if content_analysis and content_analysis.nlp_confidence > 0:
+        confidence = (confidence + content_analysis.nlp_confidence) / 2
+    if sb_threats:
+        confidence = min(0.98, confidence + 0.05)
+    confidence = round(min(0.98, max(0.50, confidence)), 2)
+
     # Ensure we have at least 3 reasons
     while len(reasons) < 3:
         reasons.append("✓ Scan completed successfully")
 
-    return threat_score, threat_level, summary, reasons[:5]  # Max 5 reasons
+    return threat_score, threat_level, summary, reasons[:8], confidence  # Max 8 reasons
 
 
 # API Endpoints
-@email_router.post("/scan-metadata", response_model=EmailScanResponse)
-async def scan_email_metadata(request: EmailScanRequest):
+async def run_scan_logic(request: EmailScanRequest) -> EmailScanResponse:
     """
     Scan email metadata for threats
 
     This endpoint analyzes email metadata including sender reputation,
     authentication headers, and links to determine if an email is safe.
     """
+    t0 = time.monotonic()
+    total_budget_s = 4.8
+    sender_email = str(request.email_metadata.sender_email)
+    scan_type = _normalize_scan_type(request.scan_type)
+
+    logger.info(f"Scanning email from {sender_email} (scan_type={scan_type})")
+
+    gmail_api_auth = request.email_metadata.gmail_api_auth
+    provided_headers = request.email_metadata.headers
+
+    if gmail_api_auth:
+        gapi_spf = (gmail_api_auth.spf or None)
+        gapi_dkim = (gmail_api_auth.dkim or None)
+        gapi_dmarc = (gmail_api_auth.dmarc or None)
+        logger.info(f"Gmail API auth data received: SPF={gapi_spf}, DKIM={gapi_dkim}, DMARC={gapi_dmarc}")
+        enhanced_headers = EmailHeaders(
+            spf=gapi_spf or (provided_headers.spf if provided_headers else None),
+            dkim=gapi_dkim or (provided_headers.dkim if provided_headers else None),
+            dmarc=gapi_dmarc or (provided_headers.dmarc if provided_headers else None),
+            via=provided_headers.via if provided_headers else None,
+            reply_to=provided_headers.reply_to if provided_headers else None,
+            return_path=provided_headers.return_path if provided_headers else None,
+            received=provided_headers.received if provided_headers else None,
+            authentication_results=provided_headers.authentication_results if provided_headers else None,
+        )
+    else:
+        enhanced_headers = provided_headers
+
+    links_limited = _dedupe_and_limit_links(request.email_metadata.links, limit=10)
+
+    sender_rep = analyze_sender_reputation(sender_email, request.email_metadata.sender_name)
+
+    header_analysis = HeaderAnalysis(
+        spf_status="unknown",
+        dkim_status="unknown",
+        dmarc_status="unknown",
+        spf_posture="unknown",
+        dkim_posture="unknown",
+        dmarc_posture="unknown",
+        is_authenticated=False,
+        authentication_score=50,
+        reply_to=(enhanced_headers.reply_to if enhanced_headers else None),
+        return_path=(enhanced_headers.return_path if enhanced_headers else None),
+        received=list(enhanced_headers.received or []) if enhanced_headers and enhanced_headers.received else [],
+        authentication_results=(enhanced_headers.authentication_results if enhanced_headers else None),
+    )
+    link_analysis = analyze_links(links_limited)
+    content_analysis = analyze_content(request.email_metadata.subject)
+    ai_explanation = None
+
     try:
-        logger.info(f"Scanning email from {request.email_metadata.sender_email}")
+        async with asyncio.timeout(total_budget_s):
+            allow_dns = True  # Always enable DNS auth checks
+            cache_only = False  # Always perform live DNS checks
 
-        # Analyze sender reputation
-        sender_rep = analyze_sender_reputation(request.email_metadata.sender_email, request.email_metadata.sender_name)
+            header_task = asyncio.create_task(
+                analyze_headers(enhanced_headers, sender_email=sender_email, allow_live_dns=allow_dns, cache_only=cache_only)
+            )
 
-        # Analyze headers with real DNS auth checking
-        header_analysis = analyze_headers(
-            request.email_metadata.headers, sender_email=str(request.email_metadata.sender_email)
-        )
+            pattern_budget = float(os.getenv("EMAIL_URL_PATTERN_BUDGET_SECONDS", "1.5"))
+            pattern_task = asyncio.create_task(analyze_links_patterns(links_limited, total_budget_seconds=max(0.2, min(2.0, pattern_budget))))
 
-        # Analyze links (heuristics first)
-        link_analysis = analyze_links(request.email_metadata.links)
+            nlp_task = asyncio.create_task(
+                asyncio.to_thread(
+                    analyze_phishing_patterns_nlp,
+                    subject=request.email_metadata.subject,
+                    body_snippet=(getattr(request.email_metadata, "body_text", None) or "")[:500],
+                    sender_email=sender_email,
+                    sender_name=request.email_metadata.sender_name,
+                )
+            )
 
-        # VirusTotal scan for every link. Use separate key for Gmail/email scanning.
-        # Time budget is configurable so you can trade off completeness vs latency.
-        vt_budget = float(os.getenv("EMAIL_VT_BUDGET_SECONDS", "8.0"))
-        vt_key_email = os.getenv("VT_API_KEY2") or os.getenv("VT_API_KEY")
-        vt_suspicious, vt_malicious, vt_scanned_count, vt_timed_out = await analyze_links_virustotal(
-            request.email_metadata.links, total_budget_seconds=vt_budget, api_key=vt_key_email
-        )
-        link_analysis.vt_suspicious_links = vt_suspicious
-        link_analysis.vt_malicious_links = vt_malicious
-        link_analysis.vt_scanned_links = vt_scanned_count
-        link_analysis.vt_scan_timed_out = vt_timed_out
+            try:
+                header_analysis = await header_task
+            except Exception as e:
+                logger.warning(f"Header analysis failed (non-critical): {e}")
 
-        # Analyze subject for lightweight content warnings
-        content_analysis = analyze_content(request.email_metadata.subject)
+            if gmail_api_auth:
+                gapi_spf = (gmail_api_auth.spf or None)
+                gapi_dkim = (gmail_api_auth.dkim or None)
+                gapi_dmarc = (gmail_api_auth.dmarc or None)
+                if gapi_spf and gapi_spf != "unknown":
+                    header_analysis.spf_status = gapi_spf
+                if gapi_dkim and gapi_dkim != "unknown":
+                    header_analysis.dkim_status = gapi_dkim
+                if gapi_dmarc and gapi_dmarc != "unknown":
+                    header_analysis.dmarc_status = gapi_dmarc
 
-        # Calculate overall threat score
-        threat_score, threat_level, summary, reasons = calculate_threat_score(sender_rep, header_analysis, link_analysis)
+                auth_score = 0
+                if header_analysis.spf_status == "pass":
+                    auth_score += 33
+                elif header_analysis.spf_status == "fail":
+                    auth_score -= 20
+                if header_analysis.dkim_status == "pass":
+                    auth_score += 33
+                elif header_analysis.dkim_status == "fail":
+                    auth_score -= 20
+                if header_analysis.dmarc_status == "pass":
+                    auth_score += 34
+                elif header_analysis.dmarc_status == "fail":
+                    auth_score -= 20
+                header_analysis.authentication_score = max(0, min(100, auth_score))
+                header_analysis.is_authenticated = (
+                    header_analysis.spf_status == "pass" or header_analysis.dkim_status == "pass"
+                ) and header_analysis.dmarc_status != "fail"
+                header_analysis.gmail_api_verified = True
 
-        # Build response
-        response = EmailScanResponse(
-            threat_score=threat_score,
-            threat_level=threat_level,
-            summary=summary,
-            reasons=reasons,
-            details=EmailScanDetails(
-                sender_reputation=sender_rep,
-                header_analysis=header_analysis,
-                link_analysis=link_analysis,
-                content_analysis=content_analysis,
-            ),
-            scanned_at=datetime.now(),
-        )
+            try:
+                nlp_score, nlp_patterns, nlp_confidence = await nlp_task
+                content_analysis.nlp_score = int(nlp_score or 0)
+                content_analysis.nlp_patterns = nlp_patterns or []
+                content_analysis.nlp_confidence = float(nlp_confidence or 0.0)
+            except Exception as e:
+                logger.warning(f"NLP analysis failed (non-critical): {e}")
 
-        logger.info(
-            f"Email scan complete: {request.email_metadata.sender_email} - "
-            f"Threat: {threat_score}/100 ({threat_level})"
-        )
+            link_scan_results: Dict[str, dict] = {}
+            try:
+                link_scan_results = await pattern_task
+            except Exception as e:
+                logger.warning(f"Link pattern analysis failed (non-critical): {e}")
 
-        return response
+            if isinstance(link_scan_results, dict):
+                link_analysis.link_scan_results = link_scan_results
+
+                for u, r in link_scan_results.items():
+                    if not u or not isinstance(r, dict):
+                        continue
+                    score = int(r.get("suspicious_score") or 0)
+                    issues = r.get("detected_issues") or []
+                    issues_text = " ".join([str(x) for x in issues])
+                    if score >= 60:
+                        if u not in link_analysis.suspicious_links and u not in link_analysis.malicious_links:
+                            link_analysis.suspicious_links.append(u)
+                    if "homograph" in issues_text.lower() or "punycode" in issues_text.lower() or "typosquat" in issues_text.lower() or "imperson" in issues_text.lower():
+                        if u not in link_analysis.suspicious_links and u not in link_analysis.malicious_links:
+                            link_analysis.suspicious_links.append(u)
+
+                link_analysis.suspicious_links = list(dict.fromkeys(link_analysis.suspicious_links))
+
+                pattern_scores = [int(v.get("suspicious_score") or 0) for v in link_scan_results.values() if isinstance(v, dict)]
+                if pattern_scores:
+                    heuristic_score = int(link_analysis.risk_score or 0)
+                    pattern_score = int(max(pattern_scores) or 0)
+                    link_analysis.risk_score = int((heuristic_score * 0.6) + (pattern_score * 0.4))
+
+            if scan_type == "full":
+                remaining = max(0.0, total_budget_s - (time.monotonic() - t0))
+
+                sb_task = None
+                redirect_task = None
+                vt_task = None
+                whois_task = None
+
+                if remaining > 0.2:
+                    sb_task = asyncio.create_task(asyncio.wait_for(check_google_safe_browsing(links_limited), timeout=min(3.0, remaining)))
+
+                if remaining > 0.2:
+                    redirect_task = asyncio.create_task(
+                        asyncio.wait_for(resolve_redirect_chains_batch(links_limited[:5]), timeout=min(3.0, remaining))
+                    )
+
+                whois_api_key = os.getenv("WHOIS_API_KEY", "").strip()
+                enable_age_check = os.getenv("ENABLE_DOMAIN_AGE_CHECK", "true").lower() == "true"
+                if remaining > 0.2 and enable_age_check and whois_api_key and (not sender_rep.is_trusted_domain) and (not sender_rep.is_free_provider):
+                    domain = sender_rep.domain
+                    whois_task = asyncio.create_task(
+                        asyncio.wait_for(asyncio.to_thread(_check_domain_age_sync, domain, whois_api_key), timeout=min(3.0, remaining))
+                    )
+
+                vt_key = os.getenv("VT_API_KEY", "").strip() or None
+                if remaining > 0.2:
+                    vt_task = asyncio.create_task(
+                        analyze_links_virustotal(links_limited[:5], total_budget_seconds=min(3.0, remaining), api_key=vt_key)
+                    )
+
+                if sb_task:
+                    try:
+                        link_analysis.safe_browsing_threats = await sb_task
+                    except Exception as e:
+                        logger.warning(f"Safe Browsing failed (non-critical): {e}")
+
+                if redirect_task:
+                    try:
+                        link_analysis.redirect_chains = await redirect_task
+                    except Exception as e:
+                        logger.warning(f"Redirect resolution failed (non-critical): {e}")
+
+                if whois_task:
+                    try:
+                        age_result = await whois_task
+                        if isinstance(age_result, dict):
+                            sender_rep.domain_age_days = age_result.get("age_days")
+                            sender_rep.domain_created = age_result.get("created")
+                            sender_rep.is_newly_registered = bool(age_result.get("is_new", False))
+                            try:
+                                if sender_rep.is_newly_registered:
+                                    sender_rep.reputation_score = max(0, int(sender_rep.reputation_score) - 20)
+                                elif sender_rep.domain_age_days is not None and int(sender_rep.domain_age_days) < 90:
+                                    sender_rep.reputation_score = max(0, int(sender_rep.reputation_score) - 10)
+                                sender_rep.reputation_score = max(0, min(100, int(sender_rep.reputation_score)))
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        logger.warning(f"WHOIS enrichment failed (non-critical): {e}")
+
+                if vt_task:
+                    try:
+                        vt_suspicious, vt_malicious, scanned_count, timed_out = await asyncio.wait_for(vt_task, timeout=min(3.0, max(0.2, remaining)))
+                        link_analysis.vt_suspicious_links = vt_suspicious
+                        link_analysis.vt_malicious_links = vt_malicious
+                        link_analysis.vt_scanned_links = int(scanned_count or 0)
+                        link_analysis.vt_scan_timed_out = bool(timed_out)
+                    except Exception as e:
+                        logger.warning(f"VirusTotal enrichment failed (non-critical): {e}")
+
+            threat_score, threat_level, summary, reasons, confidence = await calculate_threat_score(
+                sender_rep, header_analysis, link_analysis, content_analysis
+            )
+
+            details_dict = {
+                "sender_reputation": sender_rep.model_dump() if hasattr(sender_rep, "model_dump") else sender_rep.dict(),
+                "header_analysis": header_analysis.model_dump() if hasattr(header_analysis, "model_dump") else header_analysis.dict(),
+                "link_analysis": link_analysis.model_dump() if hasattr(link_analysis, "model_dump") else link_analysis.dict(),
+                "content_analysis": content_analysis.model_dump() if hasattr(content_analysis, "model_dump") else content_analysis.dict(),
+            }
+
+            groq_key = os.getenv("GROQ_API_KEY", "").strip()
+            if not groq_key:
+                logger.info({
+                    "event": "ai_explanation_skipped",
+                    "reason": "missing_groq_api_key",
+                })
+
+            try:
+                ai_explanation = await asyncio.wait_for(
+                    generate_threat_explanation(
+                        threat_score=threat_score,
+                        threat_level=threat_level,
+                        summary=summary,
+                        reasons=reasons,
+                        sender_email=sender_email,
+                        details=details_dict,
+                    ),
+                    timeout=2.0,
+                )
+            except Exception:
+                ai_explanation = None
+
+            if ai_explanation is None and groq_key:
+                logger.info({
+                    "event": "ai_explanation_unavailable",
+                    "reason": "timeout_or_error_or_empty",
+                })
+
+            response = EmailScanResponse(
+                threat_score=threat_score,
+                threat_level=threat_level,
+                summary=summary,
+                reasons=reasons,
+                confidence=confidence,
+                details=EmailScanDetails(
+                    sender_reputation=sender_rep,
+                    header_analysis=header_analysis,
+                    link_analysis=link_analysis,
+                    content_analysis=content_analysis,
+                    attachments=[dict(a) for a in (request.email_metadata.attachments or []) if isinstance(a, dict)],
+                    has_dangerous_attachments=bool(request.email_metadata.has_dangerous_attachments),
+                ),
+                ai_explanation=ai_explanation,
+                scanned_at=datetime.now(),
+            )
+
+            duration_s = round((time.monotonic() - t0), 3)
+            logger.info({
+                "event": "scan_completed",
+                "duration_seconds": duration_s,
+                "scan_type": scan_type,
+                "sender_email": sender_email,
+                "threat_score": threat_score,
+                "threat_level": threat_level,
+            })
+
+            return response
 
     except Exception as e:
-        logger.error(f"Error scanning email metadata: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to scan email: {str(e)}") from e
+        duration_s = round((time.monotonic() - t0), 3)
+        logger.error({
+            "event": "scan_logic_exception",
+            "duration_seconds": duration_s,
+            "scan_type": scan_type,
+            "sender_email": sender_email,
+            "error": str(e),
+        }, exc_info=True)
+        raise
+
+
+@email_router.post("/scan-metadata", response_model=EmailScanResponse)
+async def scan_email_metadata(request: EmailScanRequest):
+    start = time.perf_counter()
+
+    try:
+        try:
+            async with asyncio.timeout(5.0):
+                response = await run_scan_logic(request)
+        except asyncio.TimeoutError:
+            logger.warning("Global scan timeout — returning partial result")
+
+            details = _build_minimal_details()
+            response = EmailScanResponse(
+                threat_score=50,
+                threat_level="suspicious",
+                summary="Scan timed out — partial results shown",
+                reasons=[
+                    "Scan exceeded time limit",
+                    "Some checks were skipped",
+                    "Partial results returned",
+                ],
+                confidence=0.6,
+                details=details,
+                ai_explanation=None,
+                scanned_at=datetime.now(),
+            )
+
+        duration = time.perf_counter() - start
+        logger.info(f"Scan completed in {duration:.2f}s")
+        return response
+
+    except Exception:
+        logger.exception("Unexpected scan failure")
+        details = _build_minimal_details()
+        return EmailScanResponse(
+            threat_score=0,
+            threat_level="unknown",
+            summary="Scan failed",
+            reasons=["Unexpected error occurred", "Partial results returned", "Try again"],
+            confidence=0.0,
+            details=details,
+            ai_explanation=None,
+            scanned_at=datetime.now(),
+        )
 
 
 @email_router.get("/check-auth")
@@ -1029,7 +2179,7 @@ async def check_email_auth(email: str):
 
     except Exception as e:
         logger.error(f"Auth check failed for {email}: {e}")
-        raise HTTPException(status_code=500, detail=f"Authentication check failed: {str(e)}") from e
+        raise HTTPException(status_code=502, detail="Authentication check temporarily unavailable") from e
 
 
 @email_router.get("/health")
@@ -1039,5 +2189,136 @@ async def email_health_check():
         "status": "healthy",
         "service": "email-scanner",
         "auth_checker_available": AUTH_CHECKER_AVAILABLE,
+        "features": {
+            "safe_browsing": bool(os.getenv("GOOGLE_SAFE_BROWSING_KEY")),
+            "whois_domain_age": bool(os.getenv("WHOIS_API_KEY")),
+            "nlp_analysis": os.getenv("ENABLE_NLP_ANALYSIS", "true").lower() == "true",
+            "redirect_resolution": os.getenv("ENABLE_REDIRECT_RESOLUTION", "true").lower() == "true",
+            "ai_explanation": bool(os.getenv("GROQ_API_KEY")),
+        },
         "timestamp": datetime.now().isoformat(),
     }
+
+
+# ============================================
+# Standalone AI Explanation Endpoint
+# ============================================
+class ExplainThreatRequest(BaseModel):
+    """Request for standalone threat explanation"""
+    threat_score: int = Field(..., description="Threat score 0-100")
+    threat_level: str = Field(..., description="safe/suspicious/dangerous")
+    summary: str = Field("", description="Scan summary")
+    reasons: List[str] = Field(default_factory=list, description="Scan reasons")
+    sender_email: str = Field(..., description="Sender email")
+    details: Dict[str, Any] = Field(default_factory=dict, description="Scan details dict")
+
+
+@email_router.post("/explain-threat")
+async def explain_threat(request: ExplainThreatRequest):
+    """
+    Generate an AI-powered explanation for a threat scan result.
+
+    Useful when the client wants to generate or regenerate an explanation
+    for a scan that was already performed.
+    """
+    groq_key = os.getenv("GROQ_API_KEY", "").strip()
+    if not groq_key:
+        raise HTTPException(status_code=503, detail="AI explanation service not configured (GROQ_API_KEY missing)")
+
+    try:
+        explanation = await generate_threat_explanation(
+            threat_score=request.threat_score,
+            threat_level=request.threat_level,
+            summary=request.summary,
+            reasons=request.reasons,
+            sender_email=request.sender_email,
+            details=request.details,
+        )
+        if not explanation:
+            raise HTTPException(status_code=502, detail="AI explanation generation returned empty result")
+
+        return {
+            "success": True,
+            "explanation": explanation.model_dump() if hasattr(explanation, 'model_dump') else explanation.dict(),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"AI explanation endpoint failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Explanation generation failed: {str(e)}") from e
+
+
+# ============================================
+# OAuth Token Verification Endpoint
+# ============================================
+class VerifyOAuthTokenRequest(BaseModel):
+    """Request to verify an OAuth access token server-side"""
+    access_token: str = Field(..., description="OAuth access token to verify")
+    expected_email: Optional[str] = Field(None, description="Expected email to validate against")
+
+
+@email_router.post("/verify-oauth-token")
+async def verify_oauth_token(request: VerifyOAuthTokenRequest):
+    """
+    Verify a Google OAuth access token server-side.
+
+    This endpoint contacts Google's tokeninfo endpoint to verify the token
+    is valid, not expired, and matches the expected audience/email.
+    """
+    if not request.access_token or len(request.access_token) < 20:
+        raise HTTPException(status_code=400, detail="Invalid access token format")
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                "https://oauth2.googleapis.com/tokeninfo",
+                params={"access_token": request.access_token},
+            )
+
+        if resp.status_code != 200:
+            return {
+                "valid": False,
+                "error": "Token validation failed",
+                "status_code": resp.status_code,
+            }
+
+        token_info = resp.json()
+
+        # Validate audience matches our client ID
+        google_client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+        aud = token_info.get("aud", "")
+        if google_client_id and aud != google_client_id:
+            return {
+                "valid": False,
+                "error": "Token audience mismatch",
+                "expected_aud": google_client_id[:20] + "...",
+            }
+
+        # Check email if provided
+        token_email = token_info.get("email", "")
+        if request.expected_email and token_email:
+            if token_email.lower() != request.expected_email.lower():
+                return {
+                    "valid": False,
+                    "error": "Token email mismatch",
+                }
+
+        # Check scopes include Gmail access
+        scopes = token_info.get("scope", "")
+        has_gmail_scope = "gmail" in scopes.lower()
+
+        return {
+            "valid": True,
+            "email": token_email,
+            "expires_in": token_info.get("expires_in"),
+            "scopes": scopes.split(" ") if scopes else [],
+            "has_gmail_scope": has_gmail_scope,
+            "email_verified": token_info.get("email_verified", "false") == "true",
+        }
+
+    except httpx.RequestError as e:
+        logger.error(f"OAuth token verification failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed to contact Google tokeninfo endpoint") from e
+    except Exception as e:
+        logger.error(f"OAuth token verification error: {e}")
+        raise HTTPException(status_code=500, detail=f"Token verification failed: {str(e)}") from e

@@ -1,5 +1,5 @@
 def register_routes(app):
-    from .api_routes import api_router
+    from .api_routes import api_router, health_router
     from .auth import auth_router
     from .chatbot_routes import chatbot_router
     from .db import db_router
@@ -9,6 +9,7 @@ def register_routes(app):
     from .translation_routes import translation_router
 
     # Include all routers
+    app.include_router(health_router)
     app.include_router(scan_router)
     app.include_router(export_router)
     app.include_router(db_router)

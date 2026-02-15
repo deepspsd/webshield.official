@@ -841,3 +841,55 @@ class WebShieldDetector:
                 "data_unavailable": True,
                 "error": f"Real-time data unavailable: {str(e)}",
             }
+
+    async def check_virustotal_file_hash(self, sha256: str, api_key: str | None = None) -> Dict[str, Any]:
+        key = api_key or VT_API_KEY
+        s = (sha256 or "").strip().lower()
+        if not s or len(s) < 64:
+            return {"found": False, "error": "Invalid SHA-256"}
+        if not key or key == "your_virustotal_api_key_here":
+            return {"found": False, "error": "VirusTotal API key not configured"}
+
+        try:
+            headers = {"x-apikey": key, "Accept": "application/json"}
+            url = f"{VT_BASE_URL}/files/{s}"
+            async with self.session.get(url, headers=headers, timeout=4.0) as resp:
+                if resp.status == 404:
+                    return {"found": False}
+                if resp.status == 429:
+                    return {"found": None, "error": "Rate limited"}
+                if resp.status != 200:
+                    body = ""
+                    try:
+                        body = await resp.text()
+                    except Exception:
+                        body = ""
+                    return {"found": None, "error": f"HTTP {resp.status}", "body": body[:200]}
+
+                data = await resp.json()
+                attrs = data.get("data", {}).get("attributes", {})
+                stats = attrs.get("last_analysis_stats", {}) or {}
+                mc = int(stats.get("malicious", 0) or 0)
+                sc = int(stats.get("suspicious", 0) or 0)
+                tc = int(sum(int(v or 0) for v in stats.values()))
+                verdict = "clean"
+                if mc > 0:
+                    verdict = "malicious"
+                elif sc > 0:
+                    verdict = "suspicious"
+                return {
+                    "found": True,
+                    "sha256": s,
+                    "verdict": verdict,
+                    "malicious_count": mc,
+                    "suspicious_count": sc,
+                    "total_engines": tc,
+                    "reputation": attrs.get("reputation", 0),
+                    "meaningful_name": attrs.get("meaningful_name"),
+                    "type_description": attrs.get("type_description"),
+                    "last_analysis_date": attrs.get("last_analysis_date"),
+                }
+        except asyncio.TimeoutError:
+            return {"found": None, "error": "Timeout"}
+        except Exception as e:
+            return {"found": None, "error": str(e)}

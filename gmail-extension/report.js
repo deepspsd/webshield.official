@@ -1,5 +1,5 @@
 // WebShield Gmail Report - World-Class Enhanced Version
-// Version 2.0.0 - Professional Security Report Generation
+// Version 2.2.0 - Professional Security Report Generation
 
 // ===== CONSTANTS =====
 const SAFE_SCORE_THRESHOLD = 33;
@@ -113,9 +113,15 @@ function renderLink(link, linkAnalysis) {
   let riskClass = 'safe';
   let riskLabel = 'Safe';
 
-  const suspiciousLinks = linkAnalysis?.suspicious_links || [];
-  const isSuspicious = suspiciousLinks.some(sl => sl.url === url || sl === url);
-  const hasTextMismatch = typeof link === 'object' && link.textUrlMismatch;
+  const suspiciousLinks = Array.isArray(linkAnalysis?.suspicious_links) ? linkAnalysis.suspicious_links : [];
+  const isSuspicious = suspiciousLinks.some(sl => {
+    if (!sl) return false;
+    if (typeof sl === 'string') return sl === url;
+    if (typeof sl === 'object') return sl.url === url || sl.href === url;
+    return false;
+  });
+  const hasTextMismatch = (typeof link === 'object' && !!link.textUrlMismatch)
+    || suspiciousLinks.some(sl => (sl && typeof sl === 'object' && (sl.url === url || sl.href === url) && !!sl.textUrlMismatch));
 
   const scanResult = (linkAnalysis && linkAnalysis.link_scan_results && url)
     ? linkAnalysis.link_scan_results[url]
@@ -186,9 +192,13 @@ function renderReport(scanResult) {
   const senderDomain = escapeHTML(senderRep.domain || 'Unknown');
 
   const auth = scanResult?.details?.header_analysis || {};
-  const links = scanResult?.details?.link_analysis?.links || scanResult?.links || [];
   const linkAnalysis = scanResult?.details?.link_analysis || {};
+  const links = Array.isArray(scanResult?.link_details) && scanResult.link_details.length
+    ? scanResult.link_details
+    : (scanResult?.details?.link_analysis?.links || scanResult?.links || []);
   const contentAnalysis = scanResult?.details?.content_analysis || {};
+  const attachments = scanResult?.details?.attachments || scanResult?.attachments || [];
+  const hasDangerousAttachments = !!(scanResult?.details?.has_dangerous_attachments || scanResult?.has_dangerous_attachments);
 
   const authPostureParts = [];
   if (auth.spf_posture) authPostureParts.push(`SPF: ${escapeHTML(String(auth.spf_posture))}`);
@@ -236,10 +246,22 @@ function renderReport(scanResult) {
     : `<ul class="links-list">${links.map(l => renderLink(l, linkAnalysis)).join('')}</ul>`;
 
   // Suspicious links count
-  const suspiciousLinkCount = linkAnalysis.suspicious_links?.length || 0;
+  const suspiciousLinkCount = Array.isArray(linkAnalysis.suspicious_links) ? linkAnalysis.suspicious_links.length : 0;
 
   // Phishing keywords count
   const phishingKeywords = contentAnalysis.phishing_keywords_found || 0;
+
+  const redirectChains = linkAnalysis.redirect_chains || {};
+  const redirectUrls = Object.keys(redirectChains || {});
+
+
+
+  const linkScanResults = linkAnalysis.link_scan_results || {};
+  const linkScanUrls = Object.keys(linkScanResults || {});
+
+  const receivedHeaders = Array.isArray(auth.received) ? auth.received : (Array.isArray(scanResult?.headers?.received) ? scanResult.headers.received : []);
+  const replyToHeader = auth.reply_to || scanResult?.headers?.reply_to || '';
+  const returnPathHeader = auth.return_path || scanResult?.headers?.return_path || '';
 
   return `
         <!-- Premium Header -->
@@ -258,6 +280,7 @@ function renderReport(scanResult) {
         <div class="badges-row">
             ${isOffline ? '<span class="badge offline">⚡ Offline Analysis</span>' : '<span class="badge online">🌐 Live Analysis</span>'}
             <span class="badge timestamp">🕐 ${formatDate(scannedAt)}</span>
+            ${scanResult?.confidence ? `<span class="badge" style="background:rgba(0,188,212,0.15);color:#00bcd4;border-color:rgba(0,188,212,0.3)">🎯 ${Math.round(scanResult.confidence * 100)}% Confidence</span>` : ''}
         </div>
 
         <div class="report-body">
@@ -313,6 +336,14 @@ function renderReport(scanResult) {
                         <span class="info-label">Authenticated</span>
                         <span class="info-value">${auth.is_authenticated ? '✅ Yes' : '❌ No'}</span>
                     </div>
+                    ${senderRep.domain_age_days !== null && senderRep.domain_age_days !== undefined ? `
+                    <div class="info-row">
+                        <span class="info-label">Domain Age</span>
+                        <span class="info-value" style="${senderRep.is_newly_registered ? 'color:#dc3545;font-weight:600' : ''}">
+                          ${senderRep.is_newly_registered ? '⚠️ ' : ''}${senderRep.domain_age_days > 365 ? Math.round(senderRep.domain_age_days / 365) + ' years' : senderRep.domain_age_days + ' days'}
+                          ${senderRep.domain_created ? ` (since ${escapeHTML(senderRep.domain_created)})` : ''}
+                        </span>
+                    </div>` : ''}
                 </div>
             </section>
 
@@ -324,6 +355,16 @@ function renderReport(scanResult) {
                         <span class="info-label">Domain posture (DNS)</span>
                         <span class="info-value">${authPostureText}</span>
                     </div>
+                    ${replyToHeader ? `
+                    <div class="info-row">
+                        <span class="info-label">Reply-To</span>
+                        <span class="info-value">${escapeHTML(replyToHeader)}</span>
+                    </div>` : ''}
+                    ${returnPathHeader ? `
+                    <div class="info-row">
+                        <span class="info-label">Return-Path</span>
+                        <span class="info-value">${escapeHTML(returnPathHeader)}</span>
+                    </div>` : ''}
                 </div>
                 <div class="auth-grid">
                     <div class="auth-item">
@@ -339,6 +380,14 @@ function renderReport(scanResult) {
                         ${renderAuthStatus(auth.dmarc_status)}
                     </div>
                 </div>
+                ${receivedHeaders && receivedHeaders.length > 0 ? `
+                <div style="margin-top:12px">
+                    <div style="font-size:11px;text-transform:uppercase;font-weight:600;color:#9aa0a6;margin-bottom:6px">Received Headers (${receivedHeaders.length})</div>
+                    <div style="max-height:140px;overflow:auto;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;background:rgba(255,255,255,0.02);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:11px;line-height:1.5;color:#b0b8c1">
+                        ${receivedHeaders.slice(0, 5).map(h => `<div style="margin-bottom:8px">${escapeHTML(String(h))}</div>`).join('')}
+                        ${receivedHeaders.length > 5 ? `<div style="color:#9aa0a6">+ ${receivedHeaders.length - 5} more…</div>` : ''}
+                    </div>
+                </div>` : ''}
             </section>
 
             <!-- Content Analysis -->
@@ -358,6 +407,167 @@ function renderReport(scanResult) {
             </section>
             ` : ''}
 
+            <!-- NLP Phishing Analysis -->
+            ${contentAnalysis.nlp_score > 20 ? `
+            <section class="report-section" style="border-left: 3px solid ${contentAnalysis.nlp_score > 60 ? '#dc3545' : '#ffc107'}">
+                <h2 class="section-title">🧠 NLP Phishing Analysis</h2>
+                <div class="info-table">
+                    <div class="info-row">
+                        <span class="info-label">NLP Risk Score</span>
+                        <span class="info-value" style="font-weight:700;color:${contentAnalysis.nlp_score > 60 ? '#dc3545' : contentAnalysis.nlp_score > 30 ? '#ffc107' : '#28a745'}">${contentAnalysis.nlp_score}/100</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Confidence</span>
+                        <span class="info-value">${Math.round((contentAnalysis.nlp_confidence || 0) * 100)}%</span>
+                    </div>
+                </div>
+                ${Array.isArray(contentAnalysis.nlp_patterns) && contentAnalysis.nlp_patterns.length > 0 ? `
+                <div style="margin-top:8px">
+                    ${contentAnalysis.nlp_patterns.slice(0, 5).map(p => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;margin:4px 0;background:rgba(255,255,255,0.03);border-radius:6px">
+                        <span style="font-size:13px">${escapeHTML(p.pattern_name || p.pattern || 'Pattern')}</span>
+                        <span class="keyword-tag" style="font-size:10px">${Math.round((p.score || p.confidence || 0) * 100)}%</span>
+                    </div>`).join('')}
+                </div>` : ''}
+            </section>` : ''}
+
+            <!-- Google Safe Browsing Results -->
+            ${(() => {
+      const sb = linkAnalysis.safe_browsing_threats || {};
+      const sbUrls = Object.keys(sb);
+      if (sbUrls.length === 0) return '';
+      return `
+            <section class="report-section warning-section" style="border-left:3px solid #dc3545">
+                <h2 class="section-title">🛡️ Google Safe Browsing Alerts</h2>
+                <div class="warning-content">
+                    <p><strong>${sbUrls.length}</strong> URL(s) flagged by Google Safe Browsing</p>
+                    <ul class="links-list">
+                    ${sbUrls.slice(0, 5).map(u => {
+        const threats = sb[u] || [];
+        return `<li class="link-item danger">
+                        <div class="link-url" title="${escapeHTML(u)}">${escapeHTML(u.length > 50 ? u.substring(0, 47) + '...' : u)}</div>
+                        <span class="link-risk danger">${escapeHTML(threats.join(', '))}</span>
+                      </li>`;
+      }).join('')}
+                    </ul>
+                </div>
+            </section>`;
+    })()}
+
+
+
+            <!-- Redirect Resolution -->
+            ${redirectUrls.length > 0 ? `
+            <section class="report-section" style="border-left:3px solid #ffc107">
+                <h2 class="section-title">↪️ URL Redirect Resolution</h2>
+                <div class="warning-content">
+                    <p><strong>${redirectUrls.length}</strong> URL(s) resolved through redirects</p>
+                </div>
+                <div style="margin-top:10px">
+                    ${redirectUrls.slice(0, 5).map(u => {
+      const chain = Array.isArray(redirectChains[u]) ? redirectChains[u] : [];
+      const pretty = [u, ...chain].filter(Boolean);
+      return `
+                        <div style="margin:10px 0;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.02)">
+                          <div style="font-size:12px;color:#9aa0a6;margin-bottom:6px">Original</div>
+                          <div style="font-size:13px;color:#d4d8dc;word-break:break-all">${escapeHTML(u)}</div>
+                          ${pretty.length > 1 ? `
+                          <div style="font-size:12px;color:#9aa0a6;margin:8px 0 6px">Chain</div>
+                          <div style="font-size:12px;color:#b0b8c1;word-break:break-all;line-height:1.6">
+                            ${pretty.slice(1, 6).map(step => `<div>→ ${escapeHTML(step)}</div>`).join('')}
+                            ${pretty.length > 6 ? `<div style="color:#9aa0a6">+ ${pretty.length - 6} more…</div>` : ''}
+                          </div>` : ''}
+                        </div>`;
+    }).join('')}
+                </div>
+            </section>` : ''}
+
+            <!-- URL Pattern Analysis -->
+            ${linkScanUrls.length > 0 ? `
+            <section class="report-section" style="border-left:3px solid #00bcd4">
+                <h2 class="section-title">🔎 URL Pattern Analysis</h2>
+                <div class="warning-content">
+                    <p>ML/rule-based inspection of URL structure (homograph, typosquatting, punycode, suspicious patterns)</p>
+                </div>
+                <div style="margin-top:10px">
+                    ${linkScanUrls.slice(0, 8).map(u => {
+      const r = linkScanResults[u] || {};
+      const s = Number(r.suspicious_score || 0);
+      const issues = Array.isArray(r.detected_issues) ? r.detected_issues : [];
+      const badgeColor = s >= 60 ? '#dc3545' : s >= 30 ? '#ffc107' : '#28a745';
+      return `
+                        <div style="margin:10px 0;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.02)">
+                          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+                            <div style="flex:1;min-width:0">
+                              <div style="font-size:13px;color:#d4d8dc;word-break:break-all">${escapeHTML(u)}</div>
+                              ${issues.length ? `<div style="margin-top:6px;font-size:12px;color:#b0b8c1;line-height:1.5">${issues.slice(0, 4).map(i => `• ${escapeHTML(String(i))}`).join('<br/>')}${issues.length > 4 ? '<br/>…' : ''}</div>` : `<div style="margin-top:6px;font-size:12px;color:#9aa0a6">No issues detected</div>`}
+                            </div>
+                            <div style="flex-shrink:0">
+                              <span class="keyword-tag" style="border-color:${badgeColor};color:${badgeColor};background:rgba(0,0,0,0.15)">${Math.round(s)}/100</span>
+                            </div>
+                          </div>
+                        </div>`;
+    }).join('')}
+                </div>
+            </section>` : ''}
+
+            <!-- Attachment Analysis -->
+            ${(attachments && attachments.length > 0) ? `
+            <section class="report-section" style="border-left:3px solid ${hasDangerousAttachments ? '#dc3545' : '#28a745'}">
+                <h2 class="section-title">📎 Attachment Analysis</h2>
+                <div class="warning-content">
+                    <p><strong>${attachments.length}</strong> attachment(s) detected${hasDangerousAttachments ? ' — dangerous type(s) present' : ''}</p>
+                </div>
+                <div style="margin-top:10px">
+                    <ul class="links-list">
+                        ${attachments.slice(0, 10).map(a => {
+      const name = (a && (a.name || a.filename)) ? String(a.name || a.filename) : 'attachment';
+      const ext = (a && a.extension) ? String(a.extension) : (name.includes('.') ? name.split('.').pop() : '');
+      const vtVerdict = a && a.vt_verdict ? String(a.vt_verdict).toLowerCase() : null;
+      const vt = (a && a.vt && typeof a.vt === 'object') ? a.vt : null;
+      const vtLabel = vtVerdict === 'malicious'
+        ? `VT: Malicious (${vt?.malicious_count ?? 0})`
+        : (vtVerdict === 'suspicious'
+          ? `VT: Suspicious (${vt?.suspicious_count ?? 0})`
+          : (vtVerdict === 'clean' ? 'VT: Clean' : null));
+      const vtClass = vtVerdict === 'malicious' ? 'danger' : (vtVerdict === 'suspicious' ? 'warning' : (vtVerdict === 'clean' ? 'safe' : null));
+      const isDanger = !!a.is_dangerous || !!a.dangerous || (!!ext && ['exe', 'bat', 'cmd', 'scr', 'js', 'vbs', 'ps1', 'msi', 'dll', 'pif', 'application', 'gadget', 'msc', 'hta', 'cpl', 'msp', 'com', 'jar', 'wsf', 'wsh', 'reg', 'lnk', 'inf', 'scf'].includes(String(ext).toLowerCase()));
+      const riskClass = vtClass || (isDanger ? 'danger' : 'safe');
+      const riskLabel = vtLabel || (isDanger ? 'Dangerous' : 'File');
+      return `<li class="link-item ${riskClass}"><div class="link-url" title="${escapeHTML(name)}">${escapeHTML(name.length > 60 ? name.substring(0, 57) + '...' : name)}</div><span class="link-risk ${riskClass}">${escapeHTML(riskLabel)}</span></li>`;
+    }).join('')}
+                    </ul>
+                </div>
+            </section>` : ''}
+
+            <!-- AI Threat Explanation -->
+            ${scanResult?.ai_explanation?.why_marked ? `
+            <section class="report-section" style="border-left:3px solid #00bcd4">
+                <h2 class="section-title">🤖 AI Threat Explanation</h2>
+                <div style="font-size:14px;line-height:1.7;color:#d4d8dc;padding:4px 0">
+                    ${escapeHTML(scanResult.ai_explanation.why_marked)}
+                </div>
+                ${Array.isArray(scanResult.ai_explanation.factor_breakdown) && scanResult.ai_explanation.factor_breakdown.length > 0 ? `
+                <div style="margin-top:10px">
+                    <div style="font-size:11px;text-transform:uppercase;font-weight:600;color:#9aa0a6;margin-bottom:6px">Factor Breakdown</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px">
+                        ${scanResult.ai_explanation.factor_breakdown.map(f => `<span class="keyword-tag" style="background:rgba(220,53,69,0.15);color:#dc3545;border-color:rgba(220,53,69,0.3)">${escapeHTML(f.factor || f.name || JSON.stringify(f))}</span>`).join('')}
+                    </div>
+                </div>` : ''}
+                ${scanResult.ai_explanation.confidence_explanation ? `
+                <div style="margin-top:10px">
+                    <div style="font-size:11px;text-transform:uppercase;font-weight:600;color:#9aa0a6;margin-bottom:6px">Confidence</div>
+                    <div style="font-size:13px;color:#b0b8c1">${escapeHTML(scanResult.ai_explanation.confidence_explanation)}</div>
+                </div>` : ''}
+                ${scanResult.ai_explanation.recommendations?.length > 0 ? `
+                <div style="margin-top:10px">
+                    <div style="font-size:11px;text-transform:uppercase;font-weight:600;color:#9aa0a6;margin-bottom:6px">Recommendations</div>
+                    <ul style="margin:0;padding-left:16px">
+                        ${scanResult.ai_explanation.recommendations.map(r => `<li style="font-size:13px;color:#b0b8c1;margin:4px 0">${escapeHTML(r)}</li>`).join('')}
+                    </ul>
+                </div>` : ''}
+            </section>` : ''}
+
             <!-- Links Section -->
             <section class="report-section">
                 <h2 class="section-title">Links Analysis</h2>
@@ -368,7 +578,7 @@ function renderReport(scanResult) {
             <footer class="report-footer">
                 <div class="footer-brand">
                     <span class="footer-icon">🛡️</span>
-                    <span>WebShield Gmail Scanner v2.0.0</span>
+                    <span>WebShield Gmail Scanner v2.2.0</span>
                 </div>
                 <div class="footer-actions">
                     <button id="rescan-btn" class="action-btn">🔄 Re-scan</button>
@@ -401,6 +611,7 @@ THREAT ASSESSMENT
 -----------------
 Score: ${score}/100
 Level: ${level.toUpperCase()}
+Confidence: ${scanResult?.confidence ? Math.round(scanResult.confidence * 100) + '%' : 'N/A'}
 Summary: ${summary}
 
 KEY FINDINGS
@@ -412,6 +623,8 @@ SENDER INFORMATION
 Domain: ${senderRep.domain || 'Unknown'}
 Reputation Score: ${senderRep.reputation_score || 'N/A'}/100
 Trusted Domain: ${senderRep.is_trusted_domain ? 'Yes' : 'No'}
+Domain Age: ${senderRep.domain_age_days != null ? senderRep.domain_age_days + ' days' : 'N/A'}
+Newly Registered: ${senderRep.is_newly_registered ? 'YES ⚠️' : 'No'}
 
 AUTHENTICATION
 --------------
@@ -419,14 +632,25 @@ SPF: ${auth.spf_status || 'Unknown'}
 DKIM: ${auth.dkim_status || 'Unknown'}
 DMARC: ${auth.dmarc_status || 'Unknown'}
 Encrypted: ${auth.encrypted ? 'Yes' : 'No'}
-
+${scanResult?.ai_explanation?.why_marked ? `
+AI EXPLANATION
+--------------
+${scanResult.ai_explanation.why_marked}
+${scanResult.ai_explanation.factor_breakdown?.length ? '\nFactor Breakdown: ' + scanResult.ai_explanation.factor_breakdown.map(f => f.factor || f.name || JSON.stringify(f)).join(', ') : ''}
+${scanResult.ai_explanation.recommendations?.length ? '\nRecommendations:\n' + scanResult.ai_explanation.recommendations.map(r => `  • ${r}`).join('\n') : ''}
+` : ''}
 ---
-Report generated by WebShield Gmail Scanner v2.0.0
+Report generated by WebShield Gmail Scanner v2.2.0
     `.trim();
 }
 
 // ===== DOM Ready Handler =====
 document.addEventListener('DOMContentLoaded', () => {
+  chrome.storage.sync.get({ dark_mode: false }, (settings) => {
+    if (chrome.runtime.lastError) return;
+    document.body.classList.toggle('dark-mode', !!settings.dark_mode);
+  });
+
   const params = new URLSearchParams(window.location.search);
   const threadId = params.get('id');
   const load = document.getElementById('loading');
@@ -524,6 +748,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Store for actions
     currentScanData = data;
+
+    try {
+      if (data && data.scanResult) {
+        const sr = data.scanResult;
+        if (!sr.timestamp) {
+          if (data.timestamp) {
+            sr.timestamp = data.timestamp;
+          } else if (sr.scanned_at) {
+            const parsed = Date.parse(sr.scanned_at);
+            sr.timestamp = Number.isNaN(parsed) ? Date.now() : parsed;
+          }
+        }
+        if (!sr.scanned_at && sr.timestamp) {
+          sr.scanned_at = new Date(sr.timestamp).toISOString();
+        }
+      }
+    } catch (_) {
+      // ignore
+    }
 
     // Hide loading, show report
     load.classList.add('hidden');

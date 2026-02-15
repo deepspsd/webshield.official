@@ -1,12 +1,22 @@
 // WebShield Gmail Email Scanner (Standalone Gmail Extension)
 // World-Class Phishing & Fake Email Detection
-// Version 2.0.0 - Production Build
+// Version 2.2.0 - Production Build
 
 // ===== PRODUCTION CONFIGURATION =====
 const DEBUG_MODE = false; // Set to true for development logging
 const RATE_LIMIT_MS = 3000; // Minimum time between scans (3 seconds)
 const CACHE_TTL_MS = 300000; // Cache TTL (5 minutes)
 const MAX_CACHE_SIZE = 50; // Maximum cached scan results
+
+// ===== SCORING WEIGHT CONSTANTS =====
+const SCORE_WEIGHT_REPUTATION = 0.4; // 40% of safe-score from sender reputation
+const SCORE_WEIGHT_AUTH = 0.3;        // 30% from authentication status
+const SCORE_WEIGHT_LINKS = 0.3;       // 30% from link/content analysis
+const SCORE_AUTH_PASS = 30;            // Auth contribution when authenticated
+const SCORE_AUTH_UNKNOWN = 15;         // Auth contribution when unknown
+const SCORE_LINK_CAP = 45;            // Max link score contribution
+const THREAT_SAFE_MAX = 33;           // Score ≤ this = safe
+const THREAT_SUSPICIOUS_MAX = 66;     // Score ≤ this = suspicious, above = dangerous
 
 // Controlled logging - only logs in debug mode
 const log = {
@@ -28,6 +38,27 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function enforceReportRetentionLimit(maxReports = 25) {
+  try {
+    chrome.storage.local.get(null, (items) => {
+      if (chrome.runtime.lastError) return;
+      const reports = [];
+      for (const [key, value] of Object.entries(items || {})) {
+        if (!key.startsWith('gmail_report_')) continue;
+        const ts = value?.timestamp || value?.storedAt || 0;
+        reports.push({ key, ts: Number(ts) || 0 });
+      }
+      reports.sort((a, b) => b.ts - a.ts);
+      const toRemove = reports.slice(maxReports).map(r => r.key);
+      if (toRemove.length) {
+        chrome.storage.local.remove(toRemove, () => { /* ignore */ });
+      }
+    });
+  } catch (_) {
+    // ignore
+  }
 }
 
 /**
@@ -231,20 +262,57 @@ function analyzePhishingKeywords(text) {
   return detected;
 }
 
-// Known trusted domains (major email providers and services)
+// Known trusted domains (major email providers, services, and verified banks)
 const TRUSTED_DOMAINS = new Set([
+  // Tech giants
   'google.com', 'gmail.com', 'microsoft.com', 'outlook.com', 'live.com',
-  'apple.com', 'icloud.com', 'amazon.com', 'facebook.com', 'meta.com',
-  'twitter.com', 'x.com', 'linkedin.com', 'github.com', 'netflix.com',
-  'paypal.com', 'stripe.com', 'shopify.com', 'zoom.us', 'slack.com',
-  'dropbox.com', 'adobe.com', 'salesforce.com', 'spotify.com', 'uber.com'
+  'apple.com', 'icloud.com', 'amazon.com', 'aws.amazon.com',
+  'facebook.com', 'meta.com', 'instagram.com',
+  'twitter.com', 'x.com', 'linkedin.com', 'github.com', 'gitlab.com',
+  // Enterprise / SaaS
+  'salesforce.com', 'adobe.com', 'dropbox.com', 'slack.com',
+  'zoom.us', 'atlassian.com', 'jira.com', 'notion.so',
+  'figma.com', 'canva.com',
+  // Financial services (Global)
+  'paypal.com', 'stripe.com', 'visa.com', 'mastercard.com',
+  'americanexpress.com', 'chase.com', 'bankofamerica.com',
+  'wellsfargo.com', 'citibank.com',
+  // E-commerce
+  'ebay.com', 'shopify.com', 'etsy.com', 'walmart.com', 'target.com',
+  // Streaming
+  'netflix.com', 'spotify.com', 'hulu.com', 'disney.com',
+  // Other trusted global
+  'uber.com', 'protonmail.com', 'proton.me',
+  // ----- Indian Banks (official domains) -----
+  'sbi.co.in', 'onlinesbi.sbi',                          // State Bank of India
+  'hdfcbank.com', 'hdfcbank.net',                          // HDFC Bank
+  'icicibank.com',                                         // ICICI Bank
+  'pnb.co.in',                                             // Punjab National Bank
+  'kotak.com', 'kotaksecurities.co.in',                    // Kotak Mahindra Bank
+  'axisbank.com',                                          // Axis Bank
+  'bankofindia.co.in',                                     // Bank of India
+  'bankofbaroda.co.in', 'bankofbaroda.com',                // Bank of Baroda
+  'unionbankofindia.co.in',                                // Union Bank of India
+  'canarabank.com',                                        // Canara Bank
+  'idbibank.in', 'idbi.com',                               // IDBI Bank
+  'indusind.com',                                          // IndusInd Bank
+  'yesbank.in',                                            // Yes Bank
+  'federalbank.co.in',                                     // Federal Bank
+  'rbi.org.in',                                            // Reserve Bank of India
+  'npci.org.in',                                           // NPCI (UPI)
+  'paytm.com',                                             // Paytm
+  'phonepe.com',                                           // PhonePe
 ]);
 
-// Domains commonly impersonated
+// Domains commonly impersonated (brand names for substring matching)
 const IMPERSONATED_DOMAINS = [
+  // Global
   'paypal', 'amazon', 'apple', 'microsoft', 'google', 'netflix',
   'facebook', 'instagram', 'bank', 'chase', 'wellsfargo', 'bofa',
-  'citibank', 'usps', 'fedex', 'ups', 'dhl', 'irs', 'gov'
+  'citibank', 'usps', 'fedex', 'ups', 'dhl', 'irs', 'gov',
+  // Indian banks & services
+  'sbi', 'hdfc', 'icici', 'kotak', 'axisbank', 'pnb',
+  'indusind', 'yesbank', 'paytm', 'phonepe', 'razorpay'
 ];
 
 // URL shorteners to flag
@@ -297,6 +365,36 @@ function analyzeURL(url) {
         analysis.riskScore += 45;
         break;
       }
+    }
+
+    // Brand typo-squatting patterns (leet-speak, character substitution)
+    const BRAND_TYPO_PATTERNS = [
+      { brand: 'paypal', regex: /paypa[l1]|paypai|peypal|paypaI/i },
+      { brand: 'apple', regex: /app[l1]e|app1e|appie/i },
+      { brand: 'amazon', regex: /amaz[o0]n|arnazon|amazom/i },
+      { brand: 'microsoft', regex: /micr[o0]soft|mircosoft|m1crosoft/i },
+      { brand: 'netflix', regex: /netf[l1]ix|netfiix|netfl1x/i },
+      { brand: 'google', regex: /g[o0][o0]gle|googie|g00gle/i },
+      { brand: 'hdfc', regex: /hdf[c0]|hdtc|hd[f]+[c]+bank/i },
+      { brand: 'icici', regex: /[i1]c[i1]c[i1]|1c1c1/i },
+      { brand: 'sbi', regex: /sb[i1l]\.co|sb[i1l]bank/i },
+      { brand: 'axis', regex: /ax[i1]s|ax1s|ax[i1]is/i },
+      { brand: 'bank', regex: /bank|banking|bankofamerica|bankofamerica\.com/i },
+    ];
+    for (const { brand, regex } of BRAND_TYPO_PATTERNS) {
+      if (regex.test(hostname) && !TRUSTED_DOMAINS.has(hostname)) {
+        analysis.isSuspicious = true;
+        analysis.reasons.push(`Possible ${brand} typo-squatting`);
+        analysis.riskScore += 50;
+        break;
+      }
+    }
+
+    // Domain spoofing detection (e.g., paypal.com.evil.com)
+    if (/\.(com|org|net|edu|gov|co\.in)\./i.test(hostname)) {
+      analysis.isSuspicious = true;
+      analysis.reasons.push('Domain appears to spoof a legitimate site');
+      analysis.riskScore += 35;
     }
 
     // Check for excessive subdomains (e.g., login.secure.paypal.suspicious.com)
@@ -374,6 +472,26 @@ function analyzeSenderEmail(email) {
     return analysis;
   }
 
+  // Check for disposable email providers (high-risk, immediate flag)
+  const DISPOSABLE_PROVIDERS = new Set([
+    'tempmail.com', 'guerrillamail.com', '10minutemail.com', 'throwaway.email',
+    'mailinator.com', 'maildrop.cc', 'temp-mail.org', 'getnada.com',
+    'fakeinbox.com', 'sharklasers.com', 'guerrillamail.info', 'grr.la',
+    'spam4.me', 'spamgourmet.com', 'trashmail.com', 'mytemp.email',
+    'mohmal.com', 'tempail.com', 'burnermail.io', '33mail.com',
+    'dispostable.com', 'mintemail.com', 'getairmail.com', 'discard.email',
+    'temp-mail.io', 'tempinbox.com', 'emailondeck.com', 'crazymailing.com',
+    'yopmail.com', 'yopmail.fr', 'yopmail.net'
+  ]);
+  const isDisposable = DISPOSABLE_PROVIDERS.has(domain) ||
+    /tempmail|throwaway|disposable|temp-mail|fakeinbox/.test(domain);
+  if (isDisposable) {
+    analysis.isSuspicious = true;
+    analysis.reasons.push('Sender uses a disposable/temporary email address');
+    analysis.riskScore += 60;
+    return analysis; // No need to check further
+  }
+
   // Check for homograph attacks in domain
   const homograph = detectHomographAttack(domain);
   if (homograph.isHomograph) {
@@ -405,8 +523,8 @@ function analyzeSenderEmail(email) {
     analysis.riskScore += 20;
   }
 
-  // Check for recently registered TLDs commonly used in phishing
-  const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top'];
+  // Check for suspicious TLDs (synced with URL analysis)
+  const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.work', '.click'];
   if (suspiciousTLDs.some(tld => domain.endsWith(tld))) {
     analysis.isSuspicious = true;
     analysis.reasons.push('Sender uses suspicious domain extension');
@@ -479,20 +597,51 @@ function calculateClientSideThreatScore(metadata) {
 
 // --- Helper Functions ---
 
-function clickGmailMenuItem(text) {
-  const moreBtn = document.querySelector('[aria-label="More actions"]')
-    || document.querySelector('[data-tooltip="More actions"]');
-  if (moreBtn) {
-    moreBtn.click();
-    setTimeout(() => {
-      const items = Array.from(document.querySelectorAll('div[role="menuitem"], span'));
-      const item = items.find(s => s.textContent.trim() === text);
-      if (item) {
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function findMoreActionsButton() {
+  return document.querySelector('[aria-label="More actions"]')
+    || document.querySelector('[data-tooltip="More actions"]')
+    || document.querySelector('div[role="button"][aria-label*="More"][aria-label*="actions"]');
+}
+
+function findMenuItemByText(expectedText) {
+  const target = (expectedText || '').trim().toLowerCase();
+  if (!target) return null;
+
+  const candidates = Array.from(document.querySelectorAll('div[role="menuitem"]'));
+  for (const el of candidates) {
+    const t = (el.textContent || '').trim().toLowerCase();
+    if (t === target) return el;
+  }
+  return null;
+}
+
+async function clickGmailMenuItem(text) {
+  const moreBtn = findMoreActionsButton();
+  if (!moreBtn) return false;
+
+  // Gmail menu rendering can be async; retry a few times.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      moreBtn.click();
+    } catch (_) {
+      // ignore
+    }
+
+    // wait for menu
+    await sleep(150 + attempt * 150);
+    const item = findMenuItemByText(text);
+    if (item) {
+      try {
         item.click();
-        // Close menu if it didn't auto close? usually click does it.
+        return true;
+      } catch (_) {
+        // ignore
       }
-    }, 100);
-    return true;
+    }
   }
   return false;
 }
@@ -556,6 +705,9 @@ function storeLastScanResult(scanResult, source = 'content') {
     }
     storageLocalSet(storageItems);
     runtimeSendMessage({ type: MSG.storeLastScan, payload });
+
+    // Keep demo storage clean
+    enforceReportRetentionLimit(25);
   } catch (_) { }
 }
 
@@ -671,9 +823,9 @@ function extractEmailMetadata() {
     for (const selector of emailBodySelectors) {
       const body = document.querySelector(selector);
       if (body) {
-        // Anchor links
-        body.querySelectorAll('a[href]').forEach(a => {
-          const href = a.getAttribute('href');
+        // Anchor links + area map links
+        body.querySelectorAll('a[href], area[href]').forEach(el => {
+          const href = el.getAttribute('href');
           if (!href) return;
           let candidate = href;
           // Handle Google's redirect URLs
@@ -875,6 +1027,7 @@ function extractEmailMetadata() {
       link_details: linkDetails,
       text_url_mismatches: linkDetails.filter(l => l.textUrlMismatch).length,
       attachment_hashes: attachments.map(a => a.name),
+      attachment_names: attachments.map(a => a.name),
       attachments: attachments,
       has_dangerous_attachments: hasDangerousAttachment,
       headers,
@@ -894,8 +1047,18 @@ function extractEmailMetadata() {
 
 async function scanEmailMetadata(metadata, timeout = 30000) {
   const response = await runtimeSendMessage({ type: MSG.scanEmailMetadata, metadata, timeout });
-  if (!response) throw new Error('No response');
-  if (response.error) throw new Error(response.error);
+  if (!response) {
+    const e = new Error('No response');
+    e.name = 'NoResponse';
+    throw e;
+  }
+  if (response.success === false) {
+    const msg = (response.error || 'Scan failed').toString();
+    const e = new Error(msg);
+    e.name = response.details?.name || 'BackgroundScanError';
+    e.details = response.details || null;
+    throw e;
+  }
   return response.data || response;
 }
 
@@ -1330,6 +1493,70 @@ function renderBadgeHTML(scanResult) {
 
           </div>
 
+          ${(() => {
+      // Confidence score display
+      const confidence = scanResult?.confidence;
+      const confidencePct = confidence ? Math.round(confidence * 100) : null;
+      const confidenceClass = confidencePct >= 80 ? 'good' : (confidencePct >= 50 ? '' : 'bad');
+
+      // Domain age info
+      const domainAge = senderRep?.domain_age_days;
+      const isNewDomain = senderRep?.is_newly_registered || false;
+      const domainCreated = senderRep?.domain_created;
+
+      // Safe Browsing flags
+      const sbThreats = scanResult?.details?.link_analysis?.safe_browsing_threats || {};
+      const sbCount = Object.keys(sbThreats).length;
+
+      // NLP analysis
+      const nlpScore = scanResult?.details?.content_analysis?.nlp_score || 0;
+      const nlpConf = scanResult?.details?.content_analysis?.nlp_confidence || 0;
+
+      let extraHTML = '';
+
+      // Confidence badge row
+      if (confidencePct !== null) {
+        extraHTML += `
+              <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                <div class="gr-gmail-2025-float-stat-card ${confidenceClass}" style="flex:1">
+                  <div class="gr-gmail-2025-float-stat-label">Confidence</div>
+                  <div class="gr-gmail-2025-float-stat-val">${confidencePct}%</div>
+                </div>
+              ${domainAge !== null && domainAge !== undefined ? `
+                <div class="gr-gmail-2025-float-stat-card ${isNewDomain ? 'bad' : (domainAge > 365 ? 'good' : '')}" style="flex:1">
+                  <div class="gr-gmail-2025-float-stat-label">Domain Age</div>
+                  <div class="gr-gmail-2025-float-stat-val" title="Created: ${escapeHTML(domainCreated || 'N/A')}">${domainAge > 365 ? Math.round(domainAge / 365) + 'y' : domainAge + 'd'}</div>
+                </div>` : ''}
+              ${sbCount > 0 ? `
+                <div class="gr-gmail-2025-float-stat-card bad" style="flex:1">
+                  <div class="gr-gmail-2025-float-stat-label">Safe Browse</div>
+                  <div class="gr-gmail-2025-float-stat-val">⚠ ${sbCount}</div>
+                </div>` : ''}
+              ${nlpScore > 30 ? `
+                <div class="gr-gmail-2025-float-stat-card ${nlpScore > 60 ? 'bad' : ''}" style="flex:1">
+                  <div class="gr-gmail-2025-float-stat-label">NLP Risk</div>
+                  <div class="gr-gmail-2025-float-stat-val">${nlpScore}</div>
+                </div>` : ''}
+              </div>`;
+      }
+
+      // AI Explanation
+      const aiExp = scanResult?.ai_explanation;
+      if (aiExp && aiExp.why_marked) {
+        extraHTML += `
+              <div style="margin-top:10px;padding:10px;background:rgba(0,188,212,0.08);border:1px solid rgba(0,188,212,0.2);border-radius:8px">
+                <div style="font-size:10px;text-transform:uppercase;font-weight:600;color:#00bcd4;margin-bottom:4px">🤖 AI Analysis</div>
+                <div style="font-size:12px;color:#b0b8c1;line-height:1.5">${escapeHTML(aiExp.why_marked).substring(0, 300)}${aiExp.why_marked.length > 300 ? '...' : ''}</div>
+                ${Array.isArray(aiExp.factor_breakdown) && aiExp.factor_breakdown.length > 0 ? `
+                <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
+                  ${aiExp.factor_breakdown.slice(0, 3).map(f => `<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.06);color:#9aa0a6">${escapeHTML(f.factor || f.name || JSON.stringify(f))}</span>`).join('')}
+                </div>` : ''}
+              </div>`;
+      }
+
+      return extraHTML;
+    })()}
+
           <div class="gr-gmail-2025-actions-row">
              <button class="gr-gmail-2025-action" id="${ID.floatingScanBtn}">RE-SCAN</button>
              <button class="gr-gmail-2025-action" data-do="unsubscribe">UNSUBSCRIBE</button>
@@ -1643,10 +1870,104 @@ async function scanCurrentEmail(options = {}) {
     // Get client-side analysis (already calculated in extractEmailMetadata)
     const clientAnalysis = metadata.client_analysis || calculateClientSideThreatScore(metadata);
 
+    // Try to get real authentication headers from Gmail API if enabled
+    let gmailApiAuth = null;
+    try {
+      const settings = await chrome.storage.sync.get({ use_gmail_api: true });
+      if (settings.use_gmail_api && window.WebShieldGmailAPI) {
+        log.info('Attempting to fetch real auth headers via Gmail API...');
+        const authResult = await window.WebShieldGmailAPI.getCurrentEmailAuth(metadata);
+        if (authResult.success && authResult.auth) {
+          gmailApiAuth = authResult.auth;
+          log.info('Gmail API auth headers fetched:', gmailApiAuth);
+          // Inject real auth data into metadata
+          metadata.gmail_api_auth = gmailApiAuth;
+          metadata.headers = {
+            ...metadata.headers,
+            spf: gmailApiAuth.spf || metadata.headers.spf,
+            dkim: gmailApiAuth.dkim || metadata.headers.dkim,
+            dmarc: gmailApiAuth.dmarc || metadata.headers.dmarc,
+            authentication_results: gmailApiAuth.rawResults,
+            reply_to: authResult.headers?.replyTo || metadata.headers.reply_to,
+            return_path: authResult.headers?.returnPath || metadata.headers.return_path,
+            received: authResult.headers?.received || metadata.headers.received
+          };
+
+          try {
+            const emailIdForAttachments = metadata.gmail_message_id || emailId;
+            if (emailIdForAttachments && window.WebShieldGmailAPI.listMessageAttachments && window.WebShieldGmailAPI.fetchAttachmentBytes) {
+              const list = await window.WebShieldGmailAPI.listMessageAttachments(emailIdForAttachments, { threadIdFallback: metadata.thread_id || null });
+              if (list && list.success && Array.isArray(list.attachments) && list.attachments.length > 0) {
+                const MAX_ATTACHMENTS_TO_HASH = 3;
+                const MAX_BYTES_PER_ATTACHMENT = 1024 * 1024;
+
+                const toHash = list.attachments.slice(0, MAX_ATTACHMENTS_TO_HASH);
+                const hashed = [];
+
+                const toHex = (buf) => {
+                  const bytes = new Uint8Array(buf);
+                  let s = '';
+                  for (const b of bytes) s += b.toString(16).padStart(2, '0');
+                  return s;
+                };
+
+                for (const att of toHash) {
+                  const filename = att.filename || 'attachment';
+                  const mimeType = att.mimeType || '';
+                  const size = Number(att.size || 0);
+                  const attachmentId = att.attachmentId || null;
+
+                  const entry = { name: filename, filename, mimeType, size, attachmentId, extension: (filename.split('.').pop() || '').toLowerCase() };
+
+                  if (attachmentId && size > 0 && size <= MAX_BYTES_PER_ATTACHMENT) {
+                    const bytesRes = await window.WebShieldGmailAPI.fetchAttachmentBytes(list.messageId || emailIdForAttachments, attachmentId);
+                    if (bytesRes && bytesRes.success && bytesRes.bytes) {
+                      const digest = await crypto.subtle.digest('SHA-256', bytesRes.bytes);
+                      const sha256 = toHex(digest);
+                      entry.sha256 = sha256;
+                      hashed.push(entry);
+                    } else {
+                      hashed.push(entry);
+                    }
+                  } else {
+                    hashed.push(entry);
+                  }
+                }
+
+                if (hashed.length > 0) {
+                  metadata.attachments = Array.isArray(metadata.attachments) ? metadata.attachments : [];
+                  metadata.attachments = [...metadata.attachments, ...hashed];
+                  const hashes = hashed.map(a => a.sha256).filter(Boolean);
+                  metadata.attachment_hashes = Array.isArray(metadata.attachment_hashes) ? metadata.attachment_hashes : [];
+                  metadata.attachment_hashes = [...metadata.attachment_hashes, ...hashes];
+                }
+              }
+            }
+          } catch (attErr) {
+            log.warn('Attachment hashing via Gmail API failed (non-critical):', attErr.message);
+          }
+        } else if (authResult.disabled) {
+          log.info('Gmail API not enabled in settings');
+        } else {
+          log.warn('Failed to fetch Gmail API auth:', authResult.error);
+        }
+      }
+    } catch (gapiErr) {
+      log.warn('Gmail API fetch failed (non-critical):', gapiErr.message);
+    }
+
     let result;
     try {
       // Try backend scan
       result = await scanEmailMetadata(metadata, timeoutMs);
+
+      if (!result || (typeof result === 'object' && result.error)) {
+        log.warn('WebShield Gmail: scan returned error', result);
+        const e = new Error((result && result.message) ? String(result.message) : 'Scan failed or timed out');
+        e.name = 'ScanReturnedError';
+        e.details = result || null;
+        throw e;
+      }
 
       // Merge client-side flags with backend result
       if (clientAnalysis.clientFlags.length > 0) {
@@ -1664,23 +1985,35 @@ async function scanCurrentEmail(options = {}) {
         }
       }
 
+      // Post-merge adjustments for client-only signals
+      // Cap total boost to prevent a clean backend result from flipping to dangerous
+      const preAdjustScore = result.threat_score;
+      let postMergeBoost = 0;
+
       // Add text/URL mismatch warning (major phishing indicator)
       if (metadata.text_url_mismatches > 0) {
         result.reasons = result.reasons || [];
         result.reasons.unshift(`⚠️ ${metadata.text_url_mismatches} link(s) show different URL than displayed text`);
-        result.threat_score = Math.min(100, result.threat_score + (metadata.text_url_mismatches * 15));
+        postMergeBoost += metadata.text_url_mismatches * 15;
       }
 
       // Add reply-to mismatch warning
       if (metadata.reply_to_mismatch) {
         result.reasons = result.reasons || [];
         result.reasons.unshift('⚠️ Reply-to address differs from sender');
-        result.threat_score = Math.min(100, result.threat_score + 20);
+        postMergeBoost += 20;
       }
+
+      // Apply capped boost (max +40) to prevent over-correction
+      const MAX_POST_MERGE_BOOST = 40;
+      result.threat_score = Math.min(100, preAdjustScore + Math.min(postMergeBoost, MAX_POST_MERGE_BOOST));
 
       // Ensure details exist and inject client-side metadata that backend might miss
       result.details = result.details || {};
       result.details.header_analysis = result.details.header_analysis || {};
+
+      // confidence, ai_explanation are returned by the v2.2 backend
+      // (no transformation needed — they are already top-level fields)
 
       // Merge client-side link details (e.g., displayed-text vs actual URL mismatch)
       // Backend link analysis returns string URLs; UI can also handle objects.
@@ -1794,7 +2127,10 @@ async function scanCurrentEmail(options = {}) {
       const headers = metadata.headers || { spf: 'unknown', dkim: 'unknown', dmarc: 'unknown' };
 
       let finalAuth = false;
-      if (headers.spf === 'pass' || headers.dkim === 'pass') finalAuth = true;
+      const spfLower = (headers.spf || '').toLowerCase();
+      const dkimLower = (headers.dkim || '').toLowerCase();
+      const dmarcLower = (headers.dmarc || '').toLowerCase();
+      if (spfLower === 'pass' || dkimLower === 'pass') finalAuth = true;
       else if (isTrusted) finalAuth = true; // STRONG ASSUMPTION: If it's a known trusted domain (gmail, google, amazon), and we can't find headers, it's likely fine.
 
       // Score correction: match backend penalty logic
@@ -1802,8 +2138,8 @@ async function scanCurrentEmail(options = {}) {
       let offlineRepScore = senderAnalysis.isTrusted ? 95 : (80 - senderAnalysis.riskScore); // Bumping up base score
 
 
-      // safe = rep*0.4 + auth*0.3 + link*0.3
-      let safeScore = (offlineRepScore * 0.4) + (finalAuth ? 30 : 15) + ((100 - offlineScore) * 0.3);
+      // safe = rep * SCORE_WEIGHT_REPUTATION + auth + link * SCORE_WEIGHT_LINKS
+      let safeScore = (offlineRepScore * SCORE_WEIGHT_REPUTATION) + (finalAuth ? SCORE_AUTH_PASS : SCORE_AUTH_UNKNOWN) + ((100 - offlineScore) * SCORE_WEIGHT_LINKS);
 
       // Note: In offline mode, we CAN'T verify SPF/DKIM/DMARC because Gmail's DOM doesn't expose it
       // Only add warnings for actual suspicious content, not just "unknown" auth status
@@ -1864,8 +2200,8 @@ async function scanCurrentEmail(options = {}) {
             spf_posture: 'unknown',
             dkim_posture: 'unknown',
             dmarc_posture: 'unknown',
-            is_authenticated: (headers.spf === 'pass' || headers.dkim === 'pass' || headers.dmarc === 'pass'),
-            authentication_score: (headers.spf === 'pass' || headers.dkim === 'pass' || headers.dmarc === 'pass')
+            is_authenticated: (spfLower === 'pass' || dkimLower === 'pass' || dmarcLower === 'pass'),
+            authentication_score: (spfLower === 'pass' || dkimLower === 'pass' || dmarcLower === 'pass')
               ? 80
               : (isTrusted ? 60 : 0)
           },
@@ -1948,13 +2284,8 @@ async function scanCurrentEmail(options = {}) {
       createSafetyBadge(errorResult);
     }
   } finally {
-    if (activeScanRunId === runId) {
-      isScanning = false;
-      updateScanButtonState(false);
-    } else {
-      isScanning = false;
-      updateScanButtonState(false);
-    }
+    isScanning = false;
+    updateScanButtonState(false);
   }
 }
 
@@ -2170,14 +2501,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   } else if (action === MSG.safetyAction) {
     // Handle action from popup
-    let s = false;
-    if (message.action === 'spam') s = clickGmailMenuItem('Report spam');
-    else if (message.action === 'report') s = clickGmailMenuItem('Report phishing');
-    else if (message.action === 'unsubscribe') {
-      const l = findUnsubscribeLink();
-      if (l) { l.click(); s = true; }
-    }
-    sendResponse({ success: s });
+    (async () => {
+      let s = false;
+      if (message.action === 'spam') s = await clickGmailMenuItem('Report spam');
+      else if (message.action === 'report') s = await clickGmailMenuItem('Report phishing');
+      else if (message.action === 'unsubscribe') {
+        const l = findUnsubscribeLink();
+        if (l) { l.click(); s = true; }
+      }
+      sendResponse({ success: s });
+    })().catch(() => {
+      sendResponse({ success: false });
+    });
     return true;
   } else if (action === 'GMAIL_EXT_SCROLL_TO_REPORT') {
     const host = document.getElementById(ID.shadowHost);

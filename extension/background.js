@@ -30,6 +30,44 @@ const RATE_LIMIT_WINDOW = 30000; // 30s window to be more lenient
 const MAX_REQUESTS_PER_WINDOW = 15; // Allow more requests
 let isOfflineMode = false; // Track if we're in offline mode
 
+let endpointTestInFlight = null; // Promise guard to avoid overlapping endpoint tests
+const _endpointFailureLogTimestamps = new Map(); // key -> lastLogTs
+
+function shouldLogEndpointFailure(key, windowMs = 15000) {
+  const now = Date.now();
+  const last = _endpointFailureLogTimestamps.get(key) || 0;
+  if (now - last < windowMs) return false;
+  _endpointFailureLogTimestamps.set(key, now);
+  return true;
+}
+
+async function fetchJsonWithTimeout(url, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { method: 'GET', signal: controller.signal });
+    if (!res.ok) {
+      return { ok: false, status: res.status, data: null };
+    }
+    let data = null;
+    try {
+      data = await res.json();
+    } catch (e) {
+      // If health endpoint returns non-JSON for some reason, treat it as not ok.
+      return { ok: false, status: res.status, data: null };
+    }
+    return { ok: true, status: res.status, data };
+  } catch (e) {
+    const name = (e && e.name) ? String(e.name) : '';
+    if (name === 'AbortError') {
+      return { ok: false, status: 0, data: null, timeout: true };
+    }
+    return { ok: false, status: 0, data: null, error: (e && e.message) ? String(e.message) : 'request_failed' };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // Private/Local IP patterns - skip scanning for these
 const PRIVATE_IP_PATTERNS = [
   /^localhost$/i,
@@ -68,86 +106,77 @@ function isPrivateOrLocalUrl(url) {
 
 // Enhanced endpoint testing with retry logic
 async function testEndpoints() {
-  console.log('WebShield: Testing API endpoints...');
+  if (endpointTestInFlight) {
+    return endpointTestInFlight;
+  }
 
-  // Health endpoint paths to try (in order)
-  const healthPaths = ['/api/health', '/health'];
+  endpointTestInFlight = (async () => {
+    console.log('WebShield: Testing API endpoints...');
 
-  // Try dynamic endpoint first
-  const dynamicEndpoint = await getAPIBaseURL();
-  for (const healthPath of healthPaths) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+    // Health endpoint paths to try (in order)
+    // Backend mounts health under /api/health (router has /health and server includes it with prefix /api)
+    const healthPaths = ['/api/health', '/health'];
 
-      const response = await fetch(`${dynamicEndpoint}${healthPath}`, {
-        method: 'GET',
-        signal: controller.signal
-      });
+    // Try dynamic endpoint first
+    const dynamicEndpoint = await getAPIBaseURL();
+    for (const healthPath of healthPaths) {
+      const full = `${dynamicEndpoint}${healthPath}`;
+      const result = await fetchJsonWithTimeout(full, 8000);
+      if (result && result.ok && result.data && (result.data.status === 'healthy' || result.data.message || result.data.health)) {
+        currentAPIBase = dynamicEndpoint;
+        isOfflineMode = false;
+        console.log(`WebShield: API connected at: ${full}`);
 
-      clearTimeout(timeoutId);
+        // Store the detected API base URL in storage for popup access
+        chrome.storage.sync.set({ detectedApiBase: dynamicEndpoint, webAppBase: dynamicEndpoint });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.status === 'healthy' || data.message || data.health) {
-          currentAPIBase = dynamicEndpoint;
+        // Start periodic endpoint testing
+        startPeriodicEndpointTesting();
+
+        return dynamicEndpoint;
+      }
+      if (shouldLogEndpointFailure(full)) {
+        const msg = result && result.timeout ? 'timeout' : ((result && result.error) ? result.error : `HTTP ${result && result.status ? result.status : 'ERR'}`);
+        console.log(`WebShield: ${full} failed:`, msg);
+      }
+    }
+
+    // Try fallback endpoints
+    for (const endpoint of FALLBACK_ENDPOINTS) {
+      for (const healthPath of healthPaths) {
+        const full = `${endpoint}${healthPath}`;
+        const result = await fetchJsonWithTimeout(full, 8000);
+        if (result && result.ok && result.data && (result.data.status === 'healthy' || result.data.message || result.data.health)) {
+          currentAPIBase = endpoint;
           isOfflineMode = false;
-          console.log(`WebShield: API connected at: ${dynamicEndpoint}${healthPath}`);
+          console.log(`WebShield: API connected at: ${full}`);
 
           // Store the detected API base URL in storage for popup access
-          chrome.storage.sync.set({ detectedApiBase: dynamicEndpoint, webAppBase: dynamicEndpoint });
+          chrome.storage.sync.set({ detectedApiBase: endpoint, webAppBase: endpoint });
 
           // Start periodic endpoint testing
           startPeriodicEndpointTesting();
 
-          return dynamicEndpoint;
+          return endpoint;
+        }
+        if (shouldLogEndpointFailure(full)) {
+          const msg = result && result.timeout ? 'timeout' : ((result && result.error) ? result.error : `HTTP ${result && result.status ? result.status : 'ERR'}`);
+          console.log(`WebShield: ${full} failed:`, msg);
         }
       }
-    } catch (error) {
-      console.log(`WebShield: ${dynamicEndpoint}${healthPath} failed:`, error.message);
     }
+
+    console.log('WebShield: No working API endpoints found, switching to offline mode');
+    currentAPIBase = null;
+    isOfflineMode = true;
+    return null;
+  })();
+
+  try {
+    return await endpointTestInFlight;
+  } finally {
+    endpointTestInFlight = null;
   }
-
-  // Try fallback endpoints
-  for (const endpoint of FALLBACK_ENDPOINTS) {
-    for (const healthPath of healthPaths) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-        const response = await fetch(`${endpoint}${healthPath}`, {
-          method: 'GET',
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.status === 'healthy' || data.message || data.health) {
-            currentAPIBase = endpoint;
-            isOfflineMode = false;
-            console.log(`WebShield: API connected at: ${endpoint}${healthPath}`);
-
-            // Store the detected API base URL in storage for popup access
-            chrome.storage.sync.set({ detectedApiBase: endpoint, webAppBase: endpoint });
-
-            // Start periodic endpoint testing
-            startPeriodicEndpointTesting();
-
-            return endpoint;
-          }
-        }
-      } catch (error) {
-        console.log(`WebShield: ${endpoint}${healthPath} failed:`, error.message);
-      }
-    }
-  }
-
-  console.log('WebShield: No working API endpoints found, switching to offline mode');
-  currentAPIBase = null;
-  isOfflineMode = true;
-  return null;
 }
 
 // Start periodic endpoint testing
@@ -159,24 +188,15 @@ function startPeriodicEndpointTesting() {
   endpointTestInterval = setInterval(async () => {
     if (currentAPIBase && !isOfflineMode) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        // Try /api/health first
-        let response = await fetch(`${currentAPIBase}/api/health`, { method: 'GET', signal: controller.signal });
-        clearTimeout(timeoutId);
+        // Prefer /api/health (FastAPI) and only then fall back to /health.
+        const primary = await fetchJsonWithTimeout(`${currentAPIBase}/api/health`, 8000);
+        if (primary && primary.ok) return;
 
-        if (!response.ok) {
-          // Try /health as fallback
-          const controller2 = new AbortController();
-          const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
-          response = await fetch(`${currentAPIBase}/health`, { method: 'GET', signal: controller2.signal });
-          clearTimeout(timeoutId2);
-        }
+        const legacy = await fetchJsonWithTimeout(`${currentAPIBase}/health`, 8000);
+        if (legacy && legacy.ok) return;
 
-        if (!response.ok) {
-          console.log('WebShield: Current endpoint failed, retesting all endpoints...');
-          await testEndpoints();
-        }
+        console.log('WebShield: Current endpoint failed, retesting all endpoints...');
+        await testEndpoints();
       } catch (error) {
         console.log('WebShield: Endpoint health check failed, retesting...');
         await testEndpoints();

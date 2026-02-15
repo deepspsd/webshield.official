@@ -5,9 +5,6 @@ Automatically starts the FastAPI server with crash recovery
 """
 
 import os
-
-# STEP 1: FORCE STABLE ASYNCIO LOOP (MANDATORY - MUST BE FIRST)
-# This MUST be at the TOP before any other imports
 import sys
 
 # Force asyncio to use stable event loop policy on Windows
@@ -144,12 +141,19 @@ def start_server_with_monitoring(port, max_restarts=10):
                 "warning",
                 "--no-access-log",
                 "--no-use-colors",
+                "--limit-concurrency",
+                "100",
+                "--limit-max-requests",
+                "1000",  # Prevent memory leaks
+                "--timeout-keep-alive",
+                "5",
+                "--timeout-graceful-shutdown",
+                "30",  # Reduce to prevent hanging
             ]
 
             # Use repr to avoid confusing line wraps in some terminals
             logger.info(f"[CONFIG] Command: {cmd!r}")
 
-            # Start the server process
             process = subprocess.Popen(
                 cmd,
                 env=env,
@@ -243,6 +247,14 @@ def start_server_with_monitoring(port, max_restarts=10):
 def main():
     """Main entry point"""
     try:
+        print("=" * 60)
+        print("🛡️  WebShield Backend Server Startup")
+        print("=" * 60)
+        print()
+        print("📋 Pre-flight checks:")
+        print("   ✓ Python version:", sys.version.split()[0])
+        print("   ✓ Platform:", sys.platform)
+        print()
 
         # Find available port
         preferred_port = 8000
@@ -250,25 +262,56 @@ def main():
             available_port = find_available_port(preferred_port)
             if available_port != preferred_port:
                 logger.info(f"Port {preferred_port} is busy, using port {available_port}")
+                print(f"   ⚠️  Port {preferred_port} busy, using {available_port}")
                 preferred_port = available_port
             else:
                 logger.info(f"Using preferred port {preferred_port}")
+                print(f"   ✓ Port {preferred_port} available")
         except RuntimeError as e:
             logger.error(f"Port allocation failed: {e}")
+            print(f"   ❌ Port allocation failed: {e}")
             sys.exit(1)
+
+        print()
+        print("🚀 Starting server...")
+        print(f"   📍 URL: http://localhost:{preferred_port}")
+        print(f"   📊 Health: http://localhost:{preferred_port}/api/health")
+        print(f"   📧 Email API: http://localhost:{preferred_port}/api/email/scan-metadata")
+        print()
+        print("💡 Tips:")
+        print("   • Load Gmail extension: chrome://extensions/ → Load unpacked → gmail-extension/")
+        print("   • Load Regular extension: chrome://extensions/ → Load unpacked → extension/")
+        print("   • Test backend: curl http://localhost:{}/api/health".format(preferred_port))
+        print()
+        print("Press Ctrl+C to stop the server")
+        print("=" * 60)
+        print()
 
         # Start server with monitoring
         success = start_server_with_monitoring(preferred_port)
 
         if not success:
             logger.error("Server failed to start after multiple attempts")
+            print()
+            print("❌ Server failed to start. Check logs above for errors.")
+            print()
+            print("Common issues:")
+            print("   1. Port 8000 already in use → Kill the process or use different port")
+            print("   2. Missing dependencies → Run: pip install -r requirements.txt")
+            print("   3. Database connection → Check .env file DB_* settings")
+            print("   4. Groq API → Check GROQ_API_KEY in .env")
+            print()
             sys.exit(1)
 
     except KeyboardInterrupt:
         logger.info("Startup interrupted by user")
+        print()
+        print("👋 Server stopped by user")
         sys.exit(0)
     except Exception as e:
         logger.error(f"Critical startup error: {e}")
+        print()
+        print(f"❌ Critical error: {e}")
         sys.exit(1)
 
 

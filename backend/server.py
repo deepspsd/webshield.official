@@ -133,7 +133,10 @@ def _load_ml_models_once():
 
             # Update health cache after ML models are loaded
             try:
-                from .api_routes import _health_cache
+                try:
+                    from backend.api_routes import _health_cache
+                except ImportError:
+                    from api_routes import _health_cache
 
                 if _ml_engine_instance:
                     ml_status_info = _ml_engine_instance.get_model_status()
@@ -170,7 +173,10 @@ async def lifespan(app: FastAPI):
         # Initialize database in background thread
         def init_db():
             try:
-                from .db import create_database_and_tables
+                try:
+                    from backend.db import create_database_and_tables
+                except ImportError:
+                    from db import create_database_and_tables
 
                 env = os.getenv("ENVIRONMENT", "development").lower()
                 auto_create = os.getenv("AUTO_CREATE_DB", "false").lower() in ("1", "true", "yes")
@@ -275,23 +281,35 @@ app = FastAPI(
 try:
     logger.info("Loading routes...")
 
-    from .frontend_routes import frontend_router
+    try:
+        from backend.frontend_routes import frontend_router
+    except ImportError:
+        from frontend_routes import frontend_router
 
     app.include_router(frontend_router)
     logger.info("Frontend routes loaded successfully")
 
-    from .auth import auth_router
+    try:
+        from backend.auth import auth_router
+    except ImportError:
+        from auth import auth_router
 
     app.include_router(auth_router, prefix="/api")
     logger.info("Auth routes loaded successfully")
 
-    from .scan import scan_router
+    try:
+        from backend.scan import scan_router
+    except ImportError:
+        from scan import scan_router
 
     app.include_router(scan_router, prefix="/api")
     logger.info("Scan routes loaded successfully")
 
     try:
-        from .export import export_router
+        try:
+            from backend.export import export_router
+        except ImportError:
+            from export import export_router
 
         app.include_router(export_router)
         logger.info("Export routes loaded successfully")
@@ -299,14 +317,20 @@ try:
         logger.warning(f"Export routes failed to load: {e}")
         # Continue without export routes
 
-    from .api_routes import api_router, health_router
+    try:
+        from backend.api_routes import api_router, health_router
+    except ImportError:
+        from api_routes import api_router, health_router
 
     app.include_router(api_router, prefix="/api")
     app.include_router(health_router, prefix="/api")
     logger.info("API routes loaded successfully")
 
     try:
-        from .translation_routes import translation_router
+        try:
+            from backend.translation_routes import translation_router
+        except ImportError:
+            from translation_routes import translation_router
 
         app.include_router(translation_router)
         logger.info("Translation routes loaded successfully")
@@ -315,7 +339,10 @@ try:
         # Continue without translation routes
 
     try:
-        from .chatbot_routes import chatbot_router
+        try:
+            from backend.chatbot_routes import chatbot_router
+        except ImportError:
+            from chatbot_routes import chatbot_router
 
         app.include_router(chatbot_router)
         logger.info("Chatbot routes loaded successfully")
@@ -325,7 +352,10 @@ try:
 
     # Email scanning routes for Gmail extension
     try:
-        from .email_routes import email_router
+        try:
+            from backend.email_routes import email_router
+        except ImportError:
+            from email_routes import email_router
 
         app.include_router(email_router, prefix="/api")
         logger.info("Email routes loaded successfully")
@@ -335,7 +365,10 @@ try:
 
     # Course routes for educational platform
     try:
-        from .courses.routes import course_router
+        try:
+            from backend.courses.routes import course_router
+        except ImportError:
+            from courses.routes import course_router
 
         app.include_router(course_router)
         logger.info("Course routes loaded successfully")
@@ -345,7 +378,10 @@ try:
 
     # Reports and folders management routes
     try:
-        from .reports_routes import reports_router
+        try:
+            from backend.reports_routes import reports_router
+        except ImportError:
+            from reports_routes import reports_router
 
         app.include_router(reports_router)
         logger.info("Reports routes loaded successfully")
@@ -424,28 +460,79 @@ async def crash_prevention_middleware(request: Request, call_next):
 
 
 # Add CORS middleware with production-ready settings
+# IMPORTANT: This must be added BEFORE other middlewares to handle preflight correctly
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
-_allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "*")
-ALLOWED_ORIGINS = [o.strip() for o in _allowed_origins_raw.split(",") if o.strip()]
+_origins_raw = os.getenv("ALLOWED_ORIGINS", "")
+ALLOWED_ORIGINS = [o.strip() for o in _origins_raw.split(",") if o.strip()]
 if not ALLOWED_ORIGINS:
+    # Default: allow all common development origins including Chrome extensions
     ALLOWED_ORIGINS = ["*"]
 
-# In production, do not allow credentialed CORS with wildcard origins.
-# Require explicit origin allowlist via ALLOWED_ORIGINS.
-if ENVIRONMENT in ("production", "prod") and ALLOWED_ORIGINS == ["*"]:
-    logger.warning("ALLOWED_ORIGINS is '*' in production; disabling allow_credentials for safety")
+# Common dev tunnel services - add dynamically
+def get_dev_tunnel_origins():
+    """Dynamically detect and allow dev tunnel origins"""
+    origins = []
+    env_vars = dict(os.environ)
+    for key, value in env_vars.items():
+        if isinstance(value, str) and value.startswith("http"):
+            if any(pattern in value for pattern in ["devtunnels.ms", "github.dev", "gitpod.io", "codespaces.dev"]):
+                origins.append(value.rstrip("/"))
+    return origins
+
+_detected_tunnels = get_dev_tunnel_origins()
+if _detected_tunnels:
+    logger.info(f"Detected dev tunnel origins: {_detected_tunnels}")
+    ALLOWED_ORIGINS.extend(_detected_tunnels)
+
+# In production, be more restrictive
+if ENVIRONMENT in ("production", "prod"):
+    if "*" in ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS.remove("*")
+    if not ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS = ["https://webshield.app", "https://*.webshield.app", "http://localhost:8000", "chrome://extensions/"]
     _allow_credentials = False
 else:
     _allow_credentials = True
+
+# Add the built-in CORSMiddleware FIRST
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS if ALLOWED_ORIGINS != ["*"] else ["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=_allow_credentials,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-    max_age=3600,  # Cache preflight requests for 1 hour
-    expose_headers=["X-Request-ID", "X-Response-Time"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*", "Authorization", "Content-Type", "X-Requested-With", "X-Extension-Source"],
+    max_age=3600,
+    expose_headers=["X-Request-ID", "X-Response-Time", "X-Ratelimit-Remaining"],
 )
+
+# Add custom preflight handler at the very beginning
+@app.middleware("http")
+async def cors_preflight_middleware(request, call_next):
+    """Handle CORS preflight for all origins including Chrome extensions and dev tunnels"""
+    origin = request.headers.get("origin", "")
+    
+    if request.method == "OPTIONS":
+        # Return preflight response immediately
+        return JSONResponse(
+            content={"message": "OK"},
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": origin or "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Max-Age": "3600",
+            }
+        )
+    
+    # For non-OPTIONS requests, proceed and add CORS headers to response
+    response = await call_next(request)
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
+# Remove the old import block that was here
 
 # Add GZip middleware with optimized settings
 app.add_middleware(GZipMiddleware, minimum_size=500)  # Reduced from 1000 to 500 bytes
@@ -488,7 +575,10 @@ async def add_security_headers(request: Request, call_next):
 async def get_scan_status(request: Request, scan_id: str):
     """Get scan status with rate limiting"""
     try:
-        from .scan import get_scan_status
+        try:
+            from backend.scan import get_scan_status
+        except ImportError:
+            from scan import get_scan_status
 
         return await get_scan_status(scan_id)
     except Exception as e:
@@ -504,25 +594,44 @@ if os.path.isdir("frontend"):
     app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
+    import signal
+    import sys
+    
+    def handle_shutdown(signum, frame):
+        logger.info("Received shutdown signal, stopping server gracefully...")
+        sys.exit(0)
+    
+    # Register signal handlers
+    signal.signal(signal.SIGINT, handle_shutdown)
+    signal.signal(signal.SIGTERM, handle_shutdown)
+    
+    # Optimized uvicorn configuration with better error handling
+    config = uvicorn.Config(
+        "backend.server:app",
+        host="0.0.0.0",  # nosec B104
+        port=8000,
+        reload=False,
+        log_level="warning",
+        access_log=False,
+        http="h11",
+        workers=1,
+        loop="asyncio",
+        limit_concurrency=100,
+        limit_max_requests=1000,  # Add request limit to prevent memory leaks
+        timeout_keep_alive=5,
+        timeout_graceful_shutdown=30,  # Reduce graceful shutdown timeout
+        use_colors=False,
+    )
+    
     try:
-
-        # Optimized uvicorn configuration for better performance
-        uvicorn.run(
-            "backend.server:app",
-            host="0.0.0.0",  # nosec B104
-            port=8000,
-            reload=False,
-            log_level="warning",
-            access_log=False,
-            http="h11",
-            workers=1,
-            loop="asyncio",
-            limit_concurrency=100,
-            limit_max_requests=1000,
-            timeout_keep_alive=5,
-            timeout_graceful_shutdown=10,
-        )
+        server = uvicorn.Server(config)
+        logger.info("Starting WebShield server on http://0.0.0.0:8000")
+        server.run()
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")
     except Exception as e:
         logger.error(f"Server startup failed: {e}")
         logger.error(traceback.format_exc())
         sys.exit(1)
+    finally:
+        logger.info("Server shutdown complete")

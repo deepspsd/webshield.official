@@ -735,7 +735,7 @@
                     <div class="header"><div class="logo-icon">🛡️</div><div class="logo-text">WebShield</div></div>
                     <h1 class="title">📝 Scan Report</h1>
                     <div class="error-message">❌ No scan ID provided.<br><br><small>Please start a new scan from the home page.</small></div>
-                    <div style="text-align:center; margin-top:2rem;"><a href="index.html" class="back-button">← Back to Home Page</a></div>`;
+                    <div style="text-align:center; margin-top:2rem;"><a href="/index.html" class="back-button">← Back to Home Page</a></div>`;
                 return;
             }
 
@@ -786,7 +786,7 @@
                         <div class="header"><div class="logo-icon">🛡️</div><div class="logo-text">WebShield</div></div>
                         <h1 class="title">📝 Scan Report</h1>
                         <div class="error-message">❌ ${escapeHtml(error.message)}</div>
-                        <div style="text-align:center; margin-top:2rem;"><a href="index.html" class="back-button">← Back to Home Page</a></div>`;
+                        <div style="text-align:center; margin-top:2rem;"><a href="/index.html" class="back-button">← Back to Home Page</a></div>`;
                 });
         }
 
@@ -1008,7 +1008,7 @@
                     </div>
                 </div>
                 <div class="button-container">
-                    <a href="index.html" class="back-button">← Home</a>
+                    <a href="/index.html" class="back-button">← Home</a>
                     <button onclick="exportToPDF()" class="back-button" style="background:linear-gradient(135deg,#00f2fe,#4facfe);border:none;cursor:pointer;">📄 PDF</button>
                     <button onclick="exportToCSV()" class="back-button" style="background:linear-gradient(135deg,#4CAF50,#45a049);border:none;cursor:pointer;">📊 CSV</button>
                     <button onclick="shareReport()" class="back-button" style="background:linear-gradient(135deg,#FF9800,#F57C00);border:none;cursor:pointer;">🔗 Share</button>
@@ -1022,10 +1022,32 @@
                 console.error('❌ Error in displayResults:', error);
                 const container = document.querySelector('.container');
                 if (container) {
-                    container.innerHTML = `<div style="padding:2rem;text-align:center;"><div style="color:#ef4444;font-size:3rem;">⚠️</div><h2>Display Error</h2><p>Error: ${escapeHtml(error.message)}</p><a href="index.html" class="back-button">← Back</a></div>`;
+                    container.innerHTML = `<div style="padding:2rem;text-align:center;"><div style="color:#ef4444;font-size:3rem;">⚠️</div><h2>Display Error</h2><p>Error: ${escapeHtml(error.message)}</p><a href="/index.html" class="back-button">← Back</a></div>`;
                 }
             }
         }
+
+        // Failsafe: if the report page gets stuck on the loading overlay due to a runtime error
+        // or an unexpected status, surface a recoverable UI instead of trapping the user.
+        (function setupLoadingFailsafe() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (!loadingScreen) return;
+            setTimeout(() => {
+                // If it is still visible after 25s, show a fallback message with Home navigation.
+                if (loadingScreen.style.display !== 'none') {
+                    loadingScreen.style.display = 'none';
+                    const container = document.querySelector('.container');
+                    if (container) {
+                        container.style.display = 'block';
+                        container.innerHTML = `
+                            <div class="header"><div class="logo-icon">🛡️</div><div class="logo-text">WebShield</div></div>
+                            <h1 class="title">📝 Scan Report</h1>
+                            <div class="error-message">⚠️ This report is taking longer than expected. Please try refreshing, or start a new scan.</div>
+                            <div style="text-align:center; margin-top:2rem;"><a href="/index.html" class="back-button">← Back to Home Page</a></div>`;
+                    }
+                }
+            }, 25000);
+        })();
 
         window.addEventListener('load', loadScanResult);
 

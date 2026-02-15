@@ -1,10 +1,38 @@
 /**
  * WebShield Gmail Scanner Styles
- * Version 2.0.0
+ * Version 2.1.0
  * 
  * Styles for the in-page email security badges, scan buttons,
  * and floating report cards injected into Gmail.
+ * Uses CSS custom properties for theming (dark mode compatible).
  */
+
+:root {
+    --ws-text-primary: #333;
+    --ws-text-secondary: #555;
+    --ws-text-muted: #666;
+    --ws-bg-subtle: rgba(0, 0, 0, 0.03);
+    --ws-bg-hover: rgba(0, 0, 0, 0.05);
+    --ws-border-subtle: rgba(0, 0, 0, 0.1);
+    --ws-border-faint: rgba(0, 0, 0, 0.05);
+    --ws-close-bg: rgba(0, 0, 0, 0.1);
+    --ws-close-hover-bg: rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode overrides for Gmail's dark theme */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ws-text-primary: #e0e0e0;
+        --ws-text-secondary: #b0b8c1;
+        --ws-text-muted: #9aa0a6;
+        --ws-bg-subtle: rgba(255, 255, 255, 0.05);
+        --ws-bg-hover: rgba(255, 255, 255, 0.08);
+        --ws-border-subtle: rgba(255, 255, 255, 0.12);
+        --ws-border-faint: rgba(255, 255, 255, 0.06);
+        --ws-close-bg: rgba(255, 255, 255, 0.1);
+        --ws-close-hover-bg: rgba(255, 255, 255, 0.2);
+    }
+}
 
 .webshield-email-badge {
     margin: 16px 0;
@@ -70,19 +98,19 @@
 .webshield-badge-summary {
     font-size: 14px;
     margin-bottom: 12px;
-    color: #333;
+    color: var(--ws-text-primary);
 }
 
 .webshield-badge-details {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--ws-border-subtle);
 }
 
 .webshield-detail-section {
     margin: 8px 0;
     font-size: 13px;
-    color: #555;
+    color: var(--ws-text-secondary);
 }
 
 .webshield-recommendations {
@@ -97,11 +125,11 @@
 .webshield-recommendations li {
     margin: 4px 0;
     font-size: 13px;
-    color: #555;
+    color: var(--ws-text-secondary);
 }
 
 .webshield-toggle-details {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--ws-bg-subtle);
     border: none;
     padding: 8px 16px;
     border-radius: 4px;
@@ -112,7 +140,7 @@
 }
 
 .webshield-toggle-details:hover {
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--ws-bg-hover);
 }
 
 .webshield-scan-button {
@@ -151,8 +179,8 @@
 }
 
 .webshield-stat-card {
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--ws-bg-subtle);
+    border: 1px solid var(--ws-border-subtle);
     border-radius: 8px;
     padding: 12px;
     text-align: center;
@@ -161,18 +189,18 @@
 
 .webshield-stat-card:hover {
     transform: translateY(-2px);
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--ws-bg-hover);
 }
 
 .webshield-stat-value {
     font-size: 24px;
     font-weight: bold;
     margin: 5px 0;
-    color: #333;
+    color: var(--ws-text-primary);
 }
 
 .webshield-stat-label {
-    color: #666;
+    color: var(--ws-text-muted);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -197,7 +225,7 @@
 /* Detail Rows */
 .webshield-detail-section h4 {
     margin: 0 0 10px 0;
-    color: #333;
+    color: var(--ws-text-primary);
     font-size: 14px;
     font-weight: 600;
 }
@@ -206,7 +234,7 @@
     display: flex;
     justify-content: space-between;
     padding: 6px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--ws-border-faint);
     font-size: 13px;
 }
 
@@ -215,11 +243,11 @@
 }
 
 .webshield-detail-label {
-    color: #666;
+    color: var(--ws-text-muted);
 }
 
 .webshield-detail-value {
-    color: #333;
+    color: var(--ws-text-primary);
     font-weight: 600;
 }
 
@@ -253,7 +281,7 @@
     max-height: 150px;
     overflow-y: auto;
     margin: 10px 0;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--ws-border-subtle);
     border-radius: 6px;
     padding: 5px;
 }
@@ -261,7 +289,7 @@
 .webshield-link-item {
     padding: 6px;
     margin: 3px 0;
-    background: rgba(0, 0, 0, 0.02);
+    background: var(--ws-bg-subtle);
     border-radius: 4px;
     font-size: 11px;
     word-break: break-all;
@@ -287,9 +315,9 @@
     position: absolute;
     top: 10px;
     right: 10px;
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--ws-close-bg);
     border: none;
-    color: #666;
+    color: var(--ws-text-muted);
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -300,15 +328,15 @@
 }
 
 .webshield-close-btn:hover {
-    background: rgba(0, 0, 0, 0.2);
-    color: #333;
+    background: var(--ws-close-hover-bg);
+    color: var(--ws-text-primary);
     transform: rotate(90deg);
 }
 
 /* Recommendations */
 .webshield-recommendations h4 {
     margin: 0 0 8px 0;
-    color: #333;
+    color: var(--ws-text-primary);
     font-size: 14px;
     font-weight: 600;
 }
@@ -319,15 +347,15 @@
 }
 
 .webshield-links-list::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--ws-border-faint);
     border-radius: 3px;
 }
 
 .webshield-links-list::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--ws-close-bg);
     border-radius: 3px;
 }
 
 .webshield-links-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--ws-close-hover-bg);
 }

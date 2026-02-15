@@ -17,6 +17,176 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <script src="cyber-effects.js" defer></script>
+    <!-- Google Sign-In API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // Google Sign-In configuration
+        let googleClientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+
+        // Load Google Client ID from backend
+        async function loadGoogleConfig() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/auth/google/config`);
+                if (response.ok) {
+                    const config = await response.json();
+                    if (config.client_id && config.client_id !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+                        googleClientId = config.client_id;
+                    }
+                }
+            } catch (err) {
+                console.log('Failed to load Google config, using default');
+            }
+        }
+
+        // Helper: Decode base64url to base64 then atob (JWT safe)
+        function base64UrlDecode(str) {
+            const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            const padding = '='.repeat((4 - base64.length % 4) % 4);
+            return atob(base64 + padding);
+        }
+
+        // Handle Google Sign-In response
+        async function handleGoogleSignIn(response) {
+            try {
+                const idToken = response.credential;
+
+                // Decode JWT to get user info (using base64url-safe decoder)
+                const payload = JSON.parse(base64UrlDecode(idToken.split('.')[1]));
+                const email = payload.email;
+                const name = payload.name;
+                const picture = payload.picture;
+
+                // Non-PII logging only
+                if (window.location.hostname === 'localhost' || window.DEBUG) {
+                    console.log('🔐 Google Sign-In succeeded');
+                }
+
+                // Send to backend
+                const apiResponse = await fetch(`${window.API_BASE_URL}/api/auth/google/callback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_token: idToken,
+                        email: email,
+                        name: name,
+                        picture: picture
+                    }),
+                    credentials: 'include'  // Send/receive cookies
+                });
+
+                if (apiResponse.ok) {
+                    const userData = await apiResponse.json();
+                    console.log('✅ Google login successful');
+
+                    // Store only non-sensitive user info (NOT tokens)
+                    sessionStorage.setItem('userLoggedIn', 'true');
+                    sessionStorage.setItem('userEmail', email);
+                    sessionStorage.setItem('userName', name);
+                    sessionStorage.setItem('authProvider', 'google');
+                    // Tokens are now in httpOnly cookies - do NOT store in localStorage
+
+                    // Show success and redirect
+                    const successMsg = document.getElementById('success-message');
+                    successMsg.textContent = 'Login successful via Google! Redirecting...';
+                    successMsg.style.display = 'block';
+
+                    setTimeout(() => {
+                        window.location.replace('dashboard.html');
+                    }, 1000);
+                } else {
+                    const error = await apiResponse.json();
+                    console.error('❌ Google login failed:', error.detail || 'Unknown error');
+                    const errorMsg = document.getElementById('error-message');
+                    errorMsg.textContent = error.detail || 'Google login failed. Please try again.';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                console.error('❌ Google Sign-In error:', err);
+                const errorMsg = document.getElementById('error-message');
+                errorMsg.textContent = 'Google Sign-In failed. Please try again.';
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        // Wait for Google library with timeout and retry
+        async function waitForGoogleLibrary(maxWaitMs = 10000, intervalMs = 100) {
+            const startTime = Date.now();
+            while (Date.now() - startTime < maxWaitMs) {
+                if (window.google && window.google.accounts) {
+                    return true;
+                }
+                await new Promise(r => setTimeout(r, intervalMs));
+            }
+            return false;
+        }
+
+        // Initialize Google Sign-In
+        async function initGoogleSignIn() {
+            await loadGoogleConfig();
+
+            // Check if Google Sign-In is configured
+            if (!googleClientId || googleClientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
+                console.log('Google Sign-In not configured - showing notice');
+                const googleBtn = document.querySelector('.btn-google');
+                if (googleBtn) {
+                    googleBtn.style.opacity = '0.5';
+                    googleBtn.style.pointerEvents = 'none';
+                    googleBtn.title = 'Google Sign-In is not configured. Please use email/password login.';
+                }
+                const divider = document.querySelector('.divider');
+                if (divider) {
+                    divider.style.display = 'none';
+                }
+                return;
+            }
+
+            // Wait for Google library to load
+            const loaded = await waitForGoogleLibrary();
+            if (!loaded) {
+                console.error('Google Identity Services library failed to load');
+                const googleBtn = document.getElementById('google-signin-btn');
+                if (googleBtn) {
+                    googleBtn.innerHTML = '<span style="color: #ef4444;">Google Sign-In unavailable</span>';
+                    googleBtn.style.pointerEvents = 'none';
+                }
+                return;
+            }
+
+            // Hide the manual button container since we'll render the Google button
+            const manualBtn = document.querySelector('#google-signin-btn > button');
+            if (manualBtn) {
+                manualBtn.style.display = 'none';
+            }
+
+            // Initialize Google Identity Services
+            window.google.accounts.id.initialize({
+                client_id: googleClientId,
+                callback: handleGoogleSignIn,
+                auto_select: false,
+                cancel_on_tap_outside: true
+            });
+
+            // Render Google Sign-In button
+            const googleBtn = document.getElementById('google-signin-btn');
+            if (googleBtn) {
+                // Get actual width of container for proper button sizing
+                const containerWidth = googleBtn.parentElement?.clientWidth || 300;
+                window.google.accounts.id.renderButton(googleBtn, {
+                    theme: 'outline',
+                    size: 'large',
+                    width: Math.max(200, Math.min(containerWidth, 400)),
+                    text: 'continue_with'
+                });
+            }
+        }
+
+        // Run initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGoogleSignIn);
+        } else {
+            initGoogleSignIn();
+        }
+    </script>
     <style>
         :root {
             /* Enhanced Color System - Vibrant */
@@ -754,14 +924,9 @@
 
             <div class="divider"><span data-translate="divider-or">or</span></div>
 
-            <button class="btn btn-google btn-full">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M21.35 11.1H12v2.9h5.3c-.23 1.48-1.6 4.33-5.3 4.33-3.19 0-5.8-2.63-5.8-5.88s2.61-5.88 5.8-5.88c1.81 0 3.03.77 3.73 1.43l2.55-2.46C16.86 3.76 14.65 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c5.31 0 8.8-3.73 8.8-9 0-.6-.07-1.02-.15-1.5Z"
-                        fill="#4285F4" />
-                </svg>
-                <span data-translate="btn-continue-google">Continue with Google</span>
-            </button>
+            <div id="google-signin-btn" class="btn-google" style="min-height: 40px;">
+                <!-- Google Sign-In button will be rendered here -->
+            </div>
 
             <div class="login-footer" style="text-align:center; color:hsl(var(--muted-foreground)); font-size:.875rem;">
                 <p><span data-translate="login-no-account">Don't have an account?</span> <a href="register.html"

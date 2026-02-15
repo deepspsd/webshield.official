@@ -7,25 +7,25 @@
     <title>WebShield Gmail - Settings</title>
     <style>
         :root {
-            /* Core Colors - Matching Main Extension */
+            /* Core Colors */
             --primary: #00bcd4;
             --primary-dark: #0097a7;
             --success: #28a745;
             --warning: #ffc107;
             --danger: #dc3545;
 
-            /* Background Colors */
-            --dark: hsl(220 25% 3%);
-            --panel: hsl(220 25% 5%);
-            --panel2: hsl(220 25% 6%);
+            /* Light theme (default) */
+            --dark: #f5f7fb;
+            --panel: #ffffff;
+            --panel2: #f3f6fb;
 
             /* Border & Dividers */
-            --border: hsl(220 25% 15%);
+            --border: rgba(15, 23, 42, 0.12);
 
             /* Text Colors */
-            --text-primary: #ffffff;
-            --text-secondary: #b0b8c1;
-            --muted: #9aa0a6;
+            --text-primary: #0f172a;
+            --text-secondary: rgba(15, 23, 42, 0.72);
+            --muted: rgba(15, 23, 42, 0.55);
 
             /* Legacy variable names for compatibility */
             --bg: var(--dark);
@@ -34,6 +34,17 @@
             --accent: var(--primary);
             --card-bg: var(--panel);
             --hover-bg: var(--panel2);
+        }
+
+        /* Dark theme (enabled via settings toggle) */
+        body.dark-mode {
+            --dark: hsl(220 25% 3%);
+            --panel: hsl(220 25% 5%);
+            --panel2: hsl(220 25% 6%);
+            --border: hsl(220 25% 15%);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --muted: #9aa0a6;
         }
 
         * {
@@ -70,10 +81,15 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.08) 0%, transparent 50%);
+            background: radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.10) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.10) 0%, transparent 50%);
             pointer-events: none;
             z-index: 0;
+        }
+
+        body.dark-mode::before {
+            background: radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.08) 0%, transparent 50%);
         }
 
         .header {
@@ -107,6 +123,10 @@
             border: 1px solid var(--border);
             position: relative;
             z-index: 1;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        }
+
+        body.dark-mode .section {
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
@@ -196,6 +216,10 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
+        body.dark-mode .slider:before {
+            background-color: #ffffff;
+        }
+
         input:checked+.slider {
             background: linear-gradient(135deg, var(--primary), #667eea);
             border-color: transparent;
@@ -228,6 +252,10 @@
             color: var(--text-primary);
             font-size: 13px;
             transition: all 0.2s ease;
+        }
+
+        .input-group input::placeholder {
+            color: var(--muted);
         }
 
         .input-group input:focus {
@@ -366,6 +394,47 @@
             <button class="btn" id="save-api">Save API Settings</button>
         </div>
 
+        <!-- Gmail API OAuth -->
+        <div class="section">
+            <div class="section-title">Gmail API (Real SPF/DKIM/DMARC)</div>
+
+            <div class="setting-row">
+                <div class="setting-label">
+                    <div class="setting-label-title">Use Gmail API for authentication</div>
+                    <div class="setting-label-desc">Enable real SPF/DKIM/DMARC verification via Gmail API</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="use-gmail-api">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div id="gmail-api-status" role="status" aria-live="polite" aria-atomic="true"
+                style="margin-top: 12px; padding: 12px; background: var(--panel2); border-radius: 8px; display: none;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span id="gmail-api-icon" aria-hidden="true" style="font-size: 20px;">❌</span>
+                    <span id="gmail-api-text" style="font-weight: 500;">Not connected</span>
+                </div>
+                <div id="gmail-api-details" style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+                    Connect to Gmail API to verify real email authentication headers
+                </div>
+                <button class="btn btn-secondary" id="gmail-api-connect"
+                    style="width: auto; padding: 8px 16px; margin-top: 0;">
+                    Connect Gmail
+                </button>
+                <button class="btn btn-secondary" id="gmail-api-disconnect"
+                    style="width: auto; padding: 8px 16px; margin-top: 0; display: none;">
+                    Disconnect
+                </button>
+            </div>
+
+            <div
+                style="margin-top: 12px; padding: 10px; background: rgba(0, 188, 212, 0.1); border-left: 3px solid var(--primary); border-radius: 4px; font-size: 12px; color: var(--text-secondary);">
+                <strong>Privacy Note:</strong> Uses <code>gmail.metadata</code> scope (read headers only, not email
+                body). Your emails stay private.
+            </div>
+        </div>
+
         <!-- Data Management -->
         <div class="section">
             <div class="section-title">Data Management</div>
@@ -375,7 +444,8 @@
                     <div class="setting-label-title">Scan history</div>
                     <div class="setting-label-desc">Clear all stored scan results</div>
                 </div>
-                <button class="btn btn-secondary" id="clear-history" style="width: auto; padding: 6px 16px;">Clear</button>
+                <button class="btn btn-secondary" id="clear-history"
+                    style="width: auto; padding: 6px 16px;">Clear</button>
             </div>
 
             <div class="setting-row">
@@ -383,7 +453,8 @@
                     <div class="setting-label-title">Cache</div>
                     <div class="setting-label-desc">Clear extension cache</div>
                 </div>
-                <button class="btn btn-secondary" id="clear-cache" style="width: auto; padding: 6px 16px;">Clear</button>
+                <button class="btn btn-secondary" id="clear-cache"
+                    style="width: auto; padding: 6px 16px;">Clear</button>
             </div>
         </div>
 
@@ -392,13 +463,14 @@
             <div class="section-title">About</div>
             <div style="font-size: 13px; color: var(--sub); line-height: 1.6;">
                 <p><strong>WebShield Gmail Scanner</strong></p>
-                <p>Version: 2.0.0</p>
+                <p>Version: 2.1.0</p>
                 <p>Protects your inbox from phishing, malware, and suspicious emails.</p>
             </div>
         </div>
 
         <div id="status-message" class="status-message"></div>
 
+        <script src="crypto-storage.js"></script>
         <script src="settings.js"></script>
     </div>
 </body>

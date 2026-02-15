@@ -28,7 +28,9 @@ logger.setLevel(logging.WARNING)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_API_BASE = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
 GROQ_EXPLANATION_MODEL = os.getenv("GROQ_EXPLANATION_MODEL", "llama-3.1-8b-instant")
-GROQ_REQUEST_TIMEOUT_SECONDS = float(os.getenv("GROQ_REQUEST_TIMEOUT_SECONDS", "2.5"))
+GROQ_REQUEST_TIMEOUT_SECONDS = float(os.getenv("GROQ_REQUEST_TIMEOUT_SECONDS", "5.0"))
+GROQ_MAX_RETRIES = int(os.getenv("GROQ_MAX_RETRIES", "2"))
+GROQ_RETRY_DELAY = float(os.getenv("GROQ_RETRY_DELAY", "0.5"))
 
 
 class LLMService:
@@ -58,7 +60,11 @@ class LLMService:
         max_tokens: int = 240,
         request_timeout_seconds: float = GROQ_REQUEST_TIMEOUT_SECONDS,
     ) -> Optional[str]:
-        """Query Groq chat completions (OpenAI-compatible) and return assistant text."""
+        """Query Groq chat completions (OpenAI-compatible) and return assistant text.
+
+        Includes retry logic: up to GROQ_MAX_RETRIES retries with exponential
+        backoff for transient failures (timeouts and 5xx server errors).
+        """
         if not GROQ_API_KEY:
             return None
 
@@ -77,34 +83,54 @@ class LLMService:
             "max_tokens": max_tokens,
         }
 
-        try:
-            async with asyncio.timeout(request_timeout_seconds):
-                async with self.session.post(url, headers=headers, json=payload) as response:
-                    if response.status != 200:
-                        try:
-                            error_text = await response.text()
-                        except Exception:
-                            error_text = ""
-                        logger.warning(f"Groq API error {response.status}: {error_text[:200]}")
-                        return None
+        last_error: Optional[str] = None
+        for attempt in range(1 + GROQ_MAX_RETRIES):
+            try:
+                async with asyncio.timeout(request_timeout_seconds):
+                    async with self.session.post(url, headers=headers, json=payload) as response:
+                        # Retry on 5xx server errors
+                        if response.status >= 500:
+                            try:
+                                error_text = await response.text()
+                            except Exception:
+                                error_text = ""
+                            last_error = f"Groq API server error {response.status}: {error_text[:200]}"
+                            logger.warning(f"{last_error} (attempt {attempt + 1}/{1 + GROQ_MAX_RETRIES})")
+                            if attempt < GROQ_MAX_RETRIES:
+                                await asyncio.sleep(GROQ_RETRY_DELAY * (2 ** attempt))
+                                continue
+                            return None
 
-                    data = await response.json()
-                    if not isinstance(data, dict):
-                        return None
-                    choices = data.get("choices")
-                    if not isinstance(choices, list) or not choices:
-                        return None
-                    message = choices[0].get("message") if isinstance(choices[0], dict) else None
-                    content = message.get("content") if isinstance(message, dict) else None
-                    if isinstance(content, str) and content.strip():
-                        return content.strip()
-        except TimeoutError:
-            logger.warning(f"Groq request timed out after {request_timeout_seconds}s")
-        except asyncio.TimeoutError:
-            logger.warning(f"Groq request timed out after {request_timeout_seconds}s")
-        except Exception as e:
-            logger.warning(f"Groq request failed: {e}")
+                        if response.status != 200:
+                            try:
+                                error_text = await response.text()
+                            except Exception:
+                                error_text = ""
+                            logger.warning(f"Groq API error {response.status}: {error_text[:200]}")
+                            return None
 
+                        data = await response.json()
+                        if not isinstance(data, dict):
+                            return None
+                        choices = data.get("choices")
+                        if not isinstance(choices, list) or not choices:
+                            return None
+                        message = choices[0].get("message") if isinstance(choices[0], dict) else None
+                        content = message.get("content") if isinstance(message, dict) else None
+                        if isinstance(content, str) and content.strip():
+                            return content.strip()
+                        return None
+            except (TimeoutError, asyncio.TimeoutError):
+                last_error = f"Groq request timed out after {request_timeout_seconds}s"
+                logger.warning(f"{last_error} (attempt {attempt + 1}/{1 + GROQ_MAX_RETRIES})")
+                if attempt < GROQ_MAX_RETRIES:
+                    await asyncio.sleep(GROQ_RETRY_DELAY * (2 ** attempt))
+                    continue
+            except Exception as e:
+                logger.warning(f"Groq request failed: {e}")
+                return None
+
+        logger.warning(f"Groq request failed after {1 + GROQ_MAX_RETRIES} attempts: {last_error}")
         return None
 
     async def _query_groq_json(

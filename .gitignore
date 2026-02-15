@@ -86,6 +86,7 @@ logs/
 dump.rdb
 redis-data/
 *.sql
+*.ca.pem
 
 # ============================================
 # RUNTIME & UPLOADS

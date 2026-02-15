@@ -75,6 +75,18 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = Field(default=None, env="GROQ_API_KEY")
     GROQ_EXPLANATION_MODEL: str = Field(default="llama-3.1-8b-instant", env="GROQ_EXPLANATION_MODEL")
 
+    # Google Safe Browsing
+    GOOGLE_SAFE_BROWSING_KEY: Optional[str] = Field(default=None, env="GOOGLE_SAFE_BROWSING_KEY")
+
+    # WHOIS API 
+    WHOIS_API_KEY: Optional[str] = Field(default=None, env="WHOIS_API_KEY")
+
+    # Feature toggles
+    ENABLE_DOMAIN_AGE_CHECK: bool = Field(default=True, env="ENABLE_DOMAIN_AGE_CHECK")
+    ENABLE_NLP_ANALYSIS: bool = Field(default=True, env="ENABLE_NLP_ANALYSIS")
+    ENABLE_SAFE_BROWSING: bool = Field(default=True, env="ENABLE_SAFE_BROWSING")
+    ENABLE_REDIRECT_RESOLUTION: bool = Field(default=True, env="ENABLE_REDIRECT_RESOLUTION")
+
     # ============================================
     # CACHING & PERFORMANCE
     # ============================================

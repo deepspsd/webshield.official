@@ -9,32 +9,131 @@ WebShield is a state-of-the-art URL scanning and phishing detection system power
 
 ## Quick Start
 
-### Run locally 
+### Manual Setup
 
 1. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Start the server**
+2. **Configure environment**
    ```bash
-   python -m uvicorn app:app --host 0.0.0.0 --port 8000
-   ```
-   or
-   ```bash
-   uvicorn app:app --host 127.0.0.1 --port 8000
+   # Copy .env.example to .env (already done in your case)
+   # Verify these settings in .env:
+   # - GROQ_API_KEY (for AI responses)
+   # - GOOGLE_CLIENT_ID (for Gmail OAuth)
+   # - Database credentials (if using MySQL)
    ```
 
-3. **Open the Web UI (served from `frontend/`)**
-   - `http://localhost:8000/`
-   - `http://localhost:8000/index.html`
+3. **Start the server**
+   ```bash
+   # Option 1: Use the startup script (recommended)
+   python start_server.py
+   
+   # Option 2: Direct uvicorn
+   python -m uvicorn backend.server:app --host 0.0.0.0 --port 8000
+   ```
+
+4. **Verify backend is running**
+   ```bash
+   # Test health endpoint
+   curl http://localhost:8000/api/health
+   ```
+
+5. **Open the Web UI**
+   - Main: `http://localhost:8000/`
    - Dashboard: `http://localhost:8000/dashboard.html`
+   - Health: `http://localhost:8000/api/health`
 
-### Verify the backend is running
+### Gmail Extension Setup
 
-- Health:
-  - `http://localhost:8000/api/health`
-  - (fallback) `http://localhost:8000/health`
+1. **Start the backend first** (see above)
+
+2. **Load Gmail Extension**
+   - Open Chrome → `chrome://extensions/`
+   - Enable **Developer mode** (top right)
+   - Click **Load unpacked**
+   - Select `gmail-extension/` folder
+   - Extension should load with WebShield icon
+
+3. **Test in Gmail**
+   - Open Gmail (https://mail.google.com)
+   - Open any email
+   - Look for WebShield scan button
+   - Click to scan email for threats
+
+4. **Connect Gmail (OAuth)**
+   - Click extension icon
+   - Click "Connect Gmail"
+   - Grant permissions
+   - Extension will verify token with backend
+
+### Regular Extension Setup
+
+1. **Load Regular Extension**
+   - Chrome → `chrome://extensions/`
+   - Enable **Developer mode**
+   - Click **Load unpacked**
+   - Select `extension/` folder
+
+2. **Test URL Scanning**
+   - Visit any website
+   - Extension will analyze in real-time
+   - Click extension icon to see results
+
+### ✅ Verify Everything Works
+
+**Test Backend:**
+```bash
+# Windows
+TEST_BACKEND.bat
+
+# All platforms
+curl http://localhost:8000/api/health
+```
+
+**Test Groq AI:**
+```bash
+# Windows
+TEST_GROQ_API.bat
+
+# All platforms
+curl -X POST https://api.groq.com/openai/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_GROQ_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"llama-3.1-8b-instant","messages":[{"role":"user","content":"test"}],"max_tokens":10}'
+```
+
+**Test Email Scanning:**
+```bash
+curl -X POST http://localhost:8000/api/email/scan-metadata \
+  -H "Content-Type: application/json" \
+  -d '{"email_metadata":{"sender_email":"test@example.com","sender_name":"Test","subject":"Test","links":[],"attachment_hashes":[],"attachment_names":[],"attachments":[],"has_dangerous_attachments":false},"scan_type":"quick"}'
+```
+
+### 🐛 Troubleshooting
+
+**Backend not starting:**
+- Check if port 8000 is in use: `netstat -ano | findstr :8000`
+- Install dependencies: `pip install -r requirements.txt`
+- Check logs: `tail -f webshield.log`
+
+**Extensions not connecting:**
+- Verify backend is running: `curl http://localhost:8000/api/health`
+- Check extension console (F12) for errors
+- Verify CORS settings in `.env`
+
+**AI responses not working:**
+- Test Groq API: Run `TEST_GROQ_API.bat`
+- Check `GROQ_API_KEY` in `.env`
+- Backend will use fallback analysis if Groq fails
+
+**OAuth errors:**
+- Verify `GOOGLE_CLIENT_ID` in `.env` matches manifest
+- Check backend logs for token verification errors
+- Try removing and re-granting permissions
+
+### 📋 Configuration Notes
 
 
 - **Database**

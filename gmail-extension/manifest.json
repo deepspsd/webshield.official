@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WebShield Gmail Scanner",
-  "version": "2.0.0",
-  "description": "World-class email security: detects phishing, spoofing, homograph attacks, and suspicious content with advanced AI-powered analysis.",
+  "version": "2.2.0",
+  "description": "World-class email security: detects phishing, spoofing, homograph attacks, and suspicious content with advanced AI-powered analysis. Features real SPF/DKIM/DMARC verification, Google Safe Browsing, NLP phishing detection, and AI threat explanations.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -28,6 +28,8 @@
         "https://mail.google.com/*"
       ],
       "js": [
+        "crypto-storage.js",
+        "gmail-api.js",
         "gmail-scanner.js"
       ],
       "css": [
@@ -39,14 +41,24 @@
   "permissions": [
     "storage",
     "notifications",
-    "activeTab",
     "tabs",
-    "alarms"
+    "alarms",
+    "identity"
   ],
   "host_permissions": [
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*",
-    "https://pggjs0c8-8000.inc1.devtunnels.ms/*",
-    "https://*.googleapis.com/*"
-  ]
+    "https://www.googleapis.com/*",
+    "https://safebrowsing.googleapis.com/*",
+    "https://oauth2.googleapis.com/*"
+  ],
+  "oauth2": {
+    "client_id": "867726207258-ba75ij27f13956hsh2288au1jnploomq.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/gmail.metadata",
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/userinfo.email"
+    ]
+  },
+  "key": "LYPnx1M5owZhHRHLf5SruolslEYqoqgGFDPdE5bvudw="
 }

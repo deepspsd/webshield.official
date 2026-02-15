@@ -17,6 +17,154 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <script src="cyber-effects.js" defer></script>
+    <!-- Google Sign-In API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // Google Sign-In configuration (same as login.html)
+        let googleClientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+
+        async function loadGoogleConfig() {
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/auth/google/config`);
+                if (response.ok) {
+                    const config = await response.json();
+                    if (config.client_id && config.client_id !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+                        googleClientId = config.client_id;
+                    }
+                }
+            } catch (err) {
+                console.log('Failed to load Google config, using default');
+            }
+        }
+
+        // Helper: Decode base64url to base64 then atob (JWT safe)
+        function base64UrlDecode(str) {
+            const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            const padding = '='.repeat((4 - base64.length % 4) % 4);
+            return atob(base64 + padding);
+        }
+
+        async function handleGoogleSignIn(response) {
+            try {
+                const idToken = response.credential;
+                // Decode JWT safely using base64url decoder
+                const payload = JSON.parse(base64UrlDecode(idToken.split('.')[1]));
+                const email = payload.email;
+                const name = payload.name;
+                const picture = payload.picture;
+
+                // Non-PII logging only
+                if (window.location.hostname === 'localhost' || window.DEBUG) {
+                    console.log('🔐 Google Sign-Up succeeded');
+                }
+
+                const apiResponse = await fetch(`${window.API_BASE_URL}/api/auth/google/callback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_token: idToken,
+                        email: email,
+                        name: name,
+                        picture: picture
+                    }),
+                    credentials: 'include'
+                });
+
+                if (apiResponse.ok) {
+                    const userData = await apiResponse.json();
+                    console.log('✅ Google registration/login successful');
+
+                    // Store only non-sensitive user info in sessionStorage
+                    sessionStorage.setItem('userLoggedIn', 'true');
+                    sessionStorage.setItem('userEmail', email);
+                    sessionStorage.setItem('userName', name);
+                    sessionStorage.setItem('authProvider', 'google');
+
+                    const successMsg = document.getElementById('success-message');
+                    successMsg.textContent = userData.message || 'Account created via Google! Redirecting...';
+                    successMsg.style.display = 'block';
+
+                    setTimeout(() => {
+                        window.location.replace('dashboard.html');
+                    }, 1000);
+                } else {
+                    const error = await apiResponse.json();
+                    console.error('❌ Google registration failed:', error.detail || 'Unknown error');
+                    const errorMsg = document.getElementById('error-message');
+                    errorMsg.textContent = error.detail || 'Google registration failed. Please try again.';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                console.error('❌ Google Sign-In error:', err);
+                const errorMsg = document.getElementById('error-message');
+                errorMsg.textContent = 'Google Sign-In failed. Please try again.';
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        async function waitForGoogleLibrary(maxWaitMs = 10000, intervalMs = 100) {
+            const startTime = Date.now();
+            while (Date.now() - startTime < maxWaitMs) {
+                if (window.google && window.google.accounts) {
+                    return true;
+                }
+                await new Promise(r => setTimeout(r, intervalMs));
+            }
+            return false;
+        }
+
+        async function initGoogleSignIn() {
+            await loadGoogleConfig();
+
+            if (!googleClientId || googleClientId.includes('YOUR_GOOGLE_CLIENT_ID')) {
+                console.log('Google Sign-In not configured - showing notice');
+                const googleBtn = document.querySelector('.btn-google');
+                if (googleBtn) {
+                    googleBtn.style.opacity = '0.5';
+                    googleBtn.style.pointerEvents = 'none';
+                    googleBtn.title = 'Google Sign-In is not configured. Please use email/password registration.';
+                }
+                const divider = document.querySelector('.divider');
+                if (divider) {
+                    divider.style.display = 'none';
+                }
+                return;
+            }
+
+            const loaded = await waitForGoogleLibrary();
+            if (!loaded) {
+                console.error('Google Identity Services library failed to load');
+                return;
+            }
+
+            if (window.google && window.google.accounts) {
+                window.google.accounts.id.initialize({
+                    client_id: googleClientId,
+                    callback: handleGoogleSignIn,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+
+                const googleBtn = document.getElementById('google-signin-btn');
+                if (googleBtn) {
+                    // Get numeric pixel width from container
+                    const containerWidth = googleBtn.parentElement?.clientWidth || 300;
+                    window.google.accounts.id.renderButton(googleBtn, {
+                        theme: 'outline',
+                        size: 'large',
+                        width: Math.max(200, Math.min(containerWidth, 400)),
+                        text: 'signup_with'
+                    });
+                }
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGoogleSignIn);
+        } else {
+            initGoogleSignIn();
+        }
+    </script>
     <style>
         :root {
             --background: 222.2 84% 4.9%;
@@ -779,14 +927,26 @@
 
             <div class="divider"><span>or</span></div>
 
-            <button class="btn btn-google btn-full">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M21.35 11.1H12v2.9h5.3c-.23 1.48-1.6 4.33-5.3 4.33-3.19 0-5.8-2.63-5.8-5.88s2.61-5.88 5.8-5.88c1.81 0 3.03.77 3.73 1.43l2.55-2.46C16.86 3.76 14.65 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c5.31 0 8.8-3.73 8.8-9 0-.6-.07-1.02-.15-1.5Z"
-                        fill="#4285F4" />
-                </svg>
-                Continue with Google
-            </button>
+            <div id="google-signin-btn" class="btn btn-google btn-full"
+                style="padding: 0; height: auto; overflow: visible;">
+                <button class="btn btn-google btn-full" type="button" onclick="initGoogleSignIn()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M21.35 11.1H12v2.9h5.3c-.23 1.48-1.6 4.33-5.3 4.33-3.19 0-5.8-2.63-5.8-5.88s2.61-5.88 5.8-5.88c1.81 0 3.03.77 3.73 1.43l2.55-2.46C16.86 3.76 14.65 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c5.31 0 8.8-3.73 8.8-9 0-.6-.07-1.02-.15-1.5Z"
+                            fill="#4285F4" />
+                        <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.11 2.18 6.51l3.61 2.81C6.81 6.41 9.23 5.38 12 5.38Z"
+                            fill="#EA4335" />
+                        <path
+                            d="M21.35 11.1c.08.48.15.9.15 1.5 0 2.29-.8 4.22-2.2 5.61l3.15 3.15c2.09-1.96 3.35-4.84 3.35-8.06 0-.78-.08-1.54-.25-2.27l-4.2-.93Z"
+                            fill="#FBBC05" />
+                        <path
+                            d="M12 22c2.93 0 5.41-.97 7.2-2.64l-3.15-3.15c-.97.65-2.2 1.03-4.05 1.03-2.77 0-5.19-1.03-6.81-2.7L1.58 18.35C3.39 21.89 7.1 24 12 24Z"
+                            fill="#34A853" />
+                    </svg>
+                    <span>Continue with Google</span>
+                </button>
+            </div>
 
             <div class="register-footer">
                 <p>Already have an account? <a href="login.html">Sign in</a></p>
@@ -1008,7 +1168,8 @@
                         body: JSON.stringify({
                             full_name: name,
                             email: email,
-                            password: password
+                            password: password,
+                            confirm_password: confirmPassword
                         })
                     });
 

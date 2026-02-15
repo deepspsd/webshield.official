@@ -1,6 +1,6 @@
 /**
  * WebShield Gmail Shield Popup Script
- * Enhanced Version 2.0.0
+ * Enhanced Version 2.1.0
  * World-Class Phishing Detection & Email Security
  * 
  * This script handles the popup UI interactions, displaying scan results,
@@ -15,6 +15,9 @@ const els = {
   threatBadge: document.getElementById('gr-threat-badge'),
   score: document.getElementById('gr-score'),
   summary: document.getElementById('gr-summary'),
+  aiContainer: document.getElementById('gr-ai-container'),
+  aiWhy: document.getElementById('gr-ai-why'),
+  aiRecos: document.getElementById('gr-ai-recos'),
   repScore: document.getElementById('gr-rep-score'),
   linkCount: document.getElementById('gr-link-count'),
   trusted: document.getElementById('gr-trusted'),
@@ -45,8 +48,17 @@ const MSG = {
 
 let activeThreadId = null;
 
+function applyThemeFromSettings() {
+  chrome.storage.sync.get({ dark_mode: false }, (settings) => {
+    if (chrome.runtime.lastError) return;
+    document.body.classList.toggle('dark-mode', !!settings.dark_mode);
+  });
+}
+
 // Initialize the popup
 function init() {
+  applyThemeFromSettings();
+
   // Check active tab for Gmail email
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tab = tabs[0];
@@ -164,6 +176,29 @@ function renderResult(data) {
   // Summary
   els.summary.textContent = res.summary || 'Analysis complete';
 
+  // AI Explanation (optional)
+  try {
+    const ai = res.ai_explanation;
+    const why = ai && typeof ai === 'object' ? (ai.why_marked || '') : '';
+    const recos = ai && typeof ai === 'object' && Array.isArray(ai.recommendations)
+      ? ai.recommendations.map(x => (x == null ? '' : String(x))).filter(Boolean)
+      : [];
+
+    if (els.aiContainer && els.aiWhy && els.aiRecos) {
+      if (why) {
+        els.aiContainer.style.display = 'block';
+        els.aiWhy.textContent = why;
+        els.aiRecos.innerHTML = recos.slice(0, 4).map(r => `<li>${r}</li>`).join('');
+      } else {
+        els.aiContainer.style.display = 'none';
+        els.aiWhy.textContent = '';
+        els.aiRecos.innerHTML = '';
+      }
+    }
+  } catch (_) {
+    if (els.aiContainer) els.aiContainer.style.display = 'none';
+  }
+
   // Show offline badge if applicable
   if (els.offlineBadge) {
     els.offlineBadge.style.display = res.is_offline_analysis ? 'block' : 'none';
@@ -181,13 +216,49 @@ function renderResult(data) {
   }
 
   // Stats
-  const details = res.details || {};
-  const senderRep = details.sender_reputation || {};
-  const linkAnalysis = details.link_analysis || {};
-  const contentAnalysis = details.content_analysis || {};
+  const details = (res.details && typeof res.details === 'object') ? res.details : {};
+  const senderRep = (details.sender_reputation && typeof details.sender_reputation === 'object') ? details.sender_reputation : {};
+  const linkAnalysis = (details.link_analysis && typeof details.link_analysis === 'object') ? details.link_analysis : {};
+  const contentAnalysis = (details.content_analysis && typeof details.content_analysis === 'object') ? details.content_analysis : {};
 
-  els.repScore.textContent = senderRep.reputation_score ?? '—';
-  els.linkCount.textContent = linkAnalysis.link_count ?? (linkAnalysis.links?.length || 0);
+  const getLinksArray = () => {
+    if (Array.isArray(linkAnalysis.links)) return linkAnalysis.links;
+    if (Array.isArray(res.links)) return res.links;
+    if (Array.isArray(res.link_details)) {
+      return res.link_details
+        .map(l => (typeof l === 'string' ? l : (l?.url || l?.href || null)))
+        .filter(Boolean);
+    }
+    return [];
+  };
+
+  const computeUrlMismatches = () => {
+    if (Number.isFinite(res.text_url_mismatches)) return res.text_url_mismatches;
+    if (res.text_url_mismatches != null && !Number.isNaN(Number(res.text_url_mismatches))) {
+      return Number(res.text_url_mismatches);
+    }
+    if (Array.isArray(res.link_details)) {
+      return res.link_details.filter(l => l && typeof l === 'object' && !!l.textUrlMismatch).length;
+    }
+    const sl = Array.isArray(linkAnalysis.suspicious_links) ? linkAnalysis.suspicious_links : [];
+    return sl.filter(l => l && typeof l === 'object' && !!l.textUrlMismatch).length;
+  };
+
+  const computeKeywordCount = () => {
+    if (Number.isFinite(contentAnalysis.phishing_keywords_found)) return contentAnalysis.phishing_keywords_found;
+    if (contentAnalysis.phishing_keywords_found != null && !Number.isNaN(Number(contentAnalysis.phishing_keywords_found))) {
+      return Number(contentAnalysis.phishing_keywords_found);
+    }
+    const client = res.client_analysis;
+    if (client && typeof client === 'object' && Array.isArray(client.clientFlags)) return client.clientFlags.length;
+    return 0;
+  };
+
+  const linksArr = getLinksArray();
+  const suspiciousLinksArr = Array.isArray(linkAnalysis.suspicious_links) ? linkAnalysis.suspicious_links : [];
+
+  els.repScore.textContent = (senderRep.reputation_score ?? senderRep.score ?? '—');
+  els.linkCount.textContent = (linkAnalysis.link_count ?? linksArr.length);
 
   // Details
   const isOffline = !!res.is_offline_analysis;
@@ -202,25 +273,33 @@ function renderResult(data) {
   const spf = (ha.spf_status || 'unknown').toLowerCase();
   const dkim = (ha.dkim_status || 'unknown').toLowerCase();
   const dmarc = (ha.dmarc_status || 'unknown').toLowerCase();
+  const gmailApiVerified = !!ha.gmail_api_verified;
   const anyFail = spf === 'fail' || dkim === 'fail' || dmarc === 'fail';
   const allUnknown = spf === 'unknown' && dkim === 'unknown' && dmarc === 'unknown';
   if (allUnknown) {
-    els.auth.textContent = '❓ Unknown';
+    const spfPosture = (ha.spf_posture || 'unknown').toLowerCase();
+    const dkimPosture = (ha.dkim_posture || 'unknown').toLowerCase();
+    const dmarcPosture = (ha.dmarc_posture || 'unknown').toLowerCase();
+    const anyPostureKnown = spfPosture !== 'unknown' || dkimPosture !== 'unknown' || dmarcPosture !== 'unknown';
+
+
+    if (anyPostureKnown) {
+      const postureText = `DNS: SPF ${spfPosture}, DKIM ${dkimPosture}, DMARC ${dmarcPosture}`;
+      els.auth.textContent = postureText;
+    } else {
+      els.auth.textContent = '❓ Unknown';
+    }
   } else if (anyFail) {
-    els.auth.textContent = '❌ Failed';
+    els.auth.textContent = gmailApiVerified ? '❌ Failed (Gmail API)' : '❌ Failed';
   } else if (ha.is_authenticated) {
-    els.auth.textContent = '✅ Passed';
+    els.auth.textContent = gmailApiVerified ? '✅ Passed (Gmail API)' : '✅ Passed';
   } else {
-    els.auth.textContent = '⚠️ Partial';
+    els.auth.textContent = gmailApiVerified ? '⚠️ Partial (Gmail API)' : '⚠️ Partial';
   }
-  els.susLinks.textContent = linkAnalysis.suspicious_links?.length || 0;
+  els.susLinks.textContent = suspiciousLinksArr.length;
 
   // Show URL mismatches if any
-  const urlMismatches = (linkAnalysis.suspicious_links || []).filter(l => {
-    if (!l) return false;
-    if (typeof l === 'object') return !!l.textUrlMismatch;
-    return false;
-  }).length;
+  const urlMismatches = computeUrlMismatches();
   if (els.urlMismatchRow && els.urlMismatches) {
     if (urlMismatches > 0) {
       els.urlMismatchRow.style.display = 'flex';
@@ -231,7 +310,7 @@ function renderResult(data) {
   }
 
   // Show phishing keywords if detected
-  const keywordsFound = contentAnalysis.phishing_keywords_found || 0;
+  const keywordsFound = computeKeywordCount();
   if (els.keywordsRow && els.phishingKeywords) {
     if (keywordsFound > 0) {
       els.keywordsRow.style.display = 'flex';

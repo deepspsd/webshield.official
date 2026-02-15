@@ -428,3 +428,210 @@ async def upload_profile_picture(email: str = Form(...), file: UploadFile = File
     except Exception as e:
         logger.error(f"Profile picture update error: {e}")
         raise HTTPException(status_code=500, detail="Failed to update profile picture") from e
+
+
+# ===== Google OAuth Endpoints =====
+
+from pydantic import BaseModel
+
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+    email: str
+    name: str | None = None
+    picture: str | None = None
+
+
+@auth_router.post("/google/callback")
+async def google_auth_callback(request: GoogleAuthRequest):
+    """
+    Handle Google OAuth callback for login/registration.
+    Verifies Google ID token and creates/logs in user.
+    """
+    try:
+        # Require real GOOGLE_CLIENT_ID - fail if not configured
+        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+        if not google_client_id or "YOUR_GOOGLE_CLIENT_ID" in google_client_id:
+            logger.error("GOOGLE_CLIENT_ID is not properly configured")
+            raise HTTPException(status_code=500, detail="Google OAuth is not configured")
+
+        # Verify Google ID token using google-auth library
+        try:
+            from google.oauth2 import id_token
+            from google.auth.transport import requests as google_requests
+            
+            # Use async-friendly verification
+            loop = asyncio.get_event_loop()
+            token_info = await loop.run_in_executor(
+                None,
+                lambda: id_token.verify_oauth2_token(
+                    request.id_token,
+                    google_requests.Request(),
+                    google_client_id,
+                    clock_skew_in_seconds=10
+                )
+            )
+            
+            # Verify token is not expired and audience matches
+            import time
+            if token_info.get("exp", 0) < time.time():
+                logger.warning("Google token has expired")
+                raise HTTPException(status_code=401, detail="Token has expired")
+                
+            if token_info.get("aud") != google_client_id:
+                logger.warning("Google token audience mismatch")
+                raise HTTPException(status_code=401, detail="Invalid token audience")
+                
+        except ValueError as e:
+            logger.warning(f"Google token verification failed: {e}")
+            raise HTTPException(status_code=401, detail="Invalid Google token") from e
+        except Exception as e:
+            logger.error(f"Token verification error: {type(e).__name__}")
+            raise HTTPException(status_code=401, detail="Token verification failed") from e
+
+        # Extract verified email
+        google_email = token_info.get("email")
+        if not google_email or not token_info.get("email_verified"):
+            raise HTTPException(status_code=400, detail="Email not verified with Google")
+
+        # Use provided name or fallback to Google data
+        full_name = request.name or token_info.get("name", google_email.split("@")[0])
+        picture = request.picture or token_info.get("picture")
+
+        # Get user with auth_provider check - single database operation with UPSERT
+        user = None
+        user_id = None
+        auth_provider = None
+        
+        with get_db_connection_with_retry() as conn:
+            if not conn:
+                raise HTTPException(status_code=500, detail="Database connection error")
+
+            cursor = conn.cursor(dictionary=True)
+            
+            # Check if user exists and get auth_provider
+            cursor.execute("SELECT id, email, full_name, auth_provider FROM users WHERE email = %s", (google_email,))
+            existing_user = cursor.fetchone()
+            
+            if existing_user:
+                user_id = existing_user["id"]
+                auth_provider = existing_user.get("auth_provider")
+                
+                # Verify auth_provider allows OAuth login
+                if auth_provider and auth_provider not in ('google', 'oauth', None):
+                    logger.warning(
+                        f"Authentication mismatch for {google_email}: "
+                        f"user has auth_provider='{auth_provider}' but attempted Google OAuth login"
+                    )
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"This account uses {auth_provider} authentication. Please sign in with your password or link accounts in settings."
+                    )
+                
+                # Update last_login for existing OAuth user
+                try:
+                    cursor.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))
+                    conn.commit()
+                    logger.info(f"Updated last_login for Google OAuth user: {google_email}")
+                except Exception as e:
+                    logger.warning(f"Failed to update last_login: {e}")
+                    conn.rollback()
+                
+                user = existing_user
+            else:
+                # Create new user with UPSERT pattern to handle race conditions
+                logger.info(f"Creating new user from Google OAuth: {google_email}")
+                try:
+                    # Use INSERT ... ON DUPLICATE KEY UPDATE to handle race conditions atomically
+                    cursor.execute(
+                        """INSERT INTO users 
+                           (email, password_hash, full_name, profile_picture, auth_provider, created_at, last_login) 
+                           VALUES (%s, NULL, %s, %s, 'google', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                           ON DUPLICATE KEY UPDATE
+                           last_login = CURRENT_TIMESTAMP,
+                           id = LAST_INSERT_ID(id)""",
+                        (google_email, full_name, picture)
+                    )
+                    conn.commit()
+                    user_id = cursor.lastrowid
+                    logger.info(f"New user created via Google OAuth: {google_email} (id={user_id})")
+                    
+                    # Fetch the newly created user (or existing if race occurred)
+                    cursor.execute("SELECT id, email, full_name, auth_provider FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    
+                except IntegrityError as e:
+                    # Another process created the user between our check and insert
+                    # Fetch the existing user using the same connection
+                    logger.info(f"Race condition detected for {google_email}, fetching existing user")
+                    cursor.execute("SELECT id, email, full_name, auth_provider FROM users WHERE email = %s", (google_email,))
+                    user = cursor.fetchone()
+                    if user:
+                        user_id = user["id"]
+                        # Update last_login for the existing user we just found
+                        try:
+                            cursor.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))
+                            conn.commit()
+                        except Exception as e2:
+                            conn.rollback()
+                    else:
+                        logger.error(f"Failed to find user after IntegrityError for {google_email}")
+                        raise HTTPException(status_code=500, detail="Failed to create or retrieve account") from e
+                except Exception as e:
+                    logger.error(f"OAuth registration error: {type(e).__name__}")
+                    conn.rollback()
+                    raise HTTPException(status_code=500, detail="Failed to create account via Google") from e
+            
+            cursor.close()
+
+        if not user:
+            logger.error(f"User unexpectedly null after database operations for {google_email}")
+            raise HTTPException(status_code=500, detail="Failed to retrieve user account")
+
+        # Step 3: Generate JWT tokens
+        access_token = None
+        refresh_token = None
+        try:
+            from .jwt_auth import create_access_token, create_refresh_token
+
+            access_token = create_access_token(user["email"], user["id"])
+            refresh_token = create_refresh_token(user["email"], user.get("id"))
+            logger.info(f"JWT tokens generated for Google OAuth user: {user['email']}")
+        except Exception as jwt_error:
+            logger.warning(f"JWT token generation skipped: {jwt_error}")
+
+        # Step 4: Return success response
+        display_name = user.get("full_name") or user.get("name") or google_email.split("@")[0]
+
+        response = {
+            "success": True,
+            "message": "Login successful via Google",
+            "name": display_name,
+            "email": user["email"],
+            "user_id": user["id"],
+            "auth_provider": "google"
+        }
+
+        if access_token:
+            response["access_token"] = access_token
+            response["token_type"] = "Bearer"
+        if refresh_token:
+            response["refresh_token"] = refresh_token
+
+        logger.info(f"✅ Google OAuth login successful: {user['email']}")
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Google OAuth callback error: {e}")
+        raise HTTPException(status_code=500, detail="Google authentication failed") from e
+
+
+@auth_router.get("/google/config")
+def get_google_auth_config():
+    """Return Google OAuth client ID for frontend"""
+    return {
+        "client_id": os.getenv("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"),
+        "enabled": bool(os.getenv("GOOGLE_CLIENT_ID"))
+    }
+

@@ -17,24 +17,24 @@
             --warning: #ffc107;
             --danger: #dc3545;
 
-            /* Background Colors - Dark Theme */
-            --dark: hsl(220 25% 3%);
-            --darker: hsl(220 25% 2%);
-            --bg: hsl(220 25% 3%);
-            --panel: hsl(220 25% 5%);
-            --panel2: hsl(220 25% 6%);
-            --card-bg: hsl(220 25% 7%);
-            --hover-bg: hsl(220 25% 10%);
+            /* Light theme (default) */
+            --dark: #f5f7fb;
+            --darker: #eef2f8;
+            --bg: #f5f7fb;
+            --panel: #ffffff;
+            --panel2: #f3f6fb;
+            --card-bg: #ffffff;
+            --hover-bg: #eef2f8;
 
             /* Border & Dividers */
-            --border: hsl(220 25% 15%);
-            --border-subtle: rgba(148, 163, 184, 0.18);
+            --border: rgba(15, 23, 42, 0.12);
+            --border-subtle: rgba(15, 23, 42, 0.10);
 
             /* Text Colors */
-            --text-primary: #ffffff;
-            --text-secondary: #b0b8c1;
-            --text: #e3e3e3;
-            --muted: #9aa0a6;
+            --text-primary: #0f172a;
+            --text-secondary: rgba(15, 23, 42, 0.72);
+            --text: rgba(15, 23, 42, 0.88);
+            --muted: rgba(15, 23, 42, 0.55);
 
             /* Status Colors */
             --success-bg: rgba(40, 167, 69, 0.15);
@@ -43,9 +43,9 @@
             --info-bg: rgba(0, 188, 212, 0.15);
 
             /* Shadows */
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
-            --glow: 0 0 30px rgba(0, 188, 212, 0.15);
+            --shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+            --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
+            --glow: 0 0 30px rgba(0, 188, 212, 0.10);
 
             /* Border Radius */
             --radius: 8px;
@@ -55,6 +55,25 @@
 
             /* Transitions */
             --transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            --dark: hsl(220 25% 3%);
+            --darker: hsl(220 25% 2%);
+            --bg: hsl(220 25% 3%);
+            --panel: hsl(220 25% 5%);
+            --panel2: hsl(220 25% 6%);
+            --card-bg: hsl(220 25% 7%);
+            --hover-bg: hsl(220 25% 10%);
+            --border: hsl(220 25% 15%);
+            --border-subtle: rgba(148, 163, 184, 0.18);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8c1;
+            --text: #e3e3e3;
+            --muted: #9aa0a6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+            --glow: 0 0 30px rgba(0, 188, 212, 0.15);
         }
 
         /* ===== Reset & Base ===== */
